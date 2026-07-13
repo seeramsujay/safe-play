@@ -4,6 +4,18 @@
     <meta charset="utf-8"/>
     <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
     <title>EdgePulse 2026 - VOC Command Center</title>
+    <script>
+        // Defensive: unregister any legacy service workers running on port 8000
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.getRegistrations().then(function(registrations) {
+                for (let registration of registrations) {
+                    registration.unregister().then(function(ok) {
+                        console.log('Unregistered service worker from previous localhost session:', ok);
+                    });
+                }
+            });
+        }
+    </script>
     <!-- Tailwind CSS with forms and container-queries -->
     <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
     <!-- Google Fonts -->
