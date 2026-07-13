@@ -28,3 +28,4 @@
 {"timestamp": 1783949425.3526247, "event_type": "actuation_complete", "zone_id": "Gate_A", "mode": "fallback_rule_approved", "gate_action": "CLOSE_IMMEDIATELY", "signage_instruction": "CRITICAL OVERLOAD. USE ROUTE Corridor_1", "reroute_target": "Corridor_1"}
 {"timestamp": 1783949425.3529756, "event_type": "veto_window_approved", "zone_id": "Gate_A", "status": "approved"}
 {"timestamp": 1783949444.446619, "event_type": "inference_fallback", "zone_id": "Gate_A", "latency_ms": 49.63564872741699, "error": "Read timeout"}
+{"timestamp": 1783954093.194527, "event_type": "inference_fallback", "zone_id": "Gate_A", "latency_ms": 153.0904769897461, "error": "Read timeout"}
