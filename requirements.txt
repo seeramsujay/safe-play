@@ -67,3 +67,5 @@ typing-inspection==0.4.2
     #   pydantic
 uvicorn==0.51.0
     # via safe-play (pyproject.toml)
+websockets==16.1
+    # via safe-play (pyproject.toml)

@@ -4,6 +4,7 @@ import logging
 import time
 import argparse
 import sys
+import random
 import os
 from typing import Dict, Optional, Set, List
 import httpx
@@ -461,6 +462,74 @@ class SafePlayOrchestrator:
             except Exception as e:
                 logger.error(f"Error in orchestrator main loop: {e}")
 
+    async def simulation_loop(self):
+        """
+        Periodically injects fluctuating mock telemetry to show the dashboard alive.
+        Every 30 seconds, it triggers a crowd surge at Gate_A or Gate_B.
+        """
+        logger.info("Starting live telemetry simulation task...")
+        zones = ["Gate_A", "Gate_B", "Corridor_1", "Corridor_2", "Main_Concourse"]
+        tick = 0
+        while True:
+            try:
+                await asyncio.sleep(2.0)
+                tick += 1
+                
+                # Alternate surges between Gate_A and Gate_B
+                is_gate_a_surge = (tick % 15 == 0)
+                is_gate_b_surge = (tick % 15 == 7)
+                
+                for zone in zones:
+                    # Respect vetoes/approvals
+                    if zone in self.vetoed_zones:
+                        # Vetoed: simulate cleared crowd
+                        density = 0.7 + random.uniform(-0.1, 0.1)
+                        flow_in = 12.0 + random.uniform(-2, 2)
+                        flow_out = 14.0 + random.uniform(-2, 2)
+                    elif zone == "Gate_A" and is_gate_a_surge:
+                        density = 3.5 + random.uniform(-0.2, 0.2)
+                        flow_in = 92.0 + random.uniform(-5, 5)
+                        flow_out = 18.0 + random.uniform(-2, 2)
+                        logger.warning("Simulation: Triggering crowd surge at Gate_A!")
+                    elif zone == "Gate_B" and is_gate_b_surge:
+                        density = 2.3 + random.uniform(-0.1, 0.1)
+                        flow_in = 48.0 + random.uniform(-4, 4)
+                        flow_out = 32.0 + random.uniform(-3, 3)
+                        logger.warning("Simulation: Triggering elevated congestion at Gate_B!")
+                    else:
+                        # Nominal stadium fluctuations
+                        if zone.startswith("Gate"):
+                            density = 1.0 + random.uniform(-0.2, 0.2)
+                            flow_in = 20.0 + random.uniform(-3, 3)
+                            flow_out = 18.0 + random.uniform(-3, 3)
+                        elif zone.startswith("Corridor"):
+                            density = 0.8 + random.uniform(-0.15, 0.15)
+                            flow_in = 18.0 + random.uniform(-3, 3)
+                            flow_out = 16.0 + random.uniform(-3, 3)
+                        else:
+                            density = 1.2 + random.uniform(-0.2, 0.2)
+                            flow_in = 36.0 + random.uniform(-5, 5)
+                            flow_out = 34.0 + random.uniform(-5, 5)
+                    
+                    density = max(0.1, round(density, 2))
+                    flow_in = max(0.0, round(flow_in, 1))
+                    flow_out = max(0.0, round(flow_out, 1))
+                    
+                    payload = {
+                        "zone_id": zone,
+                        "crowd_density": density,
+                        "flow_rate_in": flow_in,
+                        "flow_rate_out": flow_out,
+                        "timestamp": time.time()
+                    }
+                    
+                    # Queue the mock telemetry so it flows through full processing pipeline
+                    self.telemetry_queue.put_nowait(json.dumps(payload))
+            except asyncio.CancelledError:
+                break
+            except Exception as e:
+                logger.error(f"Error in simulation loop: {e}")
+
 def create_app(orchestrator: SafePlayOrchestrator) -> FastAPI:
     app = FastAPI(title="EdgePulse 2026 Stadium Intelligence API")
 
@@ -585,10 +654,11 @@ async def main():
     config = uvicorn.Config(app, host="0.0.0.0", port=args.web_port, log_level="info")
     server = uvicorn.Server(config)
 
-    # Run the ingestion orchestrator loop and web server concurrently
+    # Run the ingestion orchestrator loop, simulation loop, and web server concurrently
     try:
         await asyncio.gather(
             orchestrator.main_loop(),
+            orchestrator.simulation_loop(),
             server.serve()
         )
     finally:
