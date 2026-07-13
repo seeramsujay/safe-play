@@ -1887,9 +1887,9 @@
                             <h4 class="font-bold text-sm truncate">${node.zone_id.replace('_', ' ')} Vomitory</h4>
                             <span class="inline-block font-mono text-[9px] font-bold py-0.5 px-1.5 mt-xs rounded ${gateBadge}">${gateAction}</span>
                         </div>
-                        <div class="flex gap-xs">
-                            <button class="bg-td-surface-high hover:bg-td-surface-highest border border-td-outline px-2.5 py-1 text-xs rounded font-bold hover:text-primary transition-colors select-none" onclick="triggerManualGateAction('${node.zone_id}', 'KEEP_OPEN')">Open</button>
-                            <button class="bg-td-surface-high hover:bg-td-surface-highest border border-td-outline px-2.5 py-1 text-xs rounded font-bold hover:text-critical transition-colors select-none" onclick="triggerManualGateAction('${node.zone_id}', 'CLOSE_IMMEDIATELY')">Close</button>
+                        <div class="flex gap-xs select-none">
+                            <button class="bg-td-surface-high dark:bg-td-surface-high light:bg-el-surface-high hover:bg-td-surface-highest dark:hover:bg-td-surface-highest light:hover:bg-el-surface-highest border border-td-outline dark:border-td-outline light:border-el-outline px-3.5 py-1.5 text-[10px] font-bold text-td-on-surface dark:text-td-on-surface light:text-primary hover:text-primary dark:hover:text-primary rounded transition-all active:scale-95 uppercase tracking-wider" onclick="triggerManualGateAction('${node.zone_id}', 'KEEP_OPEN')">Open</button>
+                            <button class="bg-td-surface-high dark:bg-td-surface-high light:bg-el-surface-high hover:bg-td-surface-highest dark:hover:bg-td-surface-highest light:hover:bg-el-surface-highest border border-td-outline dark:border-td-outline light:border-el-outline px-3.5 py-1.5 text-[10px] font-bold text-td-on-surface dark:text-td-on-surface light:text-critical hover:text-critical dark:hover:text-critical rounded transition-all active:scale-95 uppercase tracking-wider" onclick="triggerManualGateAction('${node.zone_id}', 'CLOSE_IMMEDIATELY')">Close</button>
                         </div>
                     </div>
                 `;
