@@ -154,6 +154,15 @@
         .edge-line {
             transition: stroke 0.5s ease, stroke-width 0.5s ease;
         }
+        
+        /* Centered material icons helper */
+        .material-symbols-outlined {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            vertical-align: middle;
+            line-height: 1;
+        }
     </style>
 </head>
 <body class="bg-td-bg text-td-on-surface dark:bg-td-bg dark:text-td-on-surface light:bg-el-bg light:text-el-on-surface min-h-screen flex flex-col md:flex-row font-sans overflow-hidden transition-colors duration-300">
@@ -730,13 +739,13 @@
 
                                 <!-- Action Buttons -->
                                 <div class="flex flex-col sm:flex-row gap-md justify-end pt-md border-t border-td-outline dark:border-td-outline light:border-el-outline">
-                                    <button class="flex-1 sm:flex-none flex items-center justify-center gap-sm px-xl py-2.5 rounded font-bold uppercase tracking-wider border-2 border-critical text-critical hover:bg-critical hover:text-white transition-colors duration-200" onclick="sendVeto()">
-                                        <span class="material-symbols-outlined">block</span>
-                                        Veto Override
+                                    <button class="flex-1 sm:flex-none flex items-center justify-center gap-2 px-xl py-2.5 rounded font-bold uppercase tracking-wider text-xs border-2 border-critical text-critical hover:bg-critical hover:text-white transition-all duration-200 active:scale-[0.97]" onclick="sendVeto()">
+                                        <span class="material-symbols-outlined text-[18px] leading-none" style="font-variation-settings: 'FILL' 0, 'wght' 500, 'GRAD' 0, 'opsz' 20;">block</span>
+                                        <span>Veto Override</span>
                                     </button>
-                                    <button class="flex-1 sm:flex-none flex items-center justify-center gap-sm px-xl py-2.5 rounded font-bold uppercase tracking-wider bg-success text-white border-2 border-success hover:bg-emerald-600 transition-colors duration-200 shadow-lg shadow-success/15" onclick="sendApprove()">
-                                        <span class="material-symbols-outlined">check_circle</span>
-                                        Approve Early
+                                    <button class="flex-1 sm:flex-none flex items-center justify-center gap-2 px-xl py-2.5 rounded font-bold uppercase tracking-wider text-xs bg-success text-white border-2 border-success hover:bg-emerald-600 transition-all duration-200 active:scale-[0.97] shadow-lg shadow-success/15" onclick="sendApprove()">
+                                        <span class="material-symbols-outlined text-[18px] leading-none" style="font-variation-settings: 'FILL' 0, 'wght' 500, 'GRAD' 0, 'opsz' 20;">check_circle</span>
+                                        <span>Approve Early</span>
                                     </button>
                                 </div>
                             </div>
