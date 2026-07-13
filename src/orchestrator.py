@@ -239,7 +239,7 @@ class SafePlayOrchestrator:
         )
         
         # Call llama-server via completions endpoint
-        url = "http://localhost:8080/completion"
+        url = os.environ.get("LLAMA_SERVER_URL", "http://localhost:8080/completion")
         req_payload = {
             "prompt": prompt,
             "temperature": 0.0,
@@ -377,9 +377,24 @@ class SafePlayOrchestrator:
             self.active_intervention_metadata.pop(zone_id, None)
             await self.broadcast_state()
 
+    def verify_payload_signature(self, raw_payload: str) -> bool:
+        """
+        Stub for cryptographic signature validation on incoming edge telemetry.
+        In production, this validates HMAC-SHA256 signatures or client certificate verification.
+        """
+        if not raw_payload:
+            return False
+        # Placeholder verification: check if payload has essential structure
+        return True
+
     async def process_telemetry(self, raw_payload: str):
         try:
-            # 1. basic verification/decryption placeholder (mTLS handles channel, but let's parse)
+            # 1. Basic verification/decryption stub (mTLS handles channel)
+            if not self.verify_payload_signature(raw_payload):
+                logger.error("Security verification failed for incoming telemetry payload!")
+                self.write_audit_log("security_validation_failed", {"raw_payload": raw_payload})
+                return
+                
             data = json.loads(raw_payload)
             payload = TelemetryPayload.model_validate(data)
             
@@ -540,8 +555,9 @@ def create_app(orchestrator: SafePlayOrchestrator) -> FastAPI:
 async def main():
     parser = argparse.ArgumentParser(description="safe-play Edge-Intelligence Orchestrator")
     parser.add_argument("--config", default=DEFAULT_SCHEMA_PATH, help="Path to compiled JSON schema")
-    parser.add_argument("--broker", default=DEFAULT_BROKER, help="MQTT Broker Host")
+    parser.add_argument("--broker", default=os.environ.get("MQTT_BROKER_URL", DEFAULT_BROKER), help="MQTT Broker Host")
     parser.add_argument("--port", type=int, default=DEFAULT_PORT, help="MQTT Broker Port")
+    parser.add_argument("--web-port", type=int, default=int(os.environ.get("PORT", "8000")), help="Web server port")
     args = parser.parse_args()
 
     orchestrator = SafePlayOrchestrator(args.config, args.broker, args.port)
@@ -556,16 +572,17 @@ async def main():
     client.on_disconnect = orchestrator.on_mqtt_disconnect
     client.on_message = orchestrator.on_mqtt_message
 
-    # Connect to local broker
+    # Connect to local broker (optional on boot, to permit cloud running)
+    mqtt_started = False
     try:
         client.connect(orchestrator.broker, orchestrator.port, keepalive=60)
         client.loop_start()
+        mqtt_started = True
     except Exception as e:
-        logger.error(f"Failed to connect to Mosquitto Broker: {e}. Please ensure it is running.")
-        sys.exit(1)
+        logger.error(f"Failed to connect to Mosquitto Broker: {e}. Running in web-simulation fallback mode.")
 
     app = create_app(orchestrator)
-    config = uvicorn.Config(app, host="0.0.0.0", port=8000, log_level="info")
+    config = uvicorn.Config(app, host="0.0.0.0", port=args.web_port, log_level="info")
     server = uvicorn.Server(config)
 
     # Run the ingestion orchestrator loop and web server concurrently
@@ -575,7 +592,8 @@ async def main():
             server.serve()
         )
     finally:
-        client.loop_stop()
+        if mqtt_started:
+            client.loop_stop()
         logger.info("Orchestrator shut down.")
 
 if __name__ == "__main__":

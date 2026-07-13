@@ -67,7 +67,12 @@
                         "mono": ["JetBrains Mono", "monospace"]
                     }
                 }
-            }
+            },
+            plugins: [
+                function({ addVariant }) {
+                    addVariant('light', '.light &');
+                }
+            ]
         }
     </script>
     <style>
@@ -1233,6 +1238,14 @@
             updateMapVisuals();
         }
 
+        function updateMapVisuals() {
+            if (!localState || !localState.nodes) return;
+            localState.nodes.forEach(node => {
+                updateNodeSvgCircle(`dash-node-${node.zone_id}`, node.status);
+                updateNodeSvgCircle(`map-node-${node.zone_id}`, node.status);
+            });
+        }
+
         // Simulation Modal trigger
         function openSimPanel() {
             document.getElementById('simModal').classList.remove('hidden');
@@ -1252,17 +1265,38 @@
             svgNodes.forEach(id => {
                 const mapNodeCircle = document.getElementById(`map-node-${id}`);
                 const dashNodeCircle = document.getElementById(`dash-node-${id}`);
+                if (!mapNodeCircle || !dashNodeCircle) return;
+
                 if (id === nodeId) {
                     mapNodeCircle.classList.add('stroke-primary', 'stroke-[3px]');
                     dashNodeCircle.classList.add('stroke-primary', 'stroke-[3px]');
-                    if (mapNodeCircle.r.baseVal) mapNodeCircle.r.baseVal.value = mapNodeCircle.r.baseVal.value + 3;
+                    
+                    // Explicitly set highlighted radius values
+                    if (id === 'Gate_A' || id === 'Gate_B') {
+                        mapNodeCircle.setAttribute('r', '25');
+                        dashNodeCircle.setAttribute('r', '19');
+                    } else if (id === 'Corridor_1' || id === 'Corridor_2') {
+                        mapNodeCircle.setAttribute('r', '29');
+                        dashNodeCircle.setAttribute('r', '21');
+                    } else if (id === 'Main_Concourse') {
+                        mapNodeCircle.setAttribute('r', '35');
+                        dashNodeCircle.setAttribute('r', '25');
+                    }
                 } else {
                     mapNodeCircle.classList.remove('stroke-primary', 'stroke-[3px]');
                     dashNodeCircle.classList.remove('stroke-primary', 'stroke-[3px]');
-                    // reset size
-                    if (id === 'Gate_A' || id === 'Gate_B') mapNodeCircle.setAttribute('r', '22');
-                    if (id === 'Corridor_1' || id === 'Corridor_2') mapNodeCircle.setAttribute('r', '26');
-                    if (id === 'Main_Concourse') mapNodeCircle.setAttribute('r', '32');
+                    
+                    // Explicitly reset radius values
+                    if (id === 'Gate_A' || id === 'Gate_B') {
+                        mapNodeCircle.setAttribute('r', '22');
+                        dashNodeCircle.setAttribute('r', '16');
+                    } else if (id === 'Corridor_1' || id === 'Corridor_2') {
+                        mapNodeCircle.setAttribute('r', '26');
+                        dashNodeCircle.setAttribute('r', '18');
+                    } else if (id === 'Main_Concourse') {
+                        mapNodeCircle.setAttribute('r', '32');
+                        dashNodeCircle.setAttribute('r', '22');
+                    }
                 }
             });
         }
@@ -1669,19 +1703,33 @@
         }
 
         // Live Incident stream rendering
+        function applyIncidentFilters() {
+            updateIncidentsFeedUI();
+        }
+
         function updateIncidentsFeedUI() {
             // Generate list of incidents from node statuses
             const listEl = document.getElementById('dashIncidentsList');
             const tableBody = document.getElementById('incidentFeedTableBody');
             
+            const filterSeverity = document.getElementById('incidentFilterSeverity') ? document.getElementById('incidentFilterSeverity').value : 'all';
+            const filterZone = document.getElementById('incidentFilterZone') ? document.getElementById('incidentFilterZone').value : 'all';
+
             let listHtml = "";
             let tableHtml = "";
             let counts = 0;
 
             localState.nodes.forEach(node => {
                 if (node.status === 'warning' || node.status === 'critical') {
-                    counts++;
                     const sev = node.status === 'critical' ? 'CRITICAL' : 'HIGH';
+
+                    // Apply filters to full incidents tab table body, but NOT overview dashboard list
+                    const matchesSeverity = (filterSeverity === 'all') || 
+                                           (filterSeverity === 'critical' && sev === 'CRITICAL') || 
+                                           (filterSeverity === 'high' && sev === 'HIGH');
+                    const matchesZone = (filterZone === 'all') || (filterZone === node.zone_id);
+
+                    // Add to dashboard overview list (unfiltered/global overview)
                     const badgeClass = node.status === 'critical' 
                         ? 'bg-critical/15 text-critical border border-critical/30 font-bold' 
                         : 'bg-warning/15 text-warning border border-warning/30 font-bold';
@@ -1698,40 +1746,47 @@
                         </div>
                     `;
 
-                    tableHtml += `
-                        <tr class="border-b border-td-outline/30 dark:border-td-outline/30 light:border-el-outline/30 hover:bg-td-surface-high/20">
-                            <td class="p-md text-center">
-                                <span class="material-symbols-outlined ${node.status === 'critical' ? 'text-critical' : 'text-warning'} text-[16px]">warning</span>
-                            </td>
-                            <td class="p-md text-td-on-surface-variant dark:text-td-on-surface-variant light:text-el-on-surface-variant">Just now</td>
-                            <td class="p-md font-bold">${node.zone_id}</td>
-                            <td class="p-md">DENSITY_OVERLOAD</td>
-                            <td class="p-md">
-                                <span class="inline-block px-1.5 py-0.5 rounded text-[10px] uppercase font-bold ${badgeClass}">${sev}</span>
-                            </td>
-                            <td class="p-md text-warning font-bold">${node.status === 'critical' ? 'CLOSE_IMMEDIATELY' : 'SLOW_ENTRY'}</td>
-                            <td class="p-md">${node.current_density >= 1.5 ? 'Corridor_2' : 'NONE'}</td>
-                            <td class="p-md text-critical font-bold">UNACKED</td>
-                        </tr>
-                    `;
+                    // Only count and add to Incident Feed table if matching the filters
+                    if (matchesSeverity && matchesZone) {
+                        counts++;
+                        tableHtml += `
+                            <tr class="border-b border-td-outline/30 dark:border-td-outline/30 light:border-el-outline/30 hover:bg-td-surface-high/20">
+                                <td class="p-md text-center">
+                                    <span class="material-symbols-outlined ${node.status === 'critical' ? 'text-critical' : 'text-warning'} text-[16px]">warning</span>
+                                </td>
+                                <td class="p-md text-td-on-surface-variant dark:text-td-on-surface-variant light:text-el-on-surface-variant">Just now</td>
+                                <td class="p-md font-bold">${node.zone_id}</td>
+                                <td class="p-md">DENSITY_OVERLOAD</td>
+                                <td class="p-md">
+                                    <span class="inline-block px-1.5 py-0.5 rounded text-[10px] uppercase font-bold ${badgeClass}">${sev}</span>
+                                </td>
+                                <td class="p-md text-warning font-bold">${node.status === 'critical' ? 'CLOSE_IMMEDIATELY' : 'SLOW_ENTRY'}</td>
+                                <td class="p-md">${node.current_density >= 1.5 ? 'Corridor_2' : 'NONE'}</td>
+                                <td class="p-md text-critical font-bold">UNACKED</td>
+                            </tr>
+                        `;
+                    }
                 }
             });
 
             // Mock static normal feed elements if empty
             if (counts === 0) {
-                listHtml = `
-                    <div class="text-center py-md text-td-on-surface-variant dark:text-td-on-surface-variant light:text-el-on-surface-variant font-semibold text-xs py-16">
-                        No active anomalies detected.<br>System health: NOMINAL.
-                    </div>
-                `;
                 tableHtml = `
                     <tr class="border-b border-td-outline/30 dark:border-td-outline/30 light:border-el-outline/30">
                         <td class="p-md text-center" colspan="8">
                             <div class="py-16 text-center text-td-on-surface-variant dark:text-td-on-surface-variant light:text-el-on-surface-variant font-semibold">
-                                Empty stream: No alerts reported in the current quadrant.
+                                Empty stream: No alerts matching the filter parameters.
                             </div>
                         </td>
                     </tr>
+                `;
+            }
+
+            if (listHtml === "") {
+                listHtml = `
+                    <div class="text-center py-md text-td-on-surface-variant dark:text-td-on-surface-variant light:text-el-on-surface-variant font-semibold text-xs py-16">
+                        No active anomalies detected.<br>System health: NOMINAL.
+                    </div>
                 `;
             }
 
