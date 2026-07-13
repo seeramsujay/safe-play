@@ -30,7 +30,7 @@ DEFAULT_PORT = 1883
 DEFAULT_SCHEMA_PATH = "config/schema.json"
 INFERENCE_TIMEOUT_SEC = 0.1  # 100ms timeout
 FALLBACK_DENSITY_LIMIT = 3.0  # people/m^2
-ACTUATION_SLA_SEC = 2.0  # 2 seconds
+ACTUATION_SLA_SEC = 15.0  # 15 seconds
 AUDIT_LOG_FILE = "logs/audit_trail.jsonl"
 
 class ConnectionManager:
