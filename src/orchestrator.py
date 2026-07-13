@@ -87,6 +87,7 @@ class SafePlayOrchestrator:
         self.active_scripts: Dict[str, InterventionScript] = {}
         self.active_intervention_metadata: Dict[str, dict] = {}
         self.vetoed_zones: Set[str] = set()
+        self.last_manual_telemetry_time = 0.0
         
         # Ensure audit log directory exists
         os.makedirs(os.path.dirname(AUDIT_LOG_FILE), exist_ok=True)
@@ -483,6 +484,8 @@ class SafePlayOrchestrator:
         while True:
             try:
                 await asyncio.sleep(2.0)
+                if time.time() - self.last_manual_telemetry_time < 15.0:
+                    continue
                 tick += 1
                 
                 # Alternate surges between Gate_A and Gate_B
@@ -588,6 +591,7 @@ def create_app(orchestrator: SafePlayOrchestrator) -> FastAPI:
 
     @app.post("/api/telemetry")
     async def post_telemetry(payload: dict):
+        orchestrator.last_manual_telemetry_time = time.time()
         payload_str = json.dumps(payload)
         orchestrator.telemetry_queue.put_nowait(payload_str)
         return {"status": "success", "message": "Telemetry queued"}

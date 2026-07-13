@@ -69,6 +69,7 @@
                     },
                     spacing: {
                         "gutter": "1.5rem",
+                        "lg": "1.5rem",
                         "md": "1rem",
                         "sm": "0.5rem",
                         "base": "4px",
@@ -1125,11 +1126,11 @@
                     <input class="w-full bg-td-surface-lowest dark:bg-td-surface-lowest light:bg-el-surface-low border border-td-outline dark:border-td-outline light:border-el-outline rounded p-sm focus:outline-none focus:border-primary text-sm font-mono" id="simFlowOut" step="5" type="number" value="25"/>
                 </div>
 
-                <div class="flex gap-sm justify-end pt-md border-t border-td-outline dark:border-td-outline light:border-el-outline">
-                    <button class="bg-td-surface-high hover:bg-td-surface-highest border border-td-outline text-td-on-surface dark:text-td-on-surface light:text-el-on-surface px-lg py-2 rounded transition-all active:scale-95" type="button" onclick="closeSimPanel()">
+                <div class="flex gap-sm justify-end pt-md border-t border-td-outline dark:border-td-outline light:border-el-outline select-none">
+                    <button class="bg-td-surface-high dark:bg-td-surface-high light:bg-el-surface-high hover:bg-td-surface-highest dark:hover:bg-td-surface-highest light:hover:bg-el-surface-highest border border-td-outline dark:border-td-outline light:border-el-outline text-td-on-surface dark:text-td-on-surface light:text-el-on-surface px-md py-sm rounded transition-all active:scale-95 font-semibold text-xs uppercase tracking-wider" type="button" onclick="closeSimPanel()">
                         Cancel
                     </button>
-                    <button class="bg-primary hover:bg-blue-600 text-white px-lg py-2 rounded shadow transition-all active:scale-95 flex items-center gap-xs font-bold" type="submit">
+                    <button class="bg-primary hover:bg-blue-600 text-white px-md py-sm rounded shadow transition-all active:scale-95 flex items-center gap-xs font-semibold text-xs uppercase tracking-wider" type="submit">
                         <span class="material-symbols-outlined text-[16px]">send</span> Publish Stream
                     </button>
                 </div>
