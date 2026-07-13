@@ -430,7 +430,11 @@ class SafePlayOrchestrator:
             
             # 4. Trigger triage evaluations if density is elevated
             if payload.crowd_density >= 1.5:
-                # Cancel existing pending intervention task for this zone if new telemetry arrives
+                # If there is already an active intervention script in the operator veto window, let it run
+                if payload.zone_id in self.active_scripts:
+                    return
+
+                # Cancel any dangling background task for this zone
                 if payload.zone_id in self.active_interventions:
                     self.active_interventions[payload.zone_id].cancel()
                 
@@ -444,6 +448,12 @@ class SafePlayOrchestrator:
                 # Run lifecycle task with 2-second operator override window
                 task = asyncio.create_task(self.run_intervention_lifecycle(script, mode))
                 self.active_interventions[payload.zone_id] = task
+            else:
+                # Crowd has cleared naturally below warning threshold (1.5)
+                # Cancel the pending operator veto window if it exists
+                if payload.zone_id in self.active_interventions:
+                    logger.info(f"Crowd cleared in {payload.zone_id}. Cancelling pending operator intervention task.")
+                    self.active_interventions[payload.zone_id].cancel()
                 
         except json.JSONDecodeError:
             logger.error("Failed to parse raw telemetry as JSON")
