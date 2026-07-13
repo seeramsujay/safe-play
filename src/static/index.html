@@ -256,9 +256,9 @@
         <!-- Footer / CTA -->
         <div class="mt-auto pt-md space-y-sm border-t border-td-outline dark:border-td-outline light:border-el-outline">
             <!-- Panic Button / Emergency Override -->
-            <button class="w-full flex justify-center items-center gap-sm bg-critical/20 border-2 border-critical text-critical py-2 px-sm rounded hover:bg-critical hover:text-white transition-colors duration-200 font-bold group text-sm" onclick="triggerPanicShutdown()">
-                <span class="material-symbols-outlined group-hover:animate-pulse">warning</span>
-                Emergency Shutdown
+            <button class="w-full flex justify-center items-center gap-sm bg-critical/20 border-2 border-critical text-critical py-2 px-sm rounded hover:bg-critical hover:text-white transition-colors duration-200 font-bold group text-sm" id="panicButton" onclick="handlePanicButtonClick()">
+                <span class="material-symbols-outlined group-hover:animate-pulse" id="panicButtonIcon">warning</span>
+                <span id="panicButtonText">Emergency Shutdown</span>
             </button>
             <div class="flex justify-around text-xs text-td-on-surface-variant dark:text-td-on-surface-variant light:text-el-on-surface-variant pt-xs">
                 <span>FIFA World Cup 2026</span>
@@ -1494,25 +1494,48 @@
             const badge = document.getElementById('globalStatusBadge');
             const indicator = document.getElementById('globalStatusIndicator');
             const statusText = document.getElementById('globalStatusText');
-            if (badge && indicator && statusText && statusText.textContent !== "PANIC SHUTDOWN ENABLED") {
-                let hasCritical = localState.nodes.some(n => n.status === 'critical');
-                let hasWarning = localState.nodes.some(n => n.status === 'warning');
-                
-                if (hasCritical) {
-                    badge.className = "flex items-center gap-sm bg-critical-bg border border-critical/30 px-md py-xs rounded-full shadow-[0_0_12px_rgba(239,68,68,0.25)] transition-all duration-300";
+            if (badge && indicator && statusText) {
+                if (localState.panic_mode) {
+                    badge.className = "flex items-center gap-sm bg-critical-bg border border-critical/30 px-md py-xs rounded-full shadow-[0_0_12px_rgba(239,68,68,0.4)] transition-all duration-300";
                     indicator.className = "w-2.5 h-2.5 rounded-full bg-critical animate-ping shrink-0";
-                    statusText.textContent = "Incident Surge Alert";
+                    statusText.textContent = "PANIC SHUTDOWN ENABLED";
                     statusText.className = "font-sans text-xs font-bold text-critical tracking-wider uppercase";
-                } else if (hasWarning) {
-                    badge.className = "flex items-center gap-sm bg-warning-bg border border-warning/30 px-md py-xs rounded-full shadow-[0_0_12px_rgba(223,116,18,0.25)] transition-all duration-300";
-                    indicator.className = "w-2.5 h-2.5 rounded-full bg-warning animate-pulse shrink-0";
-                    statusText.textContent = "Elevated Traffic Flow";
-                    statusText.className = "font-sans text-xs font-bold text-warning tracking-wider uppercase";
                 } else {
-                    badge.className = "flex items-center gap-sm bg-success-bg border border-success/30 px-md py-xs rounded-full shadow-[0_0_12px_rgba(16,185,129,0.15)] transition-all duration-300";
-                    indicator.className = "w-2.5 h-2.5 rounded-full bg-success animate-pulse shrink-0";
-                    statusText.textContent = "Normal Operations";
-                    statusText.className = "font-sans text-xs font-bold text-success tracking-wider uppercase";
+                    let hasCritical = localState.nodes.some(n => n.status === 'critical');
+                    let hasWarning = localState.nodes.some(n => n.status === 'warning');
+                    
+                    if (hasCritical) {
+                        badge.className = "flex items-center gap-sm bg-critical-bg border border-critical/30 px-md py-xs rounded-full shadow-[0_0_12px_rgba(239,68,68,0.25)] transition-all duration-300";
+                        indicator.className = "w-2.5 h-2.5 rounded-full bg-critical animate-ping shrink-0";
+                        statusText.textContent = "Incident Surge Alert";
+                        statusText.className = "font-sans text-xs font-bold text-critical tracking-wider uppercase";
+                    } else if (hasWarning) {
+                        badge.className = "flex items-center gap-sm bg-warning-bg border border-warning/30 px-md py-xs rounded-full shadow-[0_0_12px_rgba(223,116,18,0.25)] transition-all duration-300";
+                        indicator.className = "w-2.5 h-2.5 rounded-full bg-warning animate-pulse shrink-0";
+                        statusText.textContent = "Elevated Traffic Flow";
+                        statusText.className = "font-sans text-xs font-bold text-warning tracking-wider uppercase";
+                    } else {
+                        badge.className = "flex items-center gap-sm bg-success-bg border border-success/30 px-md py-xs rounded-full shadow-[0_0_12px_rgba(16,185,129,0.15)] transition-all duration-300";
+                        indicator.className = "w-2.5 h-2.5 rounded-full bg-success animate-pulse shrink-0";
+                        statusText.textContent = "Normal Operations";
+                        statusText.className = "font-sans text-xs font-bold text-success tracking-wider uppercase";
+                    }
+                }
+            }
+
+            // Update Panic Button styling based on current state
+            const panicButton = document.getElementById('panicButton');
+            const panicButtonIcon = document.getElementById('panicButtonIcon');
+            const panicButtonText = document.getElementById('panicButtonText');
+            if (panicButton && panicButtonIcon && panicButtonText) {
+                if (localState.panic_mode) {
+                    panicButton.className = "w-full flex justify-center items-center gap-sm bg-success/20 border-2 border-success text-success py-2 px-sm rounded hover:bg-success hover:text-white transition-colors duration-200 font-bold group text-sm";
+                    panicButtonIcon.textContent = "restart_alt";
+                    panicButtonText.textContent = "Reset Panic Shutdown";
+                } else {
+                    panicButton.className = "w-full flex justify-center items-center gap-sm bg-critical/20 border-2 border-critical text-critical py-2 px-sm rounded hover:bg-critical hover:text-white transition-colors duration-200 font-bold group text-sm";
+                    panicButtonIcon.textContent = "warning";
+                    panicButtonText.textContent = "Emergency Shutdown";
                 }
             }
             
@@ -1853,7 +1876,12 @@
                 let gateAction = "OPEN (Egress Route)";
                 let gateBadge = "bg-success-bg text-success border border-success/30";
 
-                if (node.status === 'critical') {
+                if (localState.panic_mode) {
+                    signText = "EMERGENCY SHUTDOWN ACTIVE: EVACUATE STADIUM IMMEDIATELY";
+                    actionColor = "text-critical border-critical/30 bg-critical/5 pulse-critical";
+                    gateAction = "OPEN (Panic Release)";
+                    gateBadge = "bg-critical-bg text-critical border border-critical/30 animate-pulse";
+                } else if (node.status === 'critical') {
                     signText = `CRITICAL SURGE IN ${node.zone_id.toUpperCase()}. REROUTE TO CORRIDOR 2!`;
                     actionColor = "text-critical border-critical/30 bg-critical/5 pulse-critical";
                     gateAction = "CLOSE_IMMEDIATELY (Emergency Locked)";
@@ -1871,12 +1899,12 @@
                             <span class="font-bold text-xs">Signage ${node.zone_id}</span>
                             <span class="font-mono text-[9px] font-bold text-success">ONLINE</span>
                         </div>
-                        <div class="font-mono text-[11px] text-td-on-surface bg-black/60 border border-td-outline/80 p-sm rounded text-center truncate ${node.status === 'critical' ? 'text-critical' : 'text-primary'}">
+                        <div class="font-mono text-[11px] text-td-on-surface bg-black/60 border border-td-outline/80 p-sm rounded text-center truncate ${node.status === 'critical' || localState.panic_mode ? 'text-critical' : 'text-primary'}">
                             ${signText}
                         </div>
                         <div class="mt-xs text-[10px] text-td-on-surface-variant dark:text-td-on-surface-variant light:text-el-on-surface-variant flex justify-between font-mono">
-                            <span>Mode: Auto</span>
-                            <span class="text-primary hover:underline cursor-pointer" onclick="openSimPanel()">Manual Override</span>
+                            <span>Mode: ${localState.panic_mode ? 'Override' : 'Auto'}</span>
+                            <span class="text-primary hover:underline cursor-pointer" ${localState.panic_mode ? 'style="opacity: 0.5; cursor: not-allowed; pointer-events: none;"' : 'onclick="openSimPanel()"'} >Manual Override</span>
                         </div>
                     </div>
                 `;
@@ -1888,8 +1916,8 @@
                             <span class="inline-block font-mono text-[9px] font-bold py-0.5 px-1.5 mt-xs rounded ${gateBadge}">${gateAction}</span>
                         </div>
                         <div class="flex gap-xs select-none">
-                            <button class="bg-td-surface-high dark:bg-td-surface-high light:bg-el-surface-high hover:bg-td-surface-highest dark:hover:bg-td-surface-highest light:hover:bg-el-surface-highest border border-td-outline dark:border-td-outline light:border-el-outline px-3.5 py-1.5 text-[10px] font-bold text-td-on-surface dark:text-td-on-surface light:text-primary hover:text-primary dark:hover:text-primary rounded transition-all active:scale-95 uppercase tracking-wider" onclick="triggerManualGateAction('${node.zone_id}', 'KEEP_OPEN')">Open</button>
-                            <button class="bg-td-surface-high dark:bg-td-surface-high light:bg-el-surface-high hover:bg-td-surface-highest dark:hover:bg-td-surface-highest light:hover:bg-el-surface-highest border border-td-outline dark:border-td-outline light:border-el-outline px-3.5 py-1.5 text-[10px] font-bold text-td-on-surface dark:text-td-on-surface light:text-critical hover:text-critical dark:hover:text-critical rounded transition-all active:scale-95 uppercase tracking-wider" onclick="triggerManualGateAction('${node.zone_id}', 'CLOSE_IMMEDIATELY')">Close</button>
+                            <button class="bg-td-surface-high dark:bg-td-surface-high light:bg-el-surface-high hover:bg-td-surface-highest dark:hover:bg-td-surface-highest light:hover:bg-el-surface-highest border border-td-outline dark:border-td-outline light:border-el-outline px-3.5 py-1.5 text-[10px] font-bold text-td-on-surface dark:text-td-on-surface light:text-primary hover:text-primary dark:hover:text-primary rounded transition-all active:scale-95 uppercase tracking-wider" ${localState.panic_mode ? 'disabled style="opacity: 0.5; cursor: not-allowed;"' : ''} onclick="triggerManualGateAction('${node.zone_id}', 'KEEP_OPEN')">Open</button>
+                            <button class="bg-td-surface-high dark:bg-td-surface-high light:bg-el-surface-high hover:bg-td-surface-highest dark:hover:bg-td-surface-highest light:hover:bg-el-surface-highest border border-td-outline dark:border-td-outline light:border-el-outline px-3.5 py-1.5 text-[10px] font-bold text-td-on-surface dark:text-td-on-surface light:text-critical hover:text-critical dark:hover:text-critical rounded transition-all active:scale-95 uppercase tracking-wider" ${localState.panic_mode ? 'disabled style="opacity: 0.5; cursor: not-allowed;"' : ''} onclick="triggerManualGateAction('${node.zone_id}', 'CLOSE_IMMEDIATELY')">Close</button>
                         </div>
                     </div>
                 `;
@@ -2091,15 +2119,38 @@
             });
         }
 
+        function handlePanicButtonClick() {
+            if (localState && localState.panic_mode) {
+                clearPanicShutdown();
+            } else {
+                triggerPanicShutdown();
+            }
+        }
+
         // Trigger Emergency Shutdown override
         function triggerPanicShutdown() {
-            if (confirm("WARNING: Are you sure you want to trigger a complete Emergency Shut down? All gate access limits will be open for manual egress routing.")) {
-                console.log("EMERGENCY PANIC SHUTDOWN ACTIVATED");
-                triggerGlobalAlert("EMERGENCY SHUTDOWN ACTIVATED: ALL STADIUM PERIMETER GATES RELEASED FOR EGRESS");
-                document.getElementById('globalStatusBadge').className = "flex items-center gap-sm bg-critical-bg border border-critical/30 px-md py-xs rounded-full shadow-[0_0_12px_rgba(239,68,68,0.4)] transition-all duration-300";
-                document.getElementById('globalStatusIndicator').className = "w-2.5 h-2.5 rounded-full bg-critical animate-ping shrink-0";
-                document.getElementById('globalStatusText').textContent = "PANIC SHUTDOWN ENABLED";
-                document.getElementById('globalStatusText').className = "font-sans text-xs font-bold text-critical tracking-wider uppercase";
+            if (confirm("WARNING: Are you sure you want to trigger a complete Emergency Shutdown? All gate access limits will be open for manual egress routing.")) {
+                console.log("EMERGENCY PANIC SHUTDOWN ACTIVATING");
+                fetch('/api/panic', { method: 'POST' })
+                .then(res => res.json())
+                .then(data => {
+                    console.log("Panic shutdown response:", data);
+                    triggerGlobalAlert("EMERGENCY SHUTDOWN ACTIVATED: ALL STADIUM PERIMETER GATES RELEASED FOR EGRESS");
+                })
+                .catch(err => console.error("Panic activation failed:", err));
+            }
+        }
+
+        function clearPanicShutdown() {
+            if (confirm("Reset emergency shutdown and resume normal operations?")) {
+                console.log("RESETTING EMERGENCY PANIC SHUTDOWN");
+                fetch('/api/panic/clear', { method: 'POST' })
+                .then(res => res.json())
+                .then(data => {
+                    console.log("Panic clear response:", data);
+                    triggerGlobalAlert("Emergency shutdown reset. Resuming normal operations.");
+                })
+                .catch(err => console.error("Panic clear failed:", err));
             }
         }
 

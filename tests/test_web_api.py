@@ -144,3 +144,43 @@ def test_signature_verification_stub():
     assert orchestrator.verify_payload_signature("") is False
     assert orchestrator.verify_payload_signature("valid_looking_raw_string") is True
 
+@pytest.mark.anyio
+async def test_api_panic_mode():
+    orchestrator = SafePlayOrchestrator("config/schema.json", "127.0.0.1", 1883)
+    app = create_app(orchestrator)
+    client = TestClient(app)
+    
+    # 1. Trigger elevated density telemetry to start an active intervention
+    payload = {
+        "zone_id": "Gate_A",
+        "crowd_density": 5.0,
+        "flow_rate_in": 80.0,
+        "flow_rate_out": 20.0,
+        "timestamp": 1720875600.0
+    }
+    await orchestrator.process_telemetry(json.dumps(payload))
+    await asyncio.sleep(0.01)
+    assert "Gate_A" in orchestrator.active_scripts
+    
+    # 2. Activate panic mode
+    response = client.post("/api/panic")
+    assert response.status_code == 200
+    assert response.json()["panic_mode"] is True
+    assert orchestrator.panic_mode is True
+    
+    # 3. Verify active intervention was cancelled/cleared
+    await asyncio.sleep(0.01)
+    assert "Gate_A" not in orchestrator.active_scripts
+    
+    # 4. Check that new telemetry is ignored during panic mode
+    await orchestrator.process_telemetry(json.dumps(payload))
+    await asyncio.sleep(0.01)
+    assert "Gate_A" not in orchestrator.active_scripts
+    
+    # 5. Clear panic mode
+    response = client.post("/api/panic/clear")
+    assert response.status_code == 200
+    assert response.json()["panic_mode"] is False
+    assert orchestrator.panic_mode is False
+
+

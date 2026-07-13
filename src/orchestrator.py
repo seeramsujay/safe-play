@@ -88,6 +88,7 @@ class SafePlayOrchestrator:
         self.active_intervention_metadata: Dict[str, dict] = {}
         self.vetoed_zones: Set[str] = set()
         self.last_manual_telemetry_time = 0.0
+        self.panic_mode = False
         
         # Ensure audit log directory exists
         os.makedirs(os.path.dirname(AUDIT_LOG_FILE), exist_ok=True)
@@ -116,6 +117,7 @@ class SafePlayOrchestrator:
         try:
             state = {
                 "type": "state_update",
+                "panic_mode": self.panic_mode,
                 "nodes": [
                     {
                         "zone_id": node.zone_id,
@@ -224,6 +226,26 @@ class SafePlayOrchestrator:
                 })
             # Cancel the sleep timer, which will trigger cleanup in finally block
             self.active_interventions[zone_id].cancel()
+        await self.broadcast_state()
+
+    async def trigger_panic_mode(self):
+        logger.warning("EMERGENCY PANIC SHUTDOWN ACTIVATED")
+        self.panic_mode = True
+        self.write_audit_log("panic_mode_activated", {"status": "active"})
+        
+        # Cancel all active override tasks
+        for zone_id, task in list(self.active_interventions.items()):
+            task.cancel()
+        self.active_interventions.clear()
+        self.active_scripts.clear()
+        self.active_intervention_metadata.clear()
+        
+        await self.broadcast_state()
+
+    async def clear_panic_mode(self):
+        logger.info("EMERGENCY PANIC SHUTDOWN DEACTIVATED (RESET TO NOMINAL)")
+        self.panic_mode = False
+        self.write_audit_log("panic_mode_deactivated", {"status": "nominal"})
         await self.broadcast_state()
 
     async def get_slm_recommendation(self, payload: TelemetryPayload) -> Optional[InterventionScript]:
@@ -398,6 +420,8 @@ class SafePlayOrchestrator:
         return True
 
     async def process_telemetry(self, raw_payload: str):
+        if self.panic_mode:
+            return
         try:
             # 1. Basic verification/decryption stub (mTLS handles channel)
             if not self.verify_payload_signature(raw_payload):
@@ -610,6 +634,16 @@ def create_app(orchestrator: SafePlayOrchestrator) -> FastAPI:
             return JSONResponse({"status": "error", "message": "zone_id required"}, status_code=400)
         await orchestrator.approve_intervention_early(zone_id)
         return {"status": "success", "zone_id": zone_id}
+
+    @app.post("/api/panic")
+    async def post_panic():
+        await orchestrator.trigger_panic_mode()
+        return {"status": "success", "panic_mode": True}
+
+    @app.post("/api/panic/clear")
+    async def post_panic_clear():
+        await orchestrator.clear_panic_mode()
+        return {"status": "success", "panic_mode": False}
 
     @app.post("/api/telemetry")
     async def post_telemetry(payload: dict):
