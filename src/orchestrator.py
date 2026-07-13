@@ -215,6 +215,8 @@ class SafePlayOrchestrator:
             script = self.active_scripts.get(zone_id)
             mode = self.active_intervention_metadata.get(zone_id, {}).get("mode", "manual")
             if script:
+                if zone_id in self.active_intervention_metadata:
+                    self.active_intervention_metadata[zone_id]["operator_approved"] = True
                 await self.execute_intervention(script, f"{mode}_approved")
                 self.write_audit_log("veto_window_approved", {
                     "zone_id": zone_id,
@@ -364,15 +366,21 @@ class SafePlayOrchestrator:
                 "status": "executed"
             })
         except asyncio.CancelledError:
-            # Check if this was a veto or early approval
+            # Check if this was a veto or early approval or natural clearing
             if zone_id in self.vetoed_zones:
                 logger.warning(f"Intervention on zone {zone_id} was VETOED by the operator!")
                 self.write_audit_log("veto_window_cancelled", {
                     "zone_id": zone_id,
                     "status": "vetoed"
                 })
-            else:
+            elif self.active_intervention_metadata.get(zone_id, {}).get("operator_approved"):
                 logger.info(f"Intervention on zone {zone_id} was APPROVED early by the operator.")
+            else:
+                logger.info(f"Intervention on zone {zone_id} was CANCELLED due to crowd clearing naturally.")
+                self.write_audit_log("veto_window_cancelled", {
+                    "zone_id": zone_id,
+                    "status": "cleared"
+                })
         finally:
             self.active_interventions.pop(zone_id, None)
             self.active_scripts.pop(zone_id, None)
@@ -499,6 +507,20 @@ class SafePlayOrchestrator:
                         density = 0.7 + random.uniform(-0.1, 0.1)
                         flow_in = 12.0 + random.uniform(-2, 2)
                         flow_out = 14.0 + random.uniform(-2, 2)
+                    elif zone in self.active_scripts:
+                        # Surge is active and pending operator action: sustain elevated values
+                        if zone == "Gate_A":
+                            density = 3.5 + random.uniform(-0.2, 0.2)
+                            flow_in = 92.0 + random.uniform(-5, 5)
+                            flow_out = 18.0 + random.uniform(-2, 2)
+                        elif zone == "Gate_B":
+                            density = 2.3 + random.uniform(-0.1, 0.1)
+                            flow_in = 48.0 + random.uniform(-4, 4)
+                            flow_out = 32.0 + random.uniform(-3, 3)
+                        else:
+                            density = 2.5 + random.uniform(-0.2, 0.2)
+                            flow_in = 60.0 + random.uniform(-5, 5)
+                            flow_out = 40.0 + random.uniform(-4, 4)
                     elif zone == "Gate_A" and is_gate_a_surge:
                         density = 3.5 + random.uniform(-0.2, 0.2)
                         flow_in = 92.0 + random.uniform(-5, 5)
