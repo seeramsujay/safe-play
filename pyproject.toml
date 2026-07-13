@@ -1,0 +1,18 @@
+[project]
+name = "safe-play"
+version = "0.1.0"
+description = "Add your description here"
+requires-python = ">=3.12"
+dependencies = [
+    "httpx>=0.28.1",
+    "paho-mqtt>=2.1.0",
+    "pydantic>=2.13.4",
+    "pytest>=9.1.1",
+    "pytest-asyncio>=1.4.0",
+    "fastapi>=0.111.0",
+    "uvicorn>=0.30.0",
+]
+
+[tool.pytest.ini_options]
+pythonpath = ["."]
+

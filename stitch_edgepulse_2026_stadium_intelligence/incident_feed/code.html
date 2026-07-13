@@ -1,0 +1,504 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Incident Feed - EdgePulse 2026</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&amp;family=JetBrains+Mono:wght@500;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+          darkMode: "class",
+          theme: {
+            extend: {
+              "colors": {
+                      "error-container": "#93000a",
+                      "on-primary-fixed": "#001a42",
+                      "background": "#10131a",
+                      "outline-variant": "#424754",
+                      "inverse-primary": "#005ac2",
+                      "secondary-fixed": "#d3e4fe",
+                      "surface-tint": "#adc6ff",
+                      "on-surface": "#e1e2ec",
+                      "tertiary-container": "#df7412",
+                      "surface-bright": "#363941",
+                      "on-tertiary-fixed-variant": "#723600",
+                      "tertiary": "#ffb786",
+                      "primary": "#adc6ff",
+                      "on-secondary-fixed": "#0b1c30",
+                      "surface-variant": "#32353c",
+                      "surface-container-low": "#191b23",
+                      "surface-container-highest": "#32353c",
+                      "inverse-surface": "#e1e2ec",
+                      "surface-dim": "#10131a",
+                      "primary-fixed": "#d8e2ff",
+                      "surface-container-lowest": "#0b0e15",
+                      "secondary-container": "#3a4a5f",
+                      "surface": "#10131a",
+                      "on-primary": "#002e6a",
+                      "surface-container": "#1d2027",
+                      "inverse-on-surface": "#2e3038",
+                      "on-primary-fixed-variant": "#004395",
+                      "surface-container-high": "#272a31",
+                      "on-background": "#e1e2ec",
+                      "outline": "#8c909f",
+                      "tertiary-fixed": "#ffdcc6",
+                      "on-secondary-container": "#a9bad3",
+                      "on-primary-container": "#00285d",
+                      "on-error-container": "#ffdad6",
+                      "on-surface-variant": "#c2c6d6",
+                      "on-tertiary-fixed": "#311400",
+                      "on-secondary": "#213145",
+                      "secondary": "#b7c8e1",
+                      "on-tertiary": "#502400",
+                      "primary-fixed-dim": "#adc6ff",
+                      "secondary-fixed-dim": "#b7c8e1",
+                      "on-tertiary-container": "#461f00",
+                      "tertiary-fixed-dim": "#ffb786",
+                      "primary-container": "#4d8eff",
+                      "error": "#ffb4ab",
+                      "on-error": "#690005",
+                      "on-secondary-fixed-variant": "#38485d"
+              },
+              "borderRadius": {
+                      "DEFAULT": "0.125rem",
+                      "lg": "0.25rem",
+                      "xl": "0.5rem",
+                      "full": "0.75rem"
+              },
+              "spacing": {
+                      "margin": "16px",
+                      "xl": "32px",
+                      "md": "16px",
+                      "lg": "24px",
+                      "gutter": "12px",
+                      "sm": "8px",
+                      "base": "4px",
+                      "xs": "4px"
+              },
+              "fontFamily": {
+                      "display-lg": [
+                              "Inter"
+                      ],
+                      "body-md": [
+                              "Inter"
+                      ],
+                      "data-sm": [
+                              "JetBrains Mono"
+                      ],
+                      "data-md": [
+                              "JetBrains Mono"
+                      ],
+                      "data-lg": [
+                              "JetBrains Mono"
+                      ],
+                      "headline-sm": [
+                              "Inter"
+                      ],
+                      "label-caps": [
+                              "JetBrains Mono"
+                      ],
+                      "body-sm": [
+                              "Inter"
+                      ],
+                      "headline-md": [
+                              "Inter"
+                      ]
+              },
+              "fontSize": {
+                      "display-lg": [
+                              "48px",
+                              {
+                                      "lineHeight": "56px",
+                                      "letterSpacing": "-0.02em",
+                                      "fontWeight": "700"
+                              }
+                      ],
+                      "body-md": [
+                              "16px",
+                              {
+                                      "lineHeight": "24px",
+                                      "fontWeight": "400"
+                              }
+                      ],
+                      "data-sm": [
+                              "12px",
+                              {
+                                      "lineHeight": "16px",
+                                      "fontWeight": "500"
+                              }
+                      ],
+                      "data-md": [
+                              "14px",
+                              {
+                                      "lineHeight": "20px",
+                                      "fontWeight": "500"
+                              }
+                      ],
+                      "data-lg": [
+                              "18px",
+                              {
+                                      "lineHeight": "24px",
+                                      "fontWeight": "500"
+                              }
+                      ],
+                      "headline-sm": [
+                              "18px",
+                              {
+                                      "lineHeight": "24px",
+                                      "fontWeight": "600"
+                              }
+                      ],
+                      "label-caps": [
+                              "11px",
+                              {
+                                      "lineHeight": "16px",
+                                      "letterSpacing": "0.1em",
+                                      "fontWeight": "700"
+                              }
+                      ],
+                      "body-sm": [
+                              "14px",
+                              {
+                                      "lineHeight": "20px",
+                                      "fontWeight": "400"
+                              }
+                      ],
+                      "headline-md": [
+                              "24px",
+                              {
+                                      "lineHeight": "32px",
+                                      "fontWeight": "600"
+                              }
+                      ]
+              }
+      },
+          },
+        }
+      </script>
+<style>
+          .border-glow-primary {
+              box-shadow: 0 0 2px 0px var(--tw-colors-primary);
+          }
+          .border-glow-error {
+              box-shadow: 0 0 2px 0px var(--tw-colors-error);
+          }
+          .border-glow-tertiary {
+              box-shadow: 0 0 2px 0px var(--tw-colors-tertiary);
+          }
+      </style>
+</head>
+<body class="bg-background text-on-background min-h-screen flex flex-col md:flex-row overflow-hidden font-body-md">
+<!-- Mobile Top Nav Placeholder (Hidden on Desktop) -->
+<div class="md:hidden bg-surface-container border-b border-outline-variant flex items-center justify-between p-sm">
+<span class="font-headline-md text-headline-md font-bold text-primary">EdgePulse 2026</span>
+<span class="material-symbols-outlined text-primary">menu</span>
+</div>
+<!-- SideNavBar (Desktop) -->
+<nav class="hidden md:flex flex-col h-full py-md px-sm bg-surface-container-low border-r border-outline-variant w-64 flex-shrink-0 z-20">
+<div class="mb-lg px-sm">
+<h1 class="font-headline-sm text-headline-sm text-primary">EdgePulse 2026</h1>
+</div>
+<div class="flex items-center gap-md p-sm mb-md bg-surface-container rounded-lg border border-outline-variant">
+<img class="w-10 h-10 rounded-full object-cover border border-outline-variant" data-alt="A high-contrast profile portrait of a VOC Commander in a dark control room setting, illuminated by cool blue screen glow. The atmosphere is tense and professional. The image should feature a stark black background with the subject's face partially lit by technical interfaces." src="https://lh3.googleusercontent.com/aida-public/AB6AXuA_Nq8Db-W-L4lxcLnzSr_mnSx1YJMAVET2yGlptxRXwTtcz-I11_-Z5JbpuVi2CYgRLvMQ4JZTnm_xvL2UOQapQd9pMeZrhdUUkbnfkYVJfUBlfoxMyyoILsxPnYVFZgtfIiUxqiZrwST6DilQzar4RQQWYdZadjKw3U4FTqSKvFkeuBQwtFCpg0bGiJaw5bQwsdBx7EVTA1k06ZExVBUeLDfCah-hMlZNfm-jxoDyBWg9YgAaza7GtyqvVjout_p6qZFBmP_1FWxD"/>
+<div>
+<p class="font-data-md text-data-md text-on-surface">VOC Command</p>
+<p class="font-data-sm text-data-sm text-on-surface-variant">FIFA World Cup 2026</p>
+</div>
+</div>
+<ul class="flex flex-col gap-xs flex-grow font-label-caps text-label-caps">
+<li>
+<a class="flex items-center gap-md text-on-surface-variant p-md hover:bg-surface-variant hover:text-on-surface transition-all rounded-DEFAULT" href="#">
+<span class="material-symbols-outlined">dashboard</span>
+                    Dashboard
+                </a>
+</li>
+<li>
+<a class="flex items-center gap-md text-on-surface-variant p-md hover:bg-surface-variant hover:text-on-surface transition-all rounded-DEFAULT" href="#">
+<span class="material-symbols-outlined">stadium</span>
+                    Venue Monitor
+                </a>
+</li>
+<li>
+<a class="flex items-center gap-md bg-secondary-container text-on-secondary-container rounded-lg p-md border-glow-primary scale-98" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">security</span>
+                    Security Ops
+                </a>
+</li>
+<li>
+<a class="flex items-center gap-md text-on-surface-variant p-md hover:bg-surface-variant hover:text-on-surface transition-all rounded-DEFAULT" href="#">
+<span class="material-symbols-outlined">groups</span>
+                    Crowd Flow
+                </a>
+</li>
+<li>
+<a class="flex items-center gap-md text-on-surface-variant p-md hover:bg-surface-variant hover:text-on-surface transition-all rounded-DEFAULT" href="#">
+<span class="material-symbols-outlined">dns</span>
+                    System Health
+                </a>
+</li>
+<li>
+<a class="flex items-center gap-md text-on-surface-variant p-md hover:bg-surface-variant hover:text-on-surface transition-all rounded-DEFAULT" href="#">
+<span class="material-symbols-outlined">history</span>
+                    Audit Logs
+                </a>
+</li>
+</ul>
+<div class="mt-auto pt-md flex flex-col gap-sm">
+<button class="w-full border-2 border-error text-error py-sm rounded-DEFAULT font-label-caps text-label-caps hover:bg-error hover:text-on-error transition-colors flex items-center justify-center gap-sm">
+<span class="material-symbols-outlined text-[16px]">warning</span>
+                Emergency Shutdown
+            </button>
+<ul class="flex flex-col gap-xs font-label-caps text-label-caps mt-sm">
+<li>
+<a class="flex items-center gap-md text-on-surface-variant p-sm hover:bg-surface-variant hover:text-on-surface transition-all rounded-DEFAULT" href="#">
+<span class="material-symbols-outlined text-[16px]">help</span>
+                        Support
+                    </a>
+</li>
+<li>
+<a class="flex items-center gap-md text-on-surface-variant p-sm hover:bg-surface-variant hover:text-on-surface transition-all rounded-DEFAULT" href="#">
+<span class="material-symbols-outlined text-[16px]">description</span>
+                        Manuals
+                    </a>
+</li>
+</ul>
+</div>
+</nav>
+<!-- Main Content Area -->
+<main class="flex-grow flex flex-col h-screen overflow-hidden bg-background relative z-10">
+<!-- TopAppBar -->
+<header class="flex justify-between items-center w-full px-lg h-16 bg-surface-container border-b border-outline-variant flex-shrink-0">
+<div class="flex items-center gap-lg">
+<nav class="hidden md:flex gap-md">
+<a class="text-on-surface-variant font-medium hover:bg-surface-variant transition-colors duration-200 px-sm py-xs rounded-DEFAULT" href="#">S3 Pillars</a>
+<a class="text-primary font-bold border-b-2 border-primary pb-1 px-sm py-xs" href="#">Incident Audit</a>
+<a class="text-on-surface-variant font-medium hover:bg-surface-variant transition-colors duration-200 px-sm py-xs rounded-DEFAULT" href="#">Actuator Ops</a>
+</nav>
+</div>
+<div class="flex items-center gap-md">
+<div class="relative">
+<span class="material-symbols-outlined text-on-surface-variant absolute left-2 top-1.5 text-[18px]">search</span>
+<input class="bg-surface-dim border border-outline-variant rounded-DEFAULT pl-8 pr-3 py-1 text-data-sm font-data-sm text-on-surface focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary w-48 transition-all" placeholder="Search..." type="text"/>
+</div>
+<button class="text-on-surface-variant hover:text-primary transition-colors"><span class="material-symbols-outlined">notifications</span></button>
+<button class="text-on-surface-variant hover:text-primary transition-colors"><span class="material-symbols-outlined">settings</span></button>
+<button class="text-on-surface-variant hover:text-primary transition-colors"><span class="material-symbols-outlined">account_circle</span></button>
+</div>
+</header>
+<!-- Canvas Content -->
+<div class="flex-grow p-gutter md:p-lg overflow-y-auto">
+<!-- Header & Controls -->
+<div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-md gap-sm">
+<div>
+<h2 class="font-headline-md text-headline-md text-on-surface mb-xs">Incident Feed</h2>
+<p class="font-body-sm text-body-sm text-on-surface-variant">Real-time StadiumSecurityIncidentReport payload stream.</p>
+</div>
+<div class="flex flex-wrap gap-sm items-center w-full md:w-auto">
+<div class="flex items-center gap-xs bg-surface-container rounded-DEFAULT border border-outline-variant p-1">
+<span class="material-symbols-outlined text-on-surface-variant text-[16px] pl-1">filter_alt</span>
+<select class="bg-transparent border-none text-data-sm font-data-sm text-on-surface focus:ring-0 py-1 pr-6 cursor-pointer">
+<option value="all">Severity: All</option>
+<option value="high">Severity: HIGH</option>
+<option value="medium">Severity: MED</option>
+<option value="low">Severity: LOW</option>
+</select>
+</div>
+<div class="flex items-center gap-xs bg-surface-container rounded-DEFAULT border border-outline-variant p-1">
+<span class="material-symbols-outlined text-on-surface-variant text-[16px] pl-1">location_on</span>
+<select class="bg-transparent border-none text-data-sm font-data-sm text-on-surface focus:ring-0 py-1 pr-6 cursor-pointer">
+<option value="all">Zone: All</option>
+<option value="north">Zone: North Gate</option>
+<option value="south">Zone: South Concourse</option>
+<option value="east">Zone: East Tier 1</option>
+</select>
+</div>
+<button class="bg-surface-variant hover:bg-surface-bright text-on-surface border border-outline-variant px-sm py-1 rounded-DEFAULT font-data-sm text-data-sm flex items-center gap-xs transition-colors">
+<span class="material-symbols-outlined text-[16px]">refresh</span> Sync
+                    </button>
+</div>
+</div>
+<!-- Data Table Container -->
+<div class="bg-surface-container border border-outline-variant rounded-lg overflow-hidden flex flex-col">
+<!-- Status Bar -->
+<div class="h-[2px] w-full bg-error"></div>
+<div class="overflow-x-auto">
+<table class="w-full text-left border-collapse">
+<thead class="bg-surface-container-high border-b border-outline-variant font-label-caps text-label-caps text-on-surface-variant">
+<tr>
+<th class="p-sm whitespace-nowrap w-8"></th>
+<th class="p-sm whitespace-nowrap">Timestamp</th>
+<th class="p-sm whitespace-nowrap">Zone</th>
+<th class="p-sm whitespace-nowrap">Node</th>
+<th class="p-sm whitespace-nowrap">Type</th>
+<th class="p-sm whitespace-nowrap">Severity</th>
+<th class="p-sm whitespace-nowrap">Model Conf.</th>
+<th class="p-sm whitespace-nowrap">Action</th>
+</tr>
+</thead>
+<tbody class="font-data-sm text-data-sm text-on-surface">
+<!-- Row 1: High Severity, Expanded -->
+<tr class="border-b border-outline-variant hover:bg-surface-variant/50 transition-colors bg-surface-variant/20">
+<td class="p-sm text-center">
+<button class="text-on-surface-variant hover:text-primary" onclick="document.getElementById('payload-1').classList.toggle('hidden')">
+<span class="material-symbols-outlined text-[18px]">keyboard_arrow_down</span>
+</button>
+</td>
+<td class="p-sm text-on-surface-variant">2026-06-11 14:32:01.045Z</td>
+<td class="p-sm">NORTH_CONCOURSE_A</td>
+<td class="p-sm text-on-surface-variant">CAM_N_042</td>
+<td class="p-sm">CROWD_PRESSURE</td>
+<td class="p-sm">
+<span class="inline-block bg-error/15 text-error px-2 py-0.5 rounded-DEFAULT border border-error/30 font-bold border-glow-error">HIGH</span>
+</td>
+<td class="p-sm">
+<div class="flex items-center gap-xs">
+<span>0.92</span>
+<div class="w-12 h-1 bg-surface-container-high rounded-full overflow-hidden">
+<div class="h-full bg-primary w-[92%]"></div>
+</div>
+</div>
+</td>
+<td class="p-sm font-bold text-tertiary">SIGNAGE_UPDATE</td>
+</tr>
+<!-- Payload 1 -->
+<tr class="border-b border-outline-variant bg-surface-container-lowest" id="payload-1">
+<td class="p-0" colspan="8">
+<div class="p-md relative">
+<div class="absolute left-0 top-0 bottom-0 w-1 bg-error"></div>
+<pre class="font-data-sm text-data-sm text-on-surface-variant whitespace-pre-wrap pl-sm">
+{
+  "id": "inc_8f72a9b1_44c2",
+  "timestamp": "2026-06-11T14:32:01.045Z",
+  "source": {
+    "node_id": "CAM_N_042",
+    "zone": "NORTH_CONCOURSE_A",
+    "lat": 34.1613,
+    "lng": -118.1676
+  },
+  "detection": {
+    "type": "CROWD_PRESSURE",
+    "severity": "HIGH",
+    "model_version": "v4.2.1-edge",
+    "confidence_score": 0.92,
+    "density_metrics": {
+      "ppm2": 6.8,
+      "flow_rate_ms": 0.2
+    }
+  },
+  "recommended_action": "SIGNAGE_UPDATE",
+  "status": "UNACKNOWLEDGED"
+}</pre>
+</div>
+</td>
+</tr>
+<!-- Row 2: Medium Severity -->
+<tr class="border-b border-outline-variant hover:bg-surface-variant/50 transition-colors">
+<td class="p-sm text-center">
+<button class="text-on-surface-variant hover:text-primary">
+<span class="material-symbols-outlined text-[18px]">keyboard_arrow_right</span>
+</button>
+</td>
+<td class="p-sm text-on-surface-variant">2026-06-11 14:31:45.882Z</td>
+<td class="p-sm">GATE_3_ENTRY</td>
+<td class="p-sm text-on-surface-variant">TURNSTILE_G3_04</td>
+<td class="p-sm">TICKET_ANOMALY</td>
+<td class="p-sm">
+<span class="inline-block bg-tertiary-container/20 text-tertiary px-2 py-0.5 rounded-DEFAULT border border-tertiary/30 font-bold border-glow-tertiary">MED</span>
+</td>
+<td class="p-sm">
+<div class="flex items-center gap-xs">
+<span>0.84</span>
+<div class="w-12 h-1 bg-surface-container-high rounded-full overflow-hidden">
+<div class="h-full bg-primary w-[84%]"></div>
+</div>
+</div>
+</td>
+<td class="p-sm">MANUAL_REVIEW</td>
+</tr>
+<!-- Row 3: Medium Severity -->
+<tr class="border-b border-outline-variant hover:bg-surface-variant/50 transition-colors">
+<td class="p-sm text-center">
+<button class="text-on-surface-variant hover:text-primary">
+<span class="material-symbols-outlined text-[18px]">keyboard_arrow_right</span>
+</button>
+</td>
+<td class="p-sm text-on-surface-variant">2026-06-11 14:28:12.110Z</td>
+<td class="p-sm">SOUTH_PLAZA</td>
+<td class="p-sm text-on-surface-variant">DRONE_S_02</td>
+<td class="p-sm">UNAUTHORIZED_ITEM</td>
+<td class="p-sm">
+<span class="inline-block bg-tertiary-container/20 text-tertiary px-2 py-0.5 rounded-DEFAULT border border-tertiary/30 font-bold">MED</span>
+</td>
+<td class="p-sm">
+<div class="flex items-center gap-xs">
+<span>0.78</span>
+<div class="w-12 h-1 bg-surface-container-high rounded-full overflow-hidden">
+<div class="h-full bg-primary w-[78%]"></div>
+</div>
+</div>
+</td>
+<td class="p-sm">DISPATCH_GUARD</td>
+</tr>
+<!-- Row 4: Low Severity -->
+<tr class="border-b border-outline-variant hover:bg-surface-variant/50 transition-colors">
+<td class="p-sm text-center">
+<button class="text-on-surface-variant hover:text-primary">
+<span class="material-symbols-outlined text-[18px]">keyboard_arrow_right</span>
+</button>
+</td>
+<td class="p-sm text-on-surface-variant">2026-06-11 14:25:05.331Z</td>
+<td class="p-sm">VIP_SUITE_LVL_2</td>
+<td class="p-sm text-on-surface-variant">TEMP_SENS_V2_14</td>
+<td class="p-sm">HVAC_FLUCTUATION</td>
+<td class="p-sm">
+<span class="inline-block bg-surface-variant text-on-surface-variant px-2 py-0.5 rounded-DEFAULT border border-outline-variant font-bold">LOW</span>
+</td>
+<td class="p-sm">
+<div class="flex items-center gap-xs">
+<span>0.99</span>
+<div class="w-12 h-1 bg-surface-container-high rounded-full overflow-hidden">
+<div class="h-full bg-primary w-[99%]"></div>
+</div>
+</div>
+</td>
+<td class="p-sm text-on-surface-variant">LOG_ONLY</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+<!-- Pagination / Footer info -->
+<div class="mt-sm flex justify-between items-center text-data-sm font-data-sm text-on-surface-variant">
+<span>Showing 1-25 of 1,042 incidents</span>
+<div class="flex gap-xs">
+<button class="px-2 py-1 bg-surface-container border border-outline-variant rounded-DEFAULT hover:bg-surface-variant disabled:opacity-50">Prev</button>
+<button class="px-2 py-1 bg-surface-container border border-outline-variant rounded-DEFAULT hover:bg-surface-variant">Next</button>
+</div>
+</div>
+</div>
+</main>
+<!-- BottomNavBar (Mobile) -->
+<nav class="md:hidden w-full bg-surface-container border-t border-outline-variant flex justify-around items-center h-16 flex-shrink-0 z-20">
+<a class="flex flex-col items-center gap-1 text-on-surface-variant p-sm w-16" href="#">
+<span class="material-symbols-outlined">dashboard</span>
+<span class="font-label-caps text-[9px] uppercase">Dash</span>
+</a>
+<a class="flex flex-col items-center gap-1 bg-secondary-container text-on-secondary-container rounded-lg p-sm w-16" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">security</span>
+<span class="font-label-caps text-[9px] uppercase">Sec Ops</span>
+</a>
+<a class="flex flex-col items-center gap-1 text-on-surface-variant p-sm w-16" href="#">
+<span class="material-symbols-outlined">groups</span>
+<span class="font-label-caps text-[9px] uppercase">Crowd</span>
+</a>
+<a class="flex flex-col items-center gap-1 text-on-surface-variant p-sm w-16" href="#">
+<span class="material-symbols-outlined">history</span>
+<span class="font-label-caps text-[9px] uppercase">Audit</span>
+</a>
+</nav>
+</body></html>

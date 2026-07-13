@@ -1,0 +1,2047 @@
+<!DOCTYPE html>
+<html class="dark" lang="en">
+<head>
+    <meta charset="utf-8"/>
+    <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+    <title>EdgePulse 2026 - VOC Command Center</title>
+    <!-- Tailwind CSS with forms and container-queries -->
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet"/>
+    <!-- Material Symbols Outlined -->
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+    
+    <script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        // Tactical Dark System
+                        "td-bg": "#10131a",
+                        "td-surface": "#1d2027",
+                        "td-surface-low": "#191b23",
+                        "td-surface-lowest": "#0b0e15",
+                        "td-surface-high": "#272a31",
+                        "td-surface-highest": "#32353c",
+                        "td-on-surface": "#e1e2ec",
+                        "td-on-surface-variant": "#c2c6d6",
+                        "td-outline": "#424754",
+                        
+                        // EdgePulse Light System
+                        "el-bg": "#faf8ff",
+                        "el-surface": "#ffffff",
+                        "el-surface-low": "#f2f3ff",
+                        "el-surface-lowest": "#ffffff",
+                        "el-surface-high": "#e2e7ff",
+                        "el-surface-highest": "#dae2fd",
+                        "el-on-surface": "#131b2e",
+                        "el-on-surface-variant": "#434655",
+                        "el-outline": "#c3c6d7",
+
+                        // Semantic accents
+                        "primary": "#2563eb", // Optimistic Blue
+                        "primary-glow": "rgba(37, 99, 235, 0.4)",
+                        "success": "#10b981", // Emerald
+                        "success-bg": "rgba(16, 185, 129, 0.1)",
+                        "warning": "#df7412", // Deep Amber
+                        "warning-bg": "rgba(223, 116, 18, 0.1)",
+                        "critical": "#ef4444", // Red
+                        "critical-bg": "rgba(239, 68, 68, 0.1)"
+                    },
+                    borderRadius: {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    spacing: {
+                        "gutter": "1.5rem",
+                        "md": "1rem",
+                        "sm": "0.5rem",
+                        "base": "4px",
+                        "xs": "0.25rem"
+                    },
+                    fontFamily: {
+                        "sans": ["Inter", "sans-serif"],
+                        "mono": ["JetBrains Mono", "monospace"]
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        /* Custom Sparkline Animations */
+        @keyframes drawLine {
+            to { stroke-dashoffset: 0; }
+        }
+        .sparkline path {
+            stroke-dasharray: 100;
+            stroke-dashoffset: 100;
+            animation: drawLine 2s ease-out forwards;
+        }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        .dark ::-webkit-scrollbar-track {
+            background: #0b0e15;
+        }
+        .light ::-webkit-scrollbar-track {
+            background: #f2f3ff;
+        }
+        .dark ::-webkit-scrollbar-thumb {
+            background: #32353c;
+            border-radius: 3px;
+        }
+        .light ::-webkit-scrollbar-thumb {
+            background: #c3c6d7;
+            border-radius: 3px;
+        }
+
+        /* Pulse Animations */
+        @keyframes scan-glow {
+            0% { box-shadow: 0 0 2px 0px rgba(37, 99, 235, 0.2); }
+            50% { box-shadow: 0 0 8px 2px rgba(37, 99, 235, 0.5); }
+            100% { box-shadow: 0 0 2px 0px rgba(37, 99, 235, 0.2); }
+        }
+        .scan-glow {
+            animation: scan-glow 3s infinite ease-in-out;
+        }
+        
+        @keyframes pulse-border-warning {
+            0% { box-shadow: 0 0 2px 0px rgba(223, 116, 18, 0.2); border-color: rgba(223, 116, 18, 0.4); }
+            50% { box-shadow: 0 0 10px 2px rgba(223, 116, 18, 0.6); border-color: rgba(223, 116, 18, 0.9); }
+            100% { box-shadow: 0 0 2px 0px rgba(223, 116, 18, 0.2); border-color: rgba(223, 116, 18, 0.4); }
+        }
+        .pulse-warning {
+            animation: pulse-border-warning 2s infinite ease-in-out;
+        }
+
+        @keyframes pulse-border-critical {
+            0% { box-shadow: 0 0 2px 0px rgba(239, 68, 68, 0.3); border-color: rgba(239, 68, 68, 0.5); }
+            50% { box-shadow: 0 0 12px 4px rgba(239, 68, 68, 0.8); border-color: rgba(239, 68, 68, 1); }
+            100% { box-shadow: 0 0 2px 0px rgba(239, 68, 68, 0.3); border-color: rgba(239, 68, 68, 0.5); }
+        }
+        .pulse-critical {
+            animation: pulse-border-critical 1.5s infinite ease-in-out;
+        }
+
+        /* Styles for directed spatial graph layout */
+        .node-circle {
+            transition: fill 0.5s ease, stroke 0.5s ease, r 0.5s ease;
+        }
+        .edge-line {
+            transition: stroke 0.5s ease, stroke-width 0.5s ease;
+        }
+    </style>
+</head>
+<body class="bg-td-bg text-td-on-surface dark:bg-td-bg dark:text-td-on-surface light:bg-el-bg light:text-el-on-surface min-h-screen flex flex-col md:flex-row font-sans overflow-hidden transition-colors duration-300">
+
+    <!-- Global Emergency Alert Banner -->
+    <div class="fixed top-0 left-0 w-full bg-critical text-white py-2 px-lg z-[100] flex items-center justify-between shadow-lg transform -translate-y-full transition-transform duration-300" id="globalAlert">
+        <div class="flex items-center gap-sm">
+            <span class="material-symbols-outlined animate-bounce">warning</span>
+            <span class="font-semibold text-headline-sm" id="globalAlertText">CRITICAL OVERLOAD: Active intervention pending in Zone Gate_A!</span>
+        </div>
+        <div class="flex items-center gap-md">
+            <button class="bg-white text-critical px-3 py-1 rounded text-sm font-bold hover:bg-neutral-100 transition-colors" onclick="goToTab('approval')">
+                Go to Approval
+            </button>
+            <button class="hover:bg-red-700 p-1 rounded transition-colors" onclick="dismissAlert()">
+                <span class="material-symbols-outlined">close</span>
+            </button>
+        </div>
+    </div>
+
+    <!-- SideNavBar (Docked Left) -->
+    <nav class="hidden md:flex flex-col h-full py-md px-sm bg-td-surface-low border-r border-td-outline dark:bg-td-surface-low dark:border-td-outline light:bg-el-surface light:border-el-outline w-64 z-20 shrink-0 select-none">
+        <!-- Brand / Header -->
+        <div class="px-md mb-lg">
+            <h1 class="text-headline-sm font-bold text-primary tracking-tight flex items-center gap-xs">
+                <span class="material-symbols-outlined text-[28px]">stadium</span>
+                EdgePulse 2026
+            </h1>
+            <div class="flex items-center gap-sm mt-md py-sm border-b border-td-outline dark:border-td-outline light:border-el-outline">
+                <div class="w-10 h-10 rounded-full bg-td-surface-high dark:bg-td-surface-high light:bg-el-surface-high border border-primary flex items-center justify-center overflow-hidden shrink-0">
+                    <span class="material-symbols-outlined text-primary" style="font-variation-settings: 'FILL' 1;">account_circle</span>
+                </div>
+                <div class="min-w-0">
+                    <p class="font-semibold text-sm truncate">VOC Commander</p>
+                    <p class="font-mono text-xs text-td-on-surface-variant dark:text-td-on-surface-variant light:text-el-on-surface-variant truncate">Stadium Control</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Navigation Links -->
+        <ul class="flex-1 space-y-xs overflow-y-auto px-1" id="navLinks">
+            <li>
+                <a class="flex items-center gap-md rounded p-md bg-primary/10 text-primary border border-primary/20 scale-[0.98] transition-all cursor-pointer font-medium" id="nav-dashboard" onclick="switchTab('dashboard')">
+                    <span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">dashboard</span>
+                    <span class="text-sm">Dashboard</span>
+                </a>
+            </li>
+            <li>
+                <a class="flex items-center gap-md rounded p-md text-td-on-surface-variant dark:text-td-on-surface-variant light:text-el-on-surface-variant hover:bg-td-surface-high dark:hover:bg-td-surface-high light:hover:bg-el-surface-high transition-all cursor-pointer" id="nav-map" onclick="switchTab('map')">
+                    <span class="material-symbols-outlined">map</span>
+                    <span class="text-sm">Venue Map</span>
+                </a>
+            </li>
+            <li>
+                <a class="flex items-center gap-md rounded p-md text-td-on-surface-variant dark:text-td-on-surface-variant light:text-el-on-surface-variant hover:bg-td-surface-high dark:hover:bg-td-surface-high light:hover:bg-el-surface-high transition-all cursor-pointer relative" id="nav-approval" onclick="switchTab('approval')">
+                    <span class="material-symbols-outlined">policy</span>
+                    <span class="text-sm">Approval Queue</span>
+                    <span class="absolute right-3 top-3.5 w-2.5 h-2.5 rounded-full bg-critical animate-ping hidden" id="approvalBadgePing"></span>
+                    <span class="absolute right-3 top-3.5 w-2.5 h-2.5 rounded-full bg-critical hidden" id="approvalBadge"></span>
+                </a>
+            </li>
+            <li>
+                <a class="flex items-center gap-md rounded p-md text-td-on-surface-variant dark:text-td-on-surface-variant light:text-el-on-surface-variant hover:bg-td-surface-high dark:hover:bg-td-surface-high light:hover:bg-el-surface-high transition-all cursor-pointer" id="nav-incidents" onclick="switchTab('incidents')">
+                    <span class="material-symbols-outlined">warning</span>
+                    <span class="text-sm">Incident Feed</span>
+                </a>
+            </li>
+            <li>
+                <a class="flex items-center gap-md rounded p-md text-td-on-surface-variant dark:text-td-on-surface-variant light:text-el-on-surface-variant hover:bg-td-surface-high dark:hover:bg-td-surface-high light:hover:bg-el-surface-high transition-all cursor-pointer" id="nav-actuators" onclick="switchTab('actuators')">
+                    <span class="material-symbols-outlined">settings_input_component</span>
+                    <span class="text-sm">Actuators</span>
+                </a>
+            </li>
+            <li>
+                <a class="flex items-center gap-md rounded p-md text-td-on-surface-variant dark:text-td-on-surface-variant light:text-el-on-surface-variant hover:bg-td-surface-high dark:hover:bg-td-surface-high light:hover:bg-el-surface-high transition-all cursor-pointer" id="nav-health" onclick="switchTab('health')">
+                    <span class="material-symbols-outlined">health_metrics</span>
+                    <span class="text-sm">Sensor Health</span>
+                </a>
+            </li>
+            <li>
+                <a class="flex items-center gap-md rounded p-md text-td-on-surface-variant dark:text-td-on-surface-variant light:text-el-on-surface-variant hover:bg-td-surface-high dark:hover:bg-td-surface-high light:hover:bg-el-surface-high transition-all cursor-pointer" id="nav-modelops" onclick="switchTab('modelops')">
+                    <span class="material-symbols-outlined">memory</span>
+                    <span class="text-sm">Model Ops</span>
+                </a>
+            </li>
+            <li>
+                <a class="flex items-center gap-md rounded p-md text-td-on-surface-variant dark:text-td-on-surface-variant light:text-el-on-surface-variant hover:bg-td-surface-high dark:hover:bg-td-surface-high light:hover:bg-el-surface-high transition-all cursor-pointer" id="nav-audit" onclick="switchTab('audit')">
+                    <span class="material-symbols-outlined">history</span>
+                    <span class="text-sm">Audit Trail</span>
+                </a>
+            </li>
+            <li>
+                <a class="flex items-center gap-md rounded p-md text-td-on-surface-variant dark:text-td-on-surface-variant light:text-el-on-surface-variant hover:bg-td-surface-high dark:hover:bg-td-surface-high light:hover:bg-el-surface-high transition-all cursor-pointer" id="nav-settings" onclick="switchTab('settings')">
+                    <span class="material-symbols-outlined">settings</span>
+                    <span class="text-sm">Settings</span>
+                </a>
+            </li>
+        </ul>
+
+        <!-- Footer / CTA -->
+        <div class="mt-auto pt-md space-y-sm border-t border-td-outline dark:border-td-outline light:border-el-outline">
+            <!-- Panic Button / Emergency Override -->
+            <button class="w-full flex justify-center items-center gap-sm bg-critical/20 border-2 border-critical text-critical py-2 px-sm rounded hover:bg-critical hover:text-white transition-colors duration-200 font-bold group text-sm" onclick="triggerPanicShutdown()">
+                <span class="material-symbols-outlined group-hover:animate-pulse">warning</span>
+                Emergency Shutdown
+            </button>
+            <div class="flex justify-around text-xs text-td-on-surface-variant dark:text-td-on-surface-variant light:text-el-on-surface-variant pt-xs">
+                <span>FIFA World Cup 2026</span>
+                <span class="font-semibold text-primary">v0.1.0</span>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content Canvas -->
+    <main class="flex-1 flex flex-col h-screen overflow-hidden bg-td-bg dark:bg-td-bg light:bg-el-bg relative">
+        <!-- TopAppBar -->
+        <header class="flex justify-between items-center w-full px-lg h-16 bg-td-surface border-b border-td-outline dark:bg-td-surface dark:border-td-outline light:bg-el-surface light:border-el-outline shrink-0 z-10 select-none">
+            <!-- Mobile Brand & Menu -->
+            <div class="md:hidden flex items-center gap-sm">
+                <span class="material-symbols-outlined text-primary text-[28px]" onclick="toggleMobileNav()">menu</span>
+                <h1 class="text-headline-md font-bold text-primary tracking-tight">EdgePulse</h1>
+            </div>
+
+            <!-- Global Status Badge -->
+            <div class="flex-1 flex justify-center">
+                <div class="flex items-center gap-sm bg-success-bg border border-success/30 px-lg py-sm rounded-full shadow-[0_0_8px_rgba(16,185,129,0.2)]" id="globalStatusBadge">
+                    <span class="w-2.5 h-2.5 rounded-full bg-success animate-pulse" id="globalStatusIndicator"></span>
+                    <span class="font-mono text-xs font-bold text-success tracking-widest uppercase" id="globalStatusText">Normal Operations</span>
+                </div>
+            </div>
+
+            <!-- Trailing Actions (Search, Notification, Theme Switcher) -->
+            <div class="flex items-center gap-md">
+                <!-- Simulation Trigger Widget -->
+                <button class="hidden lg:flex items-center gap-1 bg-primary text-white text-xs px-3 py-1.5 rounded hover:bg-blue-700 transition-colors font-bold shadow-md" onclick="openSimPanel()">
+                    <span class="material-symbols-outlined text-[16px]">bolt</span>
+                    Telemetry Sim
+                </button>
+                <!-- Theme Switcher -->
+                <button class="text-td-on-surface-variant dark:text-td-on-surface-variant light:text-el-on-surface-variant hover:text-primary p-sm rounded-full active:scale-95 duration-100 transition-colors" onclick="toggleTheme()" title="Toggle Visual Style (Dark/Light)">
+                    <span class="material-symbols-outlined" id="themeIcon">light_mode</span>
+                </button>
+                <div class="w-px h-8 bg-td-outline dark:bg-td-outline light:bg-el-outline"></div>
+                <div class="flex flex-col text-right font-mono text-xs text-td-on-surface-variant dark:text-td-on-surface-variant light:text-el-on-surface-variant">
+                    <span id="currentSystemTime">18:53:00</span>
+                    <span class="text-[10px]" id="currentSystemDate">Jul 13, 2026</span>
+                </div>
+            </div>
+        </header>
+
+        <!-- Dynamic Content Area -->
+        <div class="flex-1 overflow-hidden relative">
+
+            <!-- TAB 1: DASHBOARD -->
+            <div class="h-full overflow-y-auto p-md lg:p-lg space-y-lg active-tab-content" id="tab-dashboard">
+                <!-- Bento Grid Layout -->
+                <div class="grid grid-cols-1 md:grid-cols-12 gap-gutter">
+                    
+                    <!-- Safety Pillar Card -->
+                    <div class="col-span-1 md:col-span-4 bg-td-surface border border-td-outline dark:bg-td-surface dark:border-td-outline light:bg-el-surface light:border-el-outline rounded-lg p-md relative overflow-hidden flex flex-col gap-sm">
+                        <div class="absolute top-0 left-0 w-full h-[3px] bg-warning"></div>
+                        <div class="flex justify-between items-start">
+                            <div>
+                                <h2 class="font-mono text-xs font-bold text-td-on-surface-variant dark:text-td-on-surface-variant light:text-el-on-surface-variant tracking-wider uppercase">Safety Pillar</h2>
+                                <p class="text-headline-md font-bold mt-xs flex items-baseline gap-1">
+                                    <span id="dash-safety-val">1.2</span>
+                                    <span class="text-xs font-normal text-td-on-surface-variant dark:text-td-on-surface-variant light:text-el-on-surface-variant">people/m²</span>
+                                </p>
+                                <span class="text-xs text-success flex items-center gap-xs mt-1 font-semibold" id="dash-safety-trend">
+                                    <span class="material-symbols-outlined text-[16px]">trending_flat</span> Stable Egress
+                                </span>
+                            </div>
+                            <div class="bg-warning/10 border border-warning/30 p-sm rounded text-warning">
+                                <span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">shield</span>
+                            </div>
+                        </div>
+                        <div class="mt-auto pt-md h-12 sparkline">
+                            <svg class="w-full h-full" preserveAspectRatio="none" viewBox="0 0 100 30">
+                                <path d="M0,25 Q15,20 30,22 T60,24 T90,22 T100,25" fill="none" stroke="#df7412" stroke-width="2" vector-effect="non-scaling-stroke"></path>
+                            </svg>
+                        </div>
+                    </div>
+
+                    <!-- Security Pillar Card -->
+                    <div class="col-span-1 md:col-span-4 bg-td-surface border border-td-outline dark:bg-td-surface dark:border-td-outline light:bg-el-surface light:border-el-outline rounded-lg p-md relative overflow-hidden flex flex-col gap-sm">
+                        <div class="absolute top-0 left-0 w-full h-[3px] bg-primary"></div>
+                        <div class="flex justify-between items-start">
+                            <div>
+                                <h2 class="font-mono text-xs font-bold text-td-on-surface-variant dark:text-td-on-surface-variant light:text-el-on-surface-variant tracking-wider uppercase">Security Pillar</h2>
+                                <p class="text-headline-md font-bold mt-xs flex items-baseline gap-1">
+                                    <span id="dash-security-val">0</span>
+                                    <span class="text-xs font-normal text-td-on-surface-variant dark:text-td-on-surface-variant light:text-el-on-surface-variant">Active Vetoes</span>
+                                </p>
+                                <span class="text-xs text-success flex items-center gap-xs mt-1 font-semibold">
+                                    <span class="material-symbols-outlined text-[16px]">check_circle</span> Integrity Normal
+                                </span>
+                            </div>
+                            <div class="bg-primary/10 border border-primary/30 p-sm rounded text-primary">
+                                <span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">security</span>
+                            </div>
+                        </div>
+                        <div class="mt-auto pt-md h-12 sparkline">
+                            <svg class="w-full h-full" preserveAspectRatio="none" viewBox="0 0 100 30">
+                                <path d="M0,25 L20,25 L40,25 L60,25 L80,25 L100,25" fill="none" stroke="#2563eb" stroke-width="2" vector-effect="non-scaling-stroke"></path>
+                            </svg>
+                        </div>
+                    </div>
+
+                    <!-- Service Pillar Card -->
+                    <div class="col-span-1 md:col-span-4 bg-td-surface border border-td-outline dark:bg-td-surface dark:border-td-outline light:bg-el-surface light:border-el-outline rounded-lg p-md relative overflow-hidden flex flex-col gap-sm">
+                        <div class="absolute top-0 left-0 w-full h-[3px] bg-success"></div>
+                        <div class="flex justify-between items-start">
+                            <div>
+                                <h2 class="font-mono text-xs font-bold text-td-on-surface-variant dark:text-td-on-surface-variant light:text-el-on-surface-variant tracking-wider uppercase">Service Pillar</h2>
+                                <p class="text-headline-md font-bold mt-xs flex items-baseline gap-1">
+                                    <span id="dash-service-val">1.5</span>
+                                    <span class="text-xs font-normal text-td-on-surface-variant dark:text-td-on-surface-variant light:text-el-on-surface-variant">min Queue</span>
+                                </p>
+                                <span class="text-xs text-success flex items-center gap-xs mt-1 font-semibold" id="dash-service-trend">
+                                    <span class="material-symbols-outlined text-[16px]">trending_down</span> Processing Quick
+                                </span>
+                            </div>
+                            <div class="bg-success/10 border border-success/30 p-sm rounded text-success">
+                                <span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">groups</span>
+                            </div>
+                        </div>
+                        <div class="mt-auto pt-md h-12 sparkline">
+                            <svg class="w-full h-full" preserveAspectRatio="none" viewBox="0 0 100 30">
+                                <path d="M0,10 Q20,12 40,15 T70,22 T100,25" fill="none" stroke="#10b981" stroke-width="2" vector-effect="non-scaling-stroke"></path>
+                            </svg>
+                        </div>
+                    </div>
+
+                    <!-- Schematic Graph Visualization Panel (Row 2, Cols 1-8) -->
+                    <div class="col-span-1 md:col-span-8 bg-td-surface border border-td-outline dark:bg-td-surface dark:border-td-outline light:bg-el-surface light:border-el-outline rounded-lg p-md flex flex-col h-[400px]">
+                        <div class="flex justify-between items-center mb-md border-b border-td-outline dark:border-td-outline light:border-el-outline pb-sm select-none">
+                            <h2 class="text-headline-sm font-semibold flex items-center gap-xs">
+                                <span class="material-symbols-outlined text-primary">hub</span>
+                                Directed Spatial Graph Matrix G = (V, E)
+                            </h2>
+                            <div class="flex gap-sm">
+                                <button class="px-2.5 py-1 bg-td-surface-high dark:bg-td-surface-high light:bg-el-surface-high rounded font-mono text-xs font-bold hover:text-primary transition-colors border border-td-outline dark:border-td-outline light:border-el-outline" onclick="switchTab('map')">
+                                    Expand Map
+                                </button>
+                            </div>
+                        </div>
+                        <div class="flex-1 relative flex items-center justify-center bg-td-surface-lowest dark:bg-td-surface-lowest light:bg-el-surface-low rounded border border-td-outline dark:border-td-outline light:border-el-outline/50 overflow-hidden">
+                            <!-- Inlined interactive graph, mapped to backend data -->
+                            <svg class="w-full h-full select-none" id="dashboardGraphSvg" viewBox="0 0 800 380">
+                                <!-- Grid -->
+                                <pattern id="dash-grid" width="40" height="40" patternUnits="userSpaceOnUse">
+                                    <path class="stroke-td-outline/30 dark:stroke-td-outline/30 light:stroke-el-outline/50" d="M 40 0 L 0 0 0 40" fill="none" stroke-width="1"></path>
+                                </pattern>
+                                <rect width="100%" height="100%" fill="url(#dash-grid)"></rect>
+
+                                <!-- Edge Paths (Arrows) -->
+                                <defs>
+                                    <marker id="dash-arrow" viewBox="0 0 10 10" refX="22" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+                                        <path d="M 0 1 L 10 5 L 0 9 z" fill="#737686"></path>
+                                    </marker>
+                                </defs>
+
+                                <!-- Edges: Gate_A -> Corridor_1 -->
+                                <line class="edge-line stroke-td-on-surface-variant/35 dark:stroke-td-on-surface-variant/35 light:stroke-el-on-surface-variant/30" x1="150" y1="280" x2="380" y2="280" stroke-width="2" marker-end="url(#dash-arrow)" id="dash-edge-Gate_A-Corridor_1"></line>
+                                <text class="font-mono text-[9px] fill-td-on-surface-variant dark:fill-td-on-surface-variant light:fill-el-on-surface-variant" x="250" y="270" text-anchor="middle" id="dash-edge-flow-Gate_A-Corridor_1">Flow: 0.0/120</text>
+                                
+                                <!-- Edges: Gate_B -> Corridor_2 -->
+                                <line class="edge-line stroke-td-on-surface-variant/35 dark:stroke-td-on-surface-variant/35 light:stroke-el-on-surface-variant/30" x1="150" y1="100" x2="380" y2="100" stroke-width="2" marker-end="url(#dash-arrow)" id="dash-edge-Gate_B-Corridor_2"></line>
+                                <text class="font-mono text-[9px] fill-td-on-surface-variant dark:fill-td-on-surface-variant light:fill-el-on-surface-variant" x="250" y="90" text-anchor="middle" id="dash-edge-flow-Gate_B-Corridor_2">Flow: 0.0/120</text>
+
+                                <!-- Edges: Corridor_1 -> Main_Concourse -->
+                                <line class="edge-line stroke-td-on-surface-variant/35 dark:stroke-td-on-surface-variant/35 light:stroke-el-on-surface-variant/30" x1="420" y1="280" x2="650" y2="200" stroke-width="2" marker-end="url(#dash-arrow)" id="dash-edge-Corridor_1-Main_Concourse"></line>
+                                <text class="font-mono text-[9px] fill-td-on-surface-variant dark:fill-td-on-surface-variant light:fill-el-on-surface-variant" x="530" y="255" text-anchor="middle" id="dash-edge-flow-Corridor_1-Main_Concourse">Flow: 0.0/200</text>
+
+                                <!-- Edges: Corridor_2 -> Main_Concourse -->
+                                <line class="edge-line stroke-td-on-surface-variant/35 dark:stroke-td-on-surface-variant/35 light:stroke-el-on-surface-variant/30" x1="420" y1="100" x2="650" y2="170" stroke-width="2" marker-end="url(#dash-arrow)" id="dash-edge-Corridor_2-Main_Concourse"></line>
+                                <text class="font-mono text-[9px] fill-td-on-surface-variant dark:fill-td-on-surface-variant light:fill-el-on-surface-variant" x="530" y="125" text-anchor="middle" id="dash-edge-flow-Corridor_2-Main_Concourse">Flow: 0.0/200</text>
+
+                                <!-- Spatial Nodes (circles) -->
+                                <!-- Gate_A -->
+                                <g class="cursor-pointer" transform="translate(150, 280)" onclick="selectNode('Gate_A')">
+                                    <circle class="node-circle fill-success/40 stroke-success" r="16" stroke-width="2" id="dash-node-Gate_A"></circle>
+                                    <text class="font-mono font-bold text-[10px] fill-current" text-anchor="middle" y="4" id="dash-node-lbl-Gate_A">A</text>
+                                    <text class="font-sans text-[11px] font-semibold fill-current" text-anchor="middle" y="-24">Gate A</text>
+                                </g>
+                                <!-- Gate_B -->
+                                <g class="cursor-pointer" transform="translate(150, 100)" onclick="selectNode('Gate_B')">
+                                    <circle class="node-circle fill-success/40 stroke-success" r="16" stroke-width="2" id="dash-node-Gate_B"></circle>
+                                    <text class="font-mono font-bold text-[10px] fill-current" text-anchor="middle" y="4" id="dash-node-lbl-Gate_B">B</text>
+                                    <text class="font-sans text-[11px] font-semibold fill-current" text-anchor="middle" y="-24">Gate B</text>
+                                </g>
+                                <!-- Corridor_1 -->
+                                <g class="cursor-pointer" transform="translate(400, 280)" onclick="selectNode('Corridor_1')">
+                                    <circle class="node-circle fill-success/40 stroke-success" r="18" stroke-width="2" id="dash-node-Corridor_1"></circle>
+                                    <text class="font-mono font-bold text-[10px] fill-current" text-anchor="middle" y="4" id="dash-node-lbl-Corridor_1">C1</text>
+                                    <text class="font-sans text-[11px] font-semibold fill-current" text-anchor="middle" y="-26">Corridor 1</text>
+                                </g>
+                                <!-- Corridor_2 -->
+                                <g class="cursor-pointer" transform="translate(400, 100)" onclick="selectNode('Corridor_2')">
+                                    <circle class="node-circle fill-success/40 stroke-success" r="18" stroke-width="2" id="dash-node-Corridor_2"></circle>
+                                    <text class="font-mono font-bold text-[10px] fill-current" text-anchor="middle" y="4" id="dash-node-lbl-Corridor_2">C2</text>
+                                    <text class="font-sans text-[11px] font-semibold fill-current" text-anchor="middle" y="-26">Corridor 2</text>
+                                </g>
+                                <!-- Main_Concourse -->
+                                <g class="cursor-pointer" transform="translate(670, 185)" onclick="selectNode('Main_Concourse')">
+                                    <circle class="node-circle fill-success/40 stroke-success" r="22" stroke-width="2" id="dash-node-Main_Concourse"></circle>
+                                    <text class="font-mono font-bold text-[10px] fill-current" text-anchor="middle" y="4" id="dash-node-lbl-Main_Concourse">MC</text>
+                                    <text class="font-sans text-[11px] font-semibold fill-current" text-anchor="middle" y="-30">Main Concourse</text>
+                                </g>
+                            </svg>
+                        </div>
+                    </div>
+
+                    <!-- Live Incident Summary List (Row 2, Cols 9-12) -->
+                    <div class="col-span-1 md:col-span-4 bg-td-surface border border-td-outline dark:bg-td-surface dark:border-td-outline light:bg-el-surface light:border-el-outline rounded-lg p-md flex flex-col h-[400px]">
+                        <div class="flex justify-between items-center mb-sm border-b border-td-outline dark:border-td-outline light:border-el-outline pb-sm select-none">
+                            <h2 class="text-headline-sm font-semibold flex items-center gap-xs">
+                                <span class="material-symbols-outlined text-primary">warning</span>
+                                Live Incidents
+                            </h2>
+                            <a class="text-primary text-xs font-bold hover:underline cursor-pointer" onclick="switchTab('incidents')">View All</a>
+                        </div>
+                        <!-- List -->
+                        <div class="flex-1 overflow-y-auto space-y-sm" id="dashIncidentsList">
+                            <div class="text-center py-md text-td-on-surface-variant dark:text-td-on-surface-variant light:text-el-on-surface-variant font-medium text-sm">
+                                No active anomalies detected.
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+
+
+            <!-- TAB 2: VENUE MAP -->
+            <div class="h-full overflow-hidden flex flex-col md:flex-row" id="tab-map" style="display:none;">
+                <!-- Map Left Side (Graph) -->
+                <div class="flex-1 relative bg-td-surface-lowest dark:bg-td-surface-lowest light:bg-el-surface-low overflow-hidden">
+                    <!-- Graph Toggle Map/Heatmap Overlay -->
+                    <div class="absolute top-md left-md z-10 flex gap-sm bg-td-surface/80 dark:bg-td-surface/80 light:bg-el-surface/80 backdrop-blur p-1 rounded border border-td-outline dark:border-td-outline light:border-el-outline select-none shadow-md">
+                        <button class="text-xs px-3 py-1 rounded bg-primary text-white font-bold" id="map-btn-view" onclick="toggleMapMode('view')">Topology</button>
+                        <button class="text-xs px-3 py-1 rounded hover:bg-primary/20 transition-all text-td-on-surface dark:text-td-on-surface light:text-el-on-surface font-semibold" id="map-btn-heatmap" onclick="toggleMapMode('heatmap')">Heatmap</button>
+                    </div>
+
+                    <!-- Legend -->
+                    <div class="absolute bottom-4 left-4 bg-td-surface/90 dark:bg-td-surface/90 light:bg-el-surface/90 backdrop-blur p-2 rounded shadow-md border border-td-outline dark:border-td-outline light:border-el-outline flex items-center gap-2 text-xs font-semibold select-none z-10">
+                        <span>Density:</span>
+                        <div class="w-24 h-2.5 bg-gradient-to-r from-success via-warning to-critical rounded-full"></div>
+                        <div class="flex flex-col text-[10px] leading-tight font-mono">
+                            <span class="text-success">&lt;1.5 (Clear)</span>
+                            <span class="text-warning">&gt;=1.5 (Warning)</span>
+                            <span class="text-critical">&gt;=3.0 (Critical)</span>
+                        </div>
+                    </div>
+
+                    <svg class="w-full h-full select-none" id="interactiveMapSvg" viewBox="0 0 900 500">
+                        <!-- Grid -->
+                        <pattern id="map-grid" width="40" height="40" patternUnits="userSpaceOnUse">
+                            <path class="stroke-td-outline/30 dark:stroke-td-outline/30 light:stroke-el-outline/50" d="M 40 0 L 0 0 0 40" fill="none" stroke-width="1"></path>
+                        </pattern>
+                        <rect width="100%" height="100%" fill="url(#map-grid)"></rect>
+
+                        <!-- Arrows definition -->
+                        <defs>
+                            <marker id="map-arrow" viewBox="0 0 10 10" refX="22" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+                                <path d="M 0 1 L 10 5 L 0 9 z" fill="#737686"></path>
+                            </marker>
+                        </defs>
+
+                        <!-- Edge Paths -->
+                        <line class="edge-line stroke-td-on-surface-variant/40 dark:stroke-td-on-surface-variant/40 light:stroke-el-on-surface-variant/30" x1="180" y1="350" x2="430" y2="350" stroke-width="2.5" marker-end="url(#map-arrow)" id="map-edge-Gate_A-Corridor_1"></line>
+                        <text class="font-mono text-[10px] fill-td-on-surface-variant dark:fill-td-on-surface-variant light:fill-el-on-surface-variant" x="300" y="340" text-anchor="middle" id="map-edge-flow-Gate_A-Corridor_1">Flow: 0.0/120</text>
+                        
+                        <line class="edge-line stroke-td-on-surface-variant/40 dark:stroke-td-on-surface-variant/40 light:stroke-el-on-surface-variant/30" x1="180" y1="150" x2="430" y2="150" stroke-width="2.5" marker-end="url(#map-arrow)" id="map-edge-Gate_B-Corridor_2"></line>
+                        <text class="font-mono text-[10px] fill-td-on-surface-variant dark:fill-td-on-surface-variant light:fill-el-on-surface-variant" x="300" y="140" text-anchor="middle" id="map-edge-flow-Gate_B-Corridor_2">Flow: 0.0/120</text>
+
+                        <line class="edge-line stroke-td-on-surface-variant/40 dark:stroke-td-on-surface-variant/40 light:stroke-el-on-surface-variant/30" x1="480" y1="350" x2="720" y2="270" stroke-width="2.5" marker-end="url(#map-arrow)" id="map-edge-Corridor_1-Main_Concourse"></line>
+                        <text class="font-mono text-[10px] fill-td-on-surface-variant dark:fill-td-on-surface-variant light:fill-el-on-surface-variant" x="600" y="325" text-anchor="middle" id="map-edge-flow-Corridor_1-Main_Concourse">Flow: 0.0/200</text>
+
+                        <line class="edge-line stroke-td-on-surface-variant/40 dark:stroke-td-on-surface-variant/40 light:stroke-el-on-surface-variant/30" x1="480" y1="150" x2="720" y2="230" stroke-width="2.5" marker-end="url(#map-arrow)" id="map-edge-Corridor_2-Main_Concourse"></line>
+                        <text class="font-mono text-[10px] fill-td-on-surface-variant dark:fill-td-on-surface-variant light:fill-el-on-surface-variant" x="600" y="175" text-anchor="middle" id="map-edge-flow-Corridor_2-Main_Concourse">Flow: 0.0/200</text>
+
+                        <!-- Nodes -->
+                        <!-- Gate_A -->
+                        <g class="cursor-pointer" transform="translate(180, 350)" onclick="selectNode('Gate_A')">
+                            <circle class="node-circle fill-success/35 stroke-success" r="22" stroke-width="2.5" id="map-node-Gate_A"></circle>
+                            <text class="font-mono font-bold text-xs fill-current" text-anchor="middle" y="4" id="map-node-lbl-Gate_A">A</text>
+                            <text class="font-sans text-xs font-semibold fill-current" text-anchor="middle" y="-32">Gate A</text>
+                        </g>
+                        <!-- Gate_B -->
+                        <g class="cursor-pointer" transform="translate(180, 150)" onclick="selectNode('Gate_B')">
+                            <circle class="node-circle fill-success/35 stroke-success" r="22" stroke-width="2.5" id="map-node-Gate_B"></circle>
+                            <text class="font-mono font-bold text-xs fill-current" text-anchor="middle" y="4" id="map-node-lbl-Gate_B">B</text>
+                            <text class="font-sans text-xs font-semibold fill-current" text-anchor="middle" y="-32">Gate B</text>
+                        </g>
+                        <!-- Corridor_1 -->
+                        <g class="cursor-pointer" transform="translate(480, 350)" onclick="selectNode('Corridor_1')">
+                            <circle class="node-circle fill-success/35 stroke-success" r="26" stroke-width="2.5" id="map-node-Corridor_1"></circle>
+                            <text class="font-mono font-bold text-xs fill-current" text-anchor="middle" y="4" id="map-node-lbl-Corridor_1">C1</text>
+                            <text class="font-sans text-xs font-semibold fill-current" text-anchor="middle" y="-36">Corridor 1</text>
+                        </g>
+                        <!-- Corridor_2 -->
+                        <g class="cursor-pointer" transform="translate(480, 150)" onclick="selectNode('Corridor_2')">
+                            <circle class="node-circle fill-success/35 stroke-success" r="26" stroke-width="2.5" id="map-node-Corridor_2"></circle>
+                            <text class="font-mono font-bold text-xs fill-current" text-anchor="middle" y="4" id="map-node-lbl-Corridor_2">C2</text>
+                            <text class="font-sans text-xs font-semibold fill-current" text-anchor="middle" y="-36">Corridor 2</text>
+                        </g>
+                        <!-- Main_Concourse -->
+                        <g class="cursor-pointer" transform="translate(750, 250)" onclick="selectNode('Main_Concourse')">
+                            <circle class="node-circle fill-success/35 stroke-success" r="32" stroke-width="2.5" id="map-node-Main_Concourse"></circle>
+                            <text class="font-mono font-bold text-xs fill-current" text-anchor="middle" y="4" id="map-node-lbl-Main_Concourse">MC</text>
+                            <text class="font-sans text-xs font-semibold fill-current" text-anchor="middle" y="-42">Main Concourse</text>
+                        </g>
+                    </svg>
+                </div>
+
+                <!-- Map Sidebar Panel (Details) -->
+                <aside class="w-full md:w-80 h-auto md:h-full bg-td-surface border-t md:border-t-0 md:border-l border-td-outline dark:bg-td-surface dark:border-td-outline light:bg-el-surface light:border-el-outline p-md overflow-y-auto shrink-0 flex flex-col gap-md z-10 select-none shadow-xl">
+                    <div class="flex justify-between items-start">
+                        <div>
+                            <h2 class="text-headline-sm font-bold" id="nodePanelTitle">Gate A</h2>
+                            <span class="inline-block bg-success/20 text-success border border-success/30 font-mono text-[10px] font-bold px-2 py-0.5 rounded uppercase mt-xs" id="nodePanelStatus">NOMINAL DENSITY</span>
+                        </div>
+                        <button class="text-td-on-surface-variant dark:text-td-on-surface-variant light:text-el-on-surface-variant hover:text-primary" onclick="closeNodePanel()">
+                            <span class="material-symbols-outlined">close</span>
+                        </button>
+                    </div>
+
+                    <!-- Custom Status Bar Indicator -->
+                    <div class="h-0.5 w-full bg-success rounded-full" id="nodePanelStatusBar"></div>
+
+                    <!-- Occupancy / Flow details (Bento grids) -->
+                    <div class="grid grid-cols-2 gap-sm">
+                        <div class="bg-td-surface-lowest dark:bg-td-surface-lowest light:bg-el-surface-low border border-td-outline dark:border-td-outline light:border-el-outline p-sm rounded flex flex-col justify-between h-20">
+                            <span class="text-xs text-td-on-surface-variant dark:text-td-on-surface-variant light:text-el-on-surface-variant font-mono">Density</span>
+                            <span class="text-headline-sm font-bold font-mono" id="nodePanelDensity">1.2 pax/m²</span>
+                        </div>
+                        <div class="bg-td-surface-lowest dark:bg-td-surface-lowest light:bg-el-surface-low border border-td-outline dark:border-td-outline light:border-el-outline p-sm rounded flex flex-col justify-between h-20">
+                            <span class="text-xs text-td-on-surface-variant dark:text-td-on-surface-variant light:text-el-on-surface-variant font-mono">Max Capacity</span>
+                            <span class="text-headline-sm font-bold font-mono" id="nodePanelCapacity">2.5 pax/m²</span>
+                        </div>
+                    </div>
+
+                    <!-- Dynamic Backpressure / QoS -->
+                    <div class="bg-td-surface-lowest dark:bg-td-surface-lowest light:bg-el-surface-low border border-td-outline dark:border-td-outline light:border-el-outline p-md rounded flex flex-col gap-sm">
+                        <div class="flex justify-between items-center">
+                            <span class="text-xs text-td-on-surface-variant dark:text-td-on-surface-variant light:text-el-on-surface-variant font-mono flex items-center gap-xs">
+                                <span class="material-symbols-outlined text-[16px]">network_check</span> Ingestion QoS
+                            </span>
+                            <span class="font-mono text-xs font-bold text-success" id="nodePanelQoS">QoS 0 (Default)</span>
+                        </div>
+                        <p class="text-xs text-td-on-surface-variant dark:text-td-on-surface-variant light:text-el-on-surface-variant">
+                            Surges &gt;= 2.0 people/m² automatically escalate connection parameters to QoS 1 to prevent packet loss.
+                        </p>
+                    </div>
+
+                    <!-- Flow Matrix -->
+                    <div class="flex-1 bg-td-surface-lowest dark:bg-td-surface-lowest light:bg-el-surface-low border border-td-outline dark:border-td-outline light:border-el-outline rounded overflow-hidden flex flex-col">
+                        <div class="p-sm bg-td-surface-high dark:bg-td-surface-high light:bg-el-surface-high font-mono text-xs text-td-on-surface-variant dark:text-td-on-surface-variant light:text-el-on-surface-variant border-b border-td-outline dark:border-td-outline light:border-el-outline font-bold">
+                            Flow Telemetry (People/min)
+                        </div>
+                        <div class="p-md flex-1 overflow-y-auto font-mono text-sm space-y-sm">
+                            <div class="flex justify-between border-b border-td-outline/30 dark:border-td-outline/30 light:border-el-outline/30 pb-xs">
+                                <span>Inflow Rate:</span>
+                                <span id="nodePanelFlowIn" class="font-bold">0.0</span>
+                            </div>
+                            <div class="flex justify-between border-b border-td-outline/30 dark:border-td-outline/30 light:border-el-outline/30 pb-xs">
+                                <span>Outflow Rate:</span>
+                                <span id="nodePanelFlowOut" class="font-bold">0.0</span>
+                            </div>
+                            <div class="flex justify-between pb-xs">
+                                <span>Rerouting Target:</span>
+                                <span id="nodePanelReroute" class="font-bold text-primary">NONE</span>
+                            </div>
+                        </div>
+                    </div>
+                </aside>
+            </div>
+
+
+            <!-- TAB 3: APPROVAL QUEUE -->
+            <div class="h-full overflow-y-auto p-md lg:p-lg" id="tab-approval" style="display:none;">
+                <div class="max-w-4xl mx-auto w-full flex flex-col h-full justify-center py-md">
+                    
+                    <!-- Header -->
+                    <div class="mb-lg flex flex-col sm:flex-row justify-between items-start sm:items-end gap-md select-none">
+                        <div>
+                            <h1 class="text-display-lg font-bold flex items-center gap-sm">
+                                <span class="material-symbols-outlined text-4xl text-primary">policy</span>
+                                Approval Queue
+                            </h1>
+                            <p class="text-sm text-td-on-surface-variant dark:text-td-on-surface-variant light:text-el-on-surface-variant">
+                                Real-time Human-in-the-Loop decision verification checkpoint.
+                            </p>
+                        </div>
+                        <div class="bg-td-surface border border-td-outline dark:bg-td-surface dark:border-td-outline light:bg-el-surface light:border-el-outline rounded-full px-md py-1.5 flex items-center gap-sm shadow">
+                            <span class="w-2.5 h-2.5 rounded-full bg-success animate-pulse" id="approvalQueueStatusDot"></span>
+                            <span class="font-mono text-xs font-bold text-td-on-surface dark:text-td-on-surface light:text-el-on-surface" id="approvalQueueStatusText">0 Pending Requests</span>
+                        </div>
+                    </div>
+
+                    <!-- Active Request Card -->
+                    <div class="bg-td-surface border border-td-outline dark:bg-td-surface dark:border-td-outline light:bg-el-surface light:border-el-outline rounded-xl overflow-hidden shadow-2xl relative transition-all duration-300" id="approvalCardContainer">
+                        
+                        <!-- Empty State -->
+                        <div class="p-lg md:p-xl text-center flex flex-col items-center justify-center py-16 gap-md select-none" id="approvalEmptyState">
+                            <div class="w-16 h-16 rounded-full bg-success/10 border border-success/35 text-success flex items-center justify-center">
+                                <span class="material-symbols-outlined text-4xl">done_all</span>
+                            </div>
+                            <div>
+                                <h3 class="text-headline-sm font-semibold">Queue Clean</h3>
+                                <p class="text-sm text-td-on-surface-variant dark:text-td-on-surface-variant light:text-el-on-surface-variant mt-xs">
+                                    No safety overrides or signage actuation approvals required.
+                                </p>
+                            </div>
+                        </div>
+
+                        <!-- Active State -->
+                        <div class="hidden" id="approvalActiveState">
+                            <!-- Status Bar Top -->
+                            <div class="h-1.5 w-full bg-critical" id="approvalActiveBar"></div>
+                            
+                            <div class="p-lg md:p-xl space-y-lg">
+                                <!-- Card Header -->
+                                <div class="flex justify-between items-start border-b border-td-outline dark:border-td-outline light:border-el-outline pb-md select-none">
+                                    <div>
+                                        <div class="font-mono text-xs font-bold text-critical tracking-wider uppercase animate-pulse">URGENT ACTUATION REQUEST</div>
+                                        <h2 class="text-headline-md font-bold mt-1" id="approveTitle">Zone Gate_A Overload</h2>
+                                        <p class="font-mono text-xs text-td-on-surface-variant dark:text-td-on-surface-variant light:text-el-on-surface-variant mt-1" id="approveID">ID: REQ-8894-ALPHA</p>
+                                    </div>
+                                    <!-- Timer Display -->
+                                    <div class="bg-td-surface-lowest dark:bg-td-surface-lowest light:bg-el-surface-low px-lg py-md rounded-lg border border-critical/55 flex flex-col items-center justify-center min-w-[110px] pulse-critical shadow-inner">
+                                        <span class="font-mono text-[9px] text-td-on-surface-variant dark:text-td-on-surface-variant light:text-el-on-surface-variant font-bold tracking-widest uppercase mb-1">AUTO-RUN IN</span>
+                                        <span class="font-mono text-2xl font-bold text-critical" id="approveTimer">2.0s</span>
+                                    </div>
+                                </div>
+
+                                <!-- Card Body (Bento Layout) -->
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-lg select-none">
+                                    <!-- Context / Trigger -->
+                                    <div class="bg-td-surface-lowest dark:bg-td-surface-lowest light:bg-el-surface-low border border-td-outline dark:border-td-outline light:border-el-outline rounded-lg p-md flex flex-col gap-sm relative overflow-hidden">
+                                        <div class="absolute right-0 top-0 opacity-5 pointer-events-none">
+                                            <span class="material-symbols-outlined text-9xl">warning</span>
+                                        </div>
+                                        <div class="flex items-center gap-sm text-critical">
+                                            <span class="material-symbols-outlined text-[18px]">sensors</span>
+                                            <span class="font-mono text-[10px] uppercase font-bold tracking-widest">Trigger Condition</span>
+                                        </div>
+                                        <div class="text-headline-sm font-bold" id="approveCondition">Density 3.5 pax/m²</div>
+                                        <div class="text-xs text-td-on-surface-variant dark:text-td-on-surface-variant light:text-el-on-surface-variant mt-auto pt-sm border-t border-td-outline/30 dark:border-td-outline/30 light:border-el-outline/30">
+                                            Sensor readings exceeded the safety ceiling. Auto-override activated.
+                                        </div>
+                                    </div>
+
+                                    <!-- Reasoning / Recommendation -->
+                                    <div class="bg-td-surface-lowest dark:bg-td-surface-lowest light:bg-el-surface-low border border-td-outline dark:border-td-outline light:border-el-outline rounded-lg p-md flex flex-col gap-sm">
+                                        <div class="flex items-center gap-sm text-primary">
+                                            <span class="material-symbols-outlined text-[18px]">psychology</span>
+                                            <span class="font-mono text-[10px] uppercase font-bold tracking-widest" id="approveMode">Inference Script (SLM)</span>
+                                        </div>
+                                        <div class="text-sm space-y-xs">
+                                            <p class="font-semibold text-td-on-surface dark:text-td-on-surface light:text-el-on-surface">
+                                                Gate Action: <span class="text-critical font-bold" id="approveGateAction">CLOSE_IMMEDIATELY</span>
+                                            </p>
+                                            <p class="text-td-on-surface dark:text-td-on-surface light:text-el-on-surface">
+                                                Signage: <span class="font-mono font-bold text-xs border border-td-outline/50 bg-td-surface/50 dark:bg-td-surface/50 light:bg-el-surface/50 px-1 py-0.5 rounded" id="approveSignageInstruction">CRITICAL OVERLOAD. REROUTE TO Gate_B</span>
+                                            </p>
+                                            <p class="text-xs text-td-on-surface-variant dark:text-td-on-surface-variant light:text-el-on-surface-variant italic mt-2">
+                                                Rationale: "<span id="approveRationale">Fallback: density limit exceeded</span>"
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Action Buttons -->
+                                <div class="flex flex-col sm:flex-row gap-md justify-end pt-md border-t border-td-outline dark:border-td-outline light:border-el-outline">
+                                    <button class="flex-1 sm:flex-none flex items-center justify-center gap-sm px-xl py-2.5 rounded font-bold uppercase tracking-wider border-2 border-critical text-critical hover:bg-critical hover:text-white transition-colors duration-200" onclick="sendVeto()">
+                                        <span class="material-symbols-outlined">block</span>
+                                        Veto Override
+                                    </button>
+                                    <button class="flex-1 sm:flex-none flex items-center justify-center gap-sm px-xl py-2.5 rounded font-bold uppercase tracking-wider bg-success text-white border-2 border-success hover:bg-emerald-600 transition-colors duration-200 shadow-lg shadow-success/15" onclick="sendApprove()">
+                                        <span class="material-symbols-outlined">check_circle</span>
+                                        Approve Early
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+
+
+            <!-- TAB 4: INCIDENT FEED -->
+            <div class="h-full overflow-hidden flex flex-col p-md lg:p-lg" id="tab-incidents" style="display:none;">
+                <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-md gap-sm select-none">
+                    <div>
+                        <h2 class="text-headline-md font-bold">Incident Feed</h2>
+                        <p class="text-sm text-td-on-surface-variant dark:text-td-on-surface-variant light:text-el-on-surface-variant">Real-time incident report events and schema payload stream.</p>
+                    </div>
+                    <div class="flex flex-wrap gap-sm items-center w-full md:w-auto">
+                        <select class="bg-td-surface dark:bg-td-surface light:bg-el-surface border border-td-outline dark:border-td-outline light:border-el-outline rounded text-xs py-1 px-3 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary cursor-pointer font-semibold" id="incidentFilterSeverity" onchange="applyIncidentFilters()">
+                            <option value="all">Severity: All</option>
+                            <option value="critical">Severity: CRITICAL</option>
+                            <option value="high">Severity: HIGH</option>
+                            <option value="medium">Severity: MEDIUM</option>
+                            <option value="low">Severity: LOW</option>
+                        </select>
+                        <select class="bg-td-surface dark:bg-td-surface light:bg-el-surface border border-td-outline dark:border-td-outline light:border-el-outline rounded text-xs py-1 px-3 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary cursor-pointer font-semibold" id="incidentFilterZone" onchange="applyIncidentFilters()">
+                            <option value="all">Zone: All</option>
+                            <option value="Gate_A">Zone: Gate A</option>
+                            <option value="Gate_B">Zone: Gate B</option>
+                            <option value="Corridor_1">Zone: Corridor 1</option>
+                            <option value="Corridor_2">Zone: Corridor 2</option>
+                            <option value="Main_Concourse">Zone: Main Concourse</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Table -->
+                <div class="flex-1 bg-td-surface border border-td-outline dark:bg-td-surface dark:border-td-outline light:bg-el-surface light:border-el-outline rounded-lg overflow-hidden flex flex-col shadow">
+                    <div class="h-[3px] w-full bg-primary"></div>
+                    <div class="flex-1 overflow-auto">
+                        <table class="w-full text-left border-collapse font-mono text-xs">
+                            <thead class="bg-td-surface-high dark:bg-td-surface-high light:bg-el-surface-high border-b border-td-outline dark:border-td-outline light:border-el-outline font-sans text-xs font-bold text-td-on-surface-variant dark:text-td-on-surface-variant light:text-el-on-surface-variant uppercase tracking-wider select-none sticky top-0 z-10">
+                                <tr>
+                                    <th class="p-md w-8"></th>
+                                    <th class="p-md">Timestamp</th>
+                                    <th class="p-md">Zone ID</th>
+                                    <th class="p-md">Type</th>
+                                    <th class="p-md">Severity</th>
+                                    <th class="p-md">Gate Action</th>
+                                    <th class="p-md">Reroute Target</th>
+                                    <th class="p-md">Status</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-td-outline/30 dark:divide-td-outline/30 light:divide-el-outline/30 font-mono" id="incidentFeedTableBody">
+                                <!-- Dynamic rows -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+
+            <!-- TAB 5: ACTUATOR CONTROL -->
+            <div class="h-full overflow-y-auto p-md lg:p-lg" id="tab-actuators" style="display:none;">
+                <div class="max-w-5xl mx-auto space-y-lg">
+                    <!-- Title -->
+                    <div class="select-none">
+                        <h2 class="text-headline-md font-bold">Actuator Control Interface</h2>
+                        <p class="text-sm text-td-on-surface-variant dark:text-td-on-surface-variant light:text-el-on-surface-variant">Manual and automated digital signage / turnstile gate actuation panels.</p>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-lg">
+                        <!-- Digital Signage Grid Panel -->
+                        <div class="col-span-1 md:col-span-2 bg-td-surface border border-td-outline dark:bg-td-surface dark:border-td-outline light:bg-el-surface light:border-el-outline rounded-lg p-md flex flex-col gap-md">
+                            <h3 class="font-semibold text-headline-sm select-none border-b border-td-outline dark:border-td-outline light:border-el-outline pb-sm flex items-center gap-xs">
+                                <span class="material-symbols-outlined text-primary">dynamic_feed</span>
+                                Dynamic Digital Signage Displays
+                            </h3>
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-sm" id="actuatorSignageGrid">
+                                <!-- Dynamic Cards -->
+                            </div>
+                        </div>
+
+                        <!-- Turnstile Gates Config -->
+                        <div class="bg-td-surface border border-td-outline dark:bg-td-surface dark:border-td-outline light:bg-el-surface light:border-el-outline rounded-lg p-md flex flex-col gap-md">
+                            <h3 class="font-semibold text-headline-sm select-none border-b border-td-outline dark:border-td-outline light:border-el-outline pb-sm flex items-center gap-xs">
+                                <span class="material-symbols-outlined text-primary">door_sliding</span>
+                                Gate Control Panels
+                            </h3>
+                            <div class="space-y-md flex-1" id="actuatorGatesList">
+                                <!-- Dynamic Gate List -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+
+            <!-- TAB 6: SENSOR HEALTH -->
+            <div class="h-full overflow-y-auto p-md lg:p-lg" id="tab-health" style="display:none;">
+                <div class="max-w-5xl mx-auto space-y-lg">
+                    <div class="select-none">
+                        <h2 class="text-headline-md font-bold">Sensor Network Health</h2>
+                        <p class="text-sm text-td-on-surface-variant dark:text-td-on-surface-variant light:text-el-on-surface-variant">Lidar and camera telemetry stream integrity, packet rates, and network QoS.</p>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-lg">
+                        <!-- Sensor Nodes Table -->
+                        <div class="col-span-1 md:col-span-2 bg-td-surface border border-td-outline dark:bg-td-surface dark:border-td-outline light:bg-el-surface light:border-el-outline rounded-lg p-md flex flex-col gap-md">
+                            <h3 class="font-semibold text-headline-sm select-none border-b border-td-outline dark:border-td-outline light:border-el-outline pb-sm flex items-center gap-xs">
+                                <span class="material-symbols-outlined text-primary">sensors</span>
+                                Telemetry Ingest Nodes
+                            </h3>
+                            <div class="overflow-x-auto">
+                                <table class="w-full text-left border-collapse font-mono text-xs">
+                                    <thead class="bg-td-surface-high dark:bg-td-surface-high light:bg-el-surface-high border-b border-td-outline dark:border-td-outline light:border-el-outline font-sans text-[11px] font-bold text-td-on-surface-variant dark:text-td-on-surface-variant light:text-el-on-surface-variant uppercase">
+                                        <tr>
+                                            <th class="p-sm">Zone Node ID</th>
+                                            <th class="p-sm">Telemetry Source</th>
+                                            <th class="p-sm">Packet Rate</th>
+                                            <th class="p-sm">MQTT QoS</th>
+                                            <th class="p-sm">Status</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="healthSensorsTableBody">
+                                        <!-- Dynamic rows -->
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+
+                        <!-- Network Stream Status -->
+                        <div class="bg-td-surface border border-td-outline dark:bg-td-surface dark:border-td-outline light:bg-el-surface light:border-el-outline rounded-lg p-md flex flex-col gap-md">
+                            <h3 class="font-semibold text-headline-sm select-none border-b border-td-outline dark:border-td-outline light:border-el-outline pb-sm flex items-center gap-xs">
+                                <span class="material-symbols-outlined text-primary">router</span>
+                                MQTT Broker Telemetry
+                            </h3>
+                            <div class="space-y-md flex-1">
+                                <div class="flex justify-between items-center pb-sm border-b border-td-outline/30 dark:border-td-outline/30 light:border-el-outline/30 select-none">
+                                    <span class="text-sm font-semibold">Broker Endpoint:</span>
+                                    <span class="font-mono text-xs bg-td-surface-lowest dark:bg-td-surface-lowest light:bg-el-surface-low border border-td-outline/50 px-2 py-0.5 rounded" id="healthBrokerURL">127.0.0.1:1883</span>
+                                </div>
+                                <div class="flex justify-between items-center pb-sm border-b border-td-outline/30 dark:border-td-outline/30 light:border-el-outline/30 select-none">
+                                    <span class="text-sm font-semibold">MQTT Status:</span>
+                                    <span class="inline-flex items-center gap-xs px-2.5 py-0.5 rounded text-xs font-mono font-bold" id="healthBrokerStatus">
+                                        <span class="w-2 h-2 rounded-full bg-success"></span> Connected
+                                    </span>
+                                </div>
+                                <div class="flex justify-between items-center select-none">
+                                    <span class="text-sm font-semibold">Packet Loss Rate:</span>
+                                    <span class="font-mono text-xs font-bold text-success">0.02%</span>
+                                </div>
+                                <div class="pt-sm">
+                                    <span class="text-xs text-td-on-surface-variant dark:text-td-on-surface-variant light:text-el-on-surface-variant font-mono">QoS Auto-escalation Logic:</span>
+                                    <div class="mt-sm p-sm rounded bg-td-surface-lowest dark:bg-td-surface-lowest light:bg-el-surface-low border border-td-outline/50 text-xs text-td-on-surface-variant dark:text-td-on-surface-variant light:text-el-on-surface-variant">
+                                        The middleware constantly monitors TCP buffers. Under density overload (&gt;=2.0 pax/m²), nodes are flagged to enforce QoS 1 and prevent latency creep.
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+
+            <!-- TAB 7: MODEL OPS -->
+            <div class="h-full overflow-y-auto p-md lg:p-lg" id="tab-modelops" style="display:none;">
+                <div class="max-w-5xl mx-auto space-y-lg">
+                    <div class="select-none">
+                        <h2 class="text-headline-md font-bold">Model Operations</h2>
+                        <p class="text-sm text-td-on-surface-variant dark:text-td-on-surface-variant light:text-el-on-surface-variant">Local Small Language Model (SLM) stats, response latency, and logit GBNF validation metrics.</p>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-lg">
+                        <!-- Left deployment cards -->
+                        <div class="col-span-1 md:col-span-2 grid grid-cols-1 sm:grid-cols-2 gap-sm select-none">
+                            <div class="bg-td-surface border border-td-outline dark:bg-td-surface dark:border-td-outline light:bg-el-surface light:border-el-outline rounded-lg p-md flex flex-col gap-sm">
+                                <div class="flex justify-between items-start">
+                                    <div>
+                                        <h3 class="font-bold text-sm">Zone Llama Server</h3>
+                                        <span class="text-xs text-td-on-surface-variant dark:text-td-on-surface-variant light:text-el-on-surface-variant">Inference Target</span>
+                                    </div>
+                                    <span class="text-[10px] font-mono font-bold bg-success-bg border border-success/30 text-success px-2 py-0.5 rounded">ONLINE</span>
+                                </div>
+                                <div class="flex items-baseline gap-1 my-sm">
+                                    <span class="text-headline-md font-bold text-primary font-mono">Qwen-2.5-7B</span>
+                                    <span class="text-xs text-td-on-surface-variant dark:text-td-on-surface-variant light:text-el-on-surface-variant font-mono">4-bit Instruct</span>
+                                </div>
+                                <div class="mt-auto text-xs text-td-on-surface-variant dark:text-td-on-surface-variant light:text-el-on-surface-variant border-t border-td-outline/30 dark:border-td-outline/30 light:border-el-outline/30 pt-sm">
+                                    Schema enforcement: GBNF Grammar.
+                                </div>
+                            </div>
+
+                            <div class="bg-td-surface border border-td-outline dark:bg-td-surface dark:border-td-outline light:bg-el-surface light:border-el-outline rounded-lg p-md flex flex-col gap-sm">
+                                <div class="flex justify-between items-start">
+                                    <div>
+                                        <h3 class="font-bold text-sm">Hardware Acceleration</h3>
+                                        <span class="text-xs text-td-on-surface-variant dark:text-td-on-surface-variant light:text-el-on-surface-variant">CPU Mode</span>
+                                    </div>
+                                    <span class="text-[10px] font-mono font-bold bg-primary-glow border border-primary/30 text-primary px-2 py-0.5 rounded">OPTIMIZED</span>
+                                </div>
+                                <div class="flex items-baseline gap-1 my-sm">
+                                    <span class="text-headline-md font-bold text-primary font-mono">Prompt Cache</span>
+                                    <span class="text-xs text-td-on-surface-variant dark:text-td-on-surface-variant light:text-el-on-surface-variant font-mono">Enabled</span>
+                                </div>
+                                <div class="mt-auto text-xs text-td-on-surface-variant dark:text-td-on-surface-variant light:text-el-on-surface-variant border-t border-td-outline/30 dark:border-td-outline/30 light:border-el-outline/30 pt-sm">
+                                    Saves TTFT context for static prompt templates.
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Right metrics list -->
+                        <div class="bg-td-surface border border-td-outline dark:bg-td-surface dark:border-td-outline light:bg-el-surface light:border-el-outline rounded-lg p-md flex flex-col gap-md">
+                            <h3 class="font-semibold text-headline-sm select-none border-b border-td-outline dark:border-td-outline light:border-el-outline pb-sm flex items-center gap-xs">
+                                <span class="material-symbols-outlined text-primary">query_stats</span>
+                                Inference Performance
+                            </h3>
+                            <div class="space-y-sm flex-1 font-mono text-xs">
+                                <div>
+                                    <div class="flex justify-between mb-1 select-none">
+                                        <span>Prefill (TTFT) Target:</span>
+                                        <span class="text-primary font-bold">&lt; 100ms</span>
+                                    </div>
+                                    <div class="flex justify-between mb-1 select-none">
+                                        <span>Last Latency:</span>
+                                        <span id="modelopsTTFT" class="text-primary font-bold">0ms</span>
+                                    </div>
+                                </div>
+                                <div class="border-t border-td-outline/30 dark:border-t-outline/30 light:border-el-outline/30 pt-sm">
+                                    <div class="flex justify-between select-none">
+                                        <span>GBNF Compliance:</span>
+                                        <span class="text-success font-bold">100%</span>
+                                    </div>
+                                    <p class="text-[10px] text-td-on-surface-variant dark:text-td-on-surface-variant light:text-el-on-surface-variant font-sans mt-xs select-none">
+                                        Pydantic schema validation executes deterministically at the token output level.
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+
+            <!-- TAB 8: AUDIT TRAIL -->
+            <div class="h-full overflow-hidden flex flex-col p-md lg:p-lg" id="tab-audit" style="display:none;">
+                <div class="flex justify-between items-center mb-md select-none">
+                    <div>
+                        <h2 class="text-headline-md font-bold">Append-Only Audit Trail Ledger</h2>
+                        <p class="text-sm text-td-on-surface-variant dark:text-td-on-surface-variant light:text-el-on-surface-variant">Cryptographic logging of inference events, operator vetos, and signage adjustments.</p>
+                    </div>
+                    <button class="bg-td-surface border border-td-outline dark:bg-td-surface dark:border-td-outline light:bg-el-surface light:border-el-outline rounded hover:bg-td-surface-high dark:hover:bg-td-surface-high light:hover:bg-el-surface-high text-xs py-1 px-3 transition-colors font-mono font-bold flex items-center gap-xs" onclick="fetchAuditLogs()">
+                        <span class="material-symbols-outlined text-[16px]">refresh</span> Refresh Logs
+                    </button>
+                </div>
+
+                <!-- Scrolling list -->
+                <div class="flex-1 bg-td-surface border border-td-outline dark:bg-td-surface dark:border-td-outline light:bg-el-surface light:border-el-outline rounded-lg p-md overflow-y-auto font-mono text-xs space-y-xs shadow" id="auditTrailList">
+                    <!-- Logs list -->
+                </div>
+            </div>
+
+
+            <!-- TAB 9: SETTINGS -->
+            <div class="h-full overflow-y-auto p-md lg:p-lg" id="tab-settings" style="display:none;">
+                <div class="max-w-2xl mx-auto bg-td-surface border border-td-outline dark:bg-td-surface dark:border-td-outline light:bg-el-surface light:border-el-outline rounded-lg p-md md:p-lg flex flex-col gap-lg shadow">
+                    <div class="border-b border-td-outline dark:border-td-outline light:border-el-outline pb-sm select-none">
+                        <h2 class="text-headline-md font-bold">System Configuration Settings</h2>
+                        <p class="text-sm text-td-on-surface-variant dark:text-td-on-surface-variant light:text-el-on-surface-variant">Adjust EdgePulse middleware timing thresholds and network constants.</p>
+                    </div>
+
+                    <form class="space-y-md text-sm font-semibold" id="settingsForm" onsubmit="saveSettings(event)">
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-md">
+                            <div>
+                                <label class="block text-xs font-bold uppercase tracking-wider text-td-on-surface-variant dark:text-td-on-surface-variant light:text-el-on-surface-variant mb-xs select-none">Operator Veto SLA Timeout (sec)</label>
+                                <input class="w-full bg-td-surface-lowest dark:bg-td-surface-lowest light:bg-el-surface-low border border-td-outline dark:border-td-outline light:border-el-outline rounded p-sm focus:outline-none focus:border-primary text-sm font-mono" id="settingSlaSec" step="0.5" type="number" value="2.0"/>
+                            </div>
+                            <div>
+                                <label class="block text-xs font-bold uppercase tracking-wider text-td-on-surface-variant dark:text-td-on-surface-variant light:text-el-on-surface-variant mb-xs select-none">Fallback Density Limit (pax/m²)</label>
+                                <input class="w-full bg-td-surface-lowest dark:bg-td-surface-lowest light:bg-el-surface-low border border-td-outline dark:border-td-outline light:border-el-outline rounded p-sm focus:outline-none focus:border-primary text-sm font-mono" id="settingDensityLimit" step="0.1" type="number" value="3.0"/>
+                            </div>
+                        </div>
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-md">
+                            <div>
+                                <label class="block text-xs font-bold uppercase tracking-wider text-td-on-surface-variant dark:text-td-on-surface-variant light:text-el-on-surface-variant mb-xs select-none">MQTT Broker Endpoint Host</label>
+                                <input class="w-full bg-td-surface-lowest dark:bg-td-surface-lowest light:bg-el-surface-low border border-td-outline dark:border-td-outline light:border-el-outline rounded p-sm focus:outline-none focus:border-primary text-sm font-mono" id="settingMqttHost" type="text" value="127.0.0.1"/>
+                            </div>
+                            <div>
+                                <label class="block text-xs font-bold uppercase tracking-wider text-td-on-surface-variant dark:text-td-on-surface-variant light:text-el-on-surface-variant mb-xs select-none">MQTT Broker Port</label>
+                                <input class="w-full bg-td-surface-lowest dark:bg-td-surface-lowest light:bg-el-surface-low border border-td-outline dark:border-td-outline light:border-el-outline rounded p-sm focus:outline-none focus:border-primary text-sm font-mono" id="settingMqttPort" type="number" value="1883"/>
+                            </div>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold uppercase tracking-wider text-td-on-surface-variant dark:text-td-on-surface-variant light:text-el-on-surface-variant mb-xs select-none">Local llama-server Endpoint API</label>
+                            <input class="w-full bg-td-surface-lowest dark:bg-td-surface-lowest light:bg-el-surface-low border border-td-outline dark:border-td-outline light:border-el-outline rounded p-sm focus:outline-none focus:border-primary text-sm font-mono" id="settingLlmUrl" type="text" value="http://localhost:8080/completion"/>
+                        </div>
+
+                        <div class="flex justify-end pt-md border-t border-td-outline dark:border-td-outline light:border-el-outline">
+                            <button class="bg-primary hover:bg-blue-600 text-white font-bold px-lg py-2 rounded shadow transition-all duration-150 active:scale-95" type="submit">
+                                Save Settings
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- Bottom System Health Strips -->
+        <footer class="h-10 bg-td-surface-lowest border-t border-td-outline dark:bg-td-surface-lowest dark:border-td-outline light:bg-el-surface-low light:border-el-outline flex items-center justify-between px-md shrink-0 font-mono text-[11px] text-td-on-surface-variant dark:text-td-on-surface-variant light:text-el-on-surface-variant overflow-hidden z-10 select-none">
+            <!-- Ticker -->
+            <div class="flex-1 flex items-center overflow-hidden border-r border-td-outline dark:border-td-outline light:border-el-outline pr-md mr-md">
+                <span class="text-warning font-bold mr-sm shrink-0 uppercase tracking-widest text-[9px] bg-warning/10 border border-warning/20 px-1 py-0.5 rounded">TICKER:</span>
+                <div class="whitespace-nowrap overflow-hidden relative w-full h-4">
+                    <div class="absolute w-full h-full flex items-center animate-[marquee_25s_linear_infinite]" id="systemTickerStrip">
+                        <span class="mr-lg text-success">✔ All edge turnstile sensors reports nominal connections.</span>
+                        <span class="mr-lg">ℹ Local llama-server caching active (context prefill bypass enabled).</span>
+                        <span class="mr-lg text-primary">⚡ System running on local-only loopback fallback routes.</span>
+                    </div>
+                </div>
+            </div>
+            <!-- System stats -->
+            <div class="flex items-center gap-md shrink-0">
+                <div class="flex items-center gap-xs">
+                    <span class="material-symbols-outlined text-[14px]">swap_vert</span>
+                    <span>Broker: <span class="font-bold" id="footerMqttStatus">OFFLINE</span></span>
+                </div>
+                <div class="w-px h-4 bg-td-outline dark:bg-td-outline light:bg-el-outline"></div>
+                <div class="flex items-center gap-xs">
+                    <span class="material-symbols-outlined text-[14px]">memory</span>
+                    <span>LLM TTFT: <span class="font-bold text-primary" id="footerLlmLatency">0ms</span></span>
+                </div>
+            </div>
+        </footer>
+    </main>
+
+    <!-- Slide-in Mobile Navigation Menu Overlay -->
+    <div class="fixed inset-0 bg-black/60 z-[90] hidden transition-opacity duration-300 md:hidden" id="mobileNavOverlay" onclick="toggleMobileNav()">
+        <div class="w-64 h-full bg-td-surface-low dark:bg-td-surface-low light:bg-el-surface p-md flex flex-col gap-md border-r border-td-outline dark:border-td-outline light:border-el-outline transform -translate-x-full transition-transform duration-300" id="mobileNavDrawer" onclick="event.stopPropagation()">
+            <div class="flex justify-between items-center select-none border-b border-td-outline/30 pb-sm">
+                <h2 class="text-headline-sm font-bold text-primary flex items-center gap-xs">
+                    <span class="material-symbols-outlined">stadium</span>
+                    EdgePulse
+                </h2>
+                <span class="material-symbols-outlined text-td-on-surface-variant dark:text-td-on-surface-variant light:text-el-on-surface-variant cursor-pointer" onclick="toggleMobileNav()">close</span>
+            </div>
+            <ul class="flex-grow space-y-sm" id="mobileNavLinks">
+                <!-- Javascript will duplicate navigation items here -->
+            </ul>
+        </div>
+    </div>
+
+    <!-- Telemetry Simulation Controls Panel (Modal overlay) -->
+    <div class="fixed inset-0 bg-black/75 z-[80] hidden flex items-center justify-center p-md" id="simModal" onclick="closeSimPanel()">
+        <div class="bg-td-surface border border-td-outline dark:bg-td-surface dark:border-td-outline light:bg-el-surface light:border-el-outline rounded-lg p-md md:p-lg w-full max-w-md flex flex-col gap-md shadow-2xl relative" onclick="event.stopPropagation()">
+            <div class="flex justify-between items-center border-b border-td-outline dark:border-td-outline light:border-el-outline pb-sm select-none">
+                <h3 class="font-semibold text-headline-sm flex items-center gap-xs text-primary">
+                    <span class="material-symbols-outlined">bolt</span>
+                    Edge Telemetry Simulator
+                </h3>
+                <span class="material-symbols-outlined text-td-on-surface-variant dark:text-td-on-surface-variant light:text-el-on-surface-variant cursor-pointer hover:text-primary" onclick="closeSimPanel()">close</span>
+            </div>
+            
+            <form class="space-y-md text-xs font-semibold" id="simForm" onsubmit="submitSimTelemetry(event)">
+                <div>
+                    <label class="block uppercase tracking-wider text-td-on-surface-variant dark:text-td-on-surface-variant light:text-el-on-surface-variant mb-xs select-none">Select Target Zone</label>
+                    <select class="w-full bg-td-surface-lowest dark:bg-td-surface-lowest light:bg-el-surface-low border border-td-outline dark:border-td-outline light:border-el-outline rounded p-sm focus:outline-none focus:border-primary text-sm font-semibold cursor-pointer" id="simZoneId">
+                        <option value="Gate_A">Gate A (Cap: 2.5)</option>
+                        <option value="Gate_B">Gate B (Cap: 2.5)</option>
+                        <option value="Corridor_1">Corridor 1 (Cap: 4.0)</option>
+                        <option value="Corridor_2">Corridor 2 (Cap: 4.0)</option>
+                        <option value="Main_Concourse">Main Concourse (Cap: 5.0)</option>
+                    </select>
+                </div>
+                <div class="grid grid-cols-2 gap-sm">
+                    <div>
+                        <label class="block uppercase tracking-wider text-td-on-surface-variant dark:text-td-on-surface-variant light:text-el-on-surface-variant mb-xs select-none">Crowd Density (pax/m²)</label>
+                        <input class="w-full bg-td-surface-lowest dark:bg-td-surface-lowest light:bg-el-surface-low border border-td-outline dark:border-td-outline light:border-el-outline rounded p-sm focus:outline-none focus:border-primary text-sm font-mono" id="simDensity" step="0.1" type="number" value="1.2"/>
+                    </div>
+                    <div>
+                        <label class="block uppercase tracking-wider text-td-on-surface-variant dark:text-td-on-surface-variant light:text-el-on-surface-variant mb-xs select-none">Inflow Rate (pax/min)</label>
+                        <input class="w-full bg-td-surface-lowest dark:bg-td-surface-lowest light:bg-el-surface-low border border-td-outline dark:border-td-outline light:border-el-outline rounded p-sm focus:outline-none focus:border-primary text-sm font-mono" id="simFlowIn" step="5" type="number" value="30"/>
+                    </div>
+                </div>
+                <div>
+                    <label class="block uppercase tracking-wider text-td-on-surface-variant dark:text-td-on-surface-variant light:text-el-on-surface-variant mb-xs select-none">Outflow Rate (pax/min)</label>
+                    <input class="w-full bg-td-surface-lowest dark:bg-td-surface-lowest light:bg-el-surface-low border border-td-outline dark:border-td-outline light:border-el-outline rounded p-sm focus:outline-none focus:border-primary text-sm font-mono" id="simFlowOut" step="5" type="number" value="25"/>
+                </div>
+
+                <div class="flex gap-sm justify-end pt-md border-t border-td-outline dark:border-td-outline light:border-el-outline">
+                    <button class="bg-td-surface-high hover:bg-td-surface-highest border border-td-outline text-td-on-surface dark:text-td-on-surface light:text-el-on-surface px-lg py-2 rounded transition-all active:scale-95" type="button" onclick="closeSimPanel()">
+                        Cancel
+                    </button>
+                    <button class="bg-primary hover:bg-blue-600 text-white px-lg py-2 rounded shadow transition-all active:scale-95 flex items-center gap-xs font-bold" type="submit">
+                        <span class="material-symbols-outlined text-[16px]">send</span> Publish Stream
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- JavaScript logic -->
+    <script>
+        // Tab switching logic
+        let currentTab = 'dashboard';
+        function switchTab(tabId) {
+            currentTab = tabId;
+            // Update active styles on nav sidebar
+            const links = document.querySelectorAll('#navLinks a');
+            links.forEach(link => {
+                if (link.id === `nav-${tabId}`) {
+                    link.className = "flex items-center gap-md rounded p-md bg-primary/10 text-primary border border-primary/20 scale-[0.98] transition-all cursor-pointer font-bold";
+                    const icon = link.querySelector('.material-symbols-outlined');
+                    if (icon) icon.style.fontVariationSettings = "'FILL' 1";
+                } else {
+                    link.className = "flex items-center gap-md rounded p-md text-td-on-surface-variant dark:text-td-on-surface-variant light:text-el-on-surface-variant hover:bg-td-surface-high dark:hover:bg-td-surface-high light:hover:bg-el-surface-high transition-all cursor-pointer";
+                    const icon = link.querySelector('.material-symbols-outlined');
+                    if (icon) icon.style.fontVariationSettings = "'FILL' 0";
+                }
+            });
+
+            // Update mobile sidebar links too
+            const mobileLinks = document.querySelectorAll('#mobileNavLinks a');
+            mobileLinks.forEach(link => {
+                if (link.id === `mobile-nav-${tabId}`) {
+                    link.className = "flex items-center gap-md rounded p-md bg-primary/10 text-primary border border-primary/20 scale-[0.98] transition-all cursor-pointer font-bold";
+                } else {
+                    link.className = "flex items-center gap-md rounded p-md text-td-on-surface-variant dark:text-td-on-surface-variant light:text-el-on-surface-variant hover:bg-td-surface-high dark:hover:bg-td-surface-high light:hover:bg-el-surface-high transition-all cursor-pointer";
+                }
+            });
+
+            // Hide/Show tab contents
+            const tabs = ['dashboard', 'map', 'approval', 'incidents', 'actuators', 'health', 'modelops', 'audit', 'settings'];
+            tabs.forEach(id => {
+                const el = document.getElementById(`tab-${id}`);
+                if (el) el.style.display = (id === tabId) ? 'block' : 'none';
+            });
+
+            // Extra actions on tab load
+            if (tabId === 'audit') {
+                fetchAuditLogs();
+            }
+            // Close mobile nav drawer if open
+            const overlay = document.getElementById('mobileNavOverlay');
+            if (!overlay.classList.contains('hidden')) {
+                toggleMobileNav();
+            }
+        }
+
+        // Duplicate navigation links for mobile view drawer
+        const navLinksHtml = document.getElementById('navLinks').innerHTML;
+        const mobileLinksUl = document.getElementById('mobileNavLinks');
+        mobileLinksUl.innerHTML = navLinksHtml.replaceAll('id="nav-', 'id="mobile-nav-');
+
+        // Theme switching logic (Dark mode / Light mode)
+        let theme = 'dark';
+        function toggleTheme() {
+            const html = document.documentElement;
+            if (theme === 'dark') {
+                html.className = 'light';
+                theme = 'light';
+                document.getElementById('themeIcon').textContent = 'dark_mode';
+            } else {
+                html.className = 'dark';
+                theme = 'dark';
+                document.getElementById('themeIcon').textContent = 'light_mode';
+            }
+            updateGraphThemeStyles();
+        }
+
+        function updateGraphThemeStyles() {
+            const texts = document.querySelectorAll('svg text');
+            texts.forEach(text => {
+                if (theme === 'dark') {
+                    text.classList.remove('fill-el-on-surface', 'fill-el-on-surface-variant');
+                } else {
+                    text.classList.add('fill-el-on-surface');
+                }
+            });
+        }
+
+        // Mobile drawer toggling
+        function toggleMobileNav() {
+            const overlay = document.getElementById('mobileNavOverlay');
+            const drawer = document.getElementById('mobileNavDrawer');
+            if (overlay.classList.contains('hidden')) {
+                overlay.classList.remove('hidden');
+                setTimeout(() => {
+                    drawer.classList.remove('-translate-x-full');
+                }, 50);
+            } else {
+                drawer.classList.add('-translate-x-full');
+                setTimeout(() => {
+                    overlay.classList.add('hidden');
+                }, 300);
+            }
+        }
+
+        // Interactive Map Mode Toggle (Topology / Heatmap)
+        let mapMode = 'view';
+        function toggleMapMode(mode) {
+            mapMode = mode;
+            const viewBtn = document.getElementById('map-btn-view');
+            const heatBtn = document.getElementById('map-btn-heatmap');
+            if (mode === 'view') {
+                viewBtn.className = "text-xs px-3 py-1 rounded bg-primary text-white font-bold";
+                heatBtn.className = "text-xs px-3 py-1 rounded hover:bg-primary/20 transition-all text-td-on-surface dark:text-td-on-surface light:text-el-on-surface font-semibold";
+            } else {
+                heatBtn.className = "text-xs px-3 py-1 rounded bg-primary text-white font-bold";
+                viewBtn.className = "text-xs px-3 py-1 rounded hover:bg-primary/20 transition-all text-td-on-surface dark:text-td-on-surface light:text-el-on-surface font-semibold";
+            }
+            updateMapVisuals();
+        }
+
+        // Simulation Modal trigger
+        function openSimPanel() {
+            document.getElementById('simModal').classList.remove('hidden');
+        }
+        function closeSimPanel() {
+            document.getElementById('simModal').classList.add('hidden');
+        }
+
+        // Selected node in map/details panel
+        let selectedNodeId = 'Gate_A';
+        function selectNode(nodeId) {
+            selectedNodeId = nodeId;
+            document.getElementById('nodePanelTitle').textContent = nodeId.replace('_', ' ');
+            updateNodeDetailsUI(nodeId);
+            // Highlight selected node in SVGs
+            const svgNodes = ['Gate_A', 'Gate_B', 'Corridor_1', 'Corridor_2', 'Main_Concourse'];
+            svgNodes.forEach(id => {
+                const mapNodeCircle = document.getElementById(`map-node-${id}`);
+                const dashNodeCircle = document.getElementById(`dash-node-${id}`);
+                if (id === nodeId) {
+                    mapNodeCircle.classList.add('stroke-primary', 'stroke-[3px]');
+                    dashNodeCircle.classList.add('stroke-primary', 'stroke-[3px]');
+                    if (mapNodeCircle.r.baseVal) mapNodeCircle.r.baseVal.value = mapNodeCircle.r.baseVal.value + 3;
+                } else {
+                    mapNodeCircle.classList.remove('stroke-primary', 'stroke-[3px]');
+                    dashNodeCircle.classList.remove('stroke-primary', 'stroke-[3px]');
+                    // reset size
+                    if (id === 'Gate_A' || id === 'Gate_B') mapNodeCircle.setAttribute('r', '22');
+                    if (id === 'Corridor_1' || id === 'Corridor_2') mapNodeCircle.setAttribute('r', '26');
+                    if (id === 'Main_Concourse') mapNodeCircle.setAttribute('r', '32');
+                }
+            });
+        }
+        function closeNodePanel() {
+            // default close simply highlights nothing
+        }
+
+        // System Date-Time
+        setInterval(() => {
+            const now = new Date();
+            document.getElementById('currentSystemTime').textContent = now.toTimeString().split(' ')[0];
+            document.getElementById('currentSystemDate').textContent = now.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+        }, 1000);
+
+        // Global Alert display
+        let criticalAlertActive = false;
+        function triggerGlobalAlert(message) {
+            document.getElementById('globalAlertText').textContent = message;
+            document.getElementById('globalAlert').classList.remove('-translate-y-full');
+            criticalAlertActive = true;
+        }
+        function dismissAlert() {
+            document.getElementById('globalAlert').classList.add('-translate-y-full');
+            criticalAlertActive = false;
+        }
+
+        function goToTab(tabId) {
+            switchTab(tabId);
+            dismissAlert();
+        }
+
+        // Global State & WebSockets Integration
+        let socket = null;
+        let localState = {
+            nodes: [],
+            edges: [],
+            active_interventions: [],
+            system_health: {
+                mqtt_connected: false,
+                llm_latency_ms: 0,
+                llm_status: "offline"
+            }
+        };
+
+        function connectWebSocket() {
+            const loc = window.location;
+            let wsUri = loc.protocol === "https:" ? "wss:" : "ws:";
+            wsUri += "//" + loc.host + "/ws";
+
+            console.log("Connecting to WebSocket at " + wsUri);
+            socket = new WebSocket(wsUri);
+
+            socket.onopen = function() {
+                console.log("WebSocket connected.");
+                updateMQTTFooter(true);
+            };
+
+            socket.onmessage = function(event) {
+                const data = JSON.parse(event.data);
+                if (data.type === "state_update") {
+                    localState = data;
+                    updateUI();
+                } else if (data.type === "audit_log") {
+                    // Append log to list if tab is open
+                    if (currentTab === 'audit') {
+                        addAuditLogEntry(data.log);
+                    }
+                }
+            };
+
+            socket.onclose = function() {
+                console.log("WebSocket connection closed. Retrying in 3 seconds...");
+                updateMQTTFooter(false);
+                setTimeout(connectWebSocket, 3000);
+            };
+
+            socket.onerror = function(err) {
+                console.error("WebSocket error:", err);
+                socket.close();
+            };
+        }
+
+        // Initialize UI with mock values if offline
+        function initializeOfflineDemo() {
+            localState = {
+                nodes: [
+                    { zone_id: "Gate_A", capacity: 2.5, current_density: 0.8, qos: 0, status: "nominal" },
+                    { zone_id: "Gate_B", capacity: 2.5, current_density: 1.6, qos: 0, status: "warning" },
+                    { zone_id: "Corridor_1", capacity: 4.0, current_density: 1.1, qos: 0, status: "nominal" },
+                    { zone_id: "Corridor_2", capacity: 4.0, current_density: 0.9, qos: 0, status: "nominal" },
+                    { zone_id: "Main_Concourse", capacity: 5.0, current_density: 1.3, qos: 0, status: "nominal" }
+                ],
+                edges: [
+                    { source: "Gate_A", target: "Corridor_1", max_flow_rate: 120.0, current_flow_rate: 35.0 },
+                    { source: "Gate_B", target: "Corridor_2", max_flow_rate: 120.0, current_flow_rate: 55.0 },
+                    { source: "Corridor_1", target: "Main_Concourse", max_flow_rate: 200.0, current_flow_rate: 45.0 },
+                    { source: "Corridor_2", target: "Main_Concourse", max_flow_rate: 200.0, current_flow_rate: 60.0 }
+                ],
+                active_interventions: [],
+                system_health: {
+                    mqtt_connected: false,
+                    llm_latency_ms: 88,
+                    llm_status: "online"
+                }
+            };
+            updateUI();
+        }
+
+        function updateMQTTFooter(connected) {
+            const footerMqtt = document.getElementById('footerMqttStatus');
+            const healthStatus = document.getElementById('healthBrokerStatus');
+            
+            if (connected) {
+                footerMqtt.textContent = "CONNECTED";
+                footerMqtt.className = "text-success font-bold";
+                if (healthStatus) {
+                    healthStatus.className = "inline-flex items-center gap-xs px-2.5 py-0.5 rounded text-xs font-mono font-bold bg-success-bg border border-success/30 text-success shadow-sm";
+                    healthStatus.innerHTML = '<span class="w-2 h-2 rounded-full bg-success animate-pulse"></span> Connected';
+                }
+            } else {
+                footerMqtt.textContent = "OFFLINE";
+                footerMqtt.className = "text-critical font-bold";
+                if (healthStatus) {
+                    healthStatus.className = "inline-flex items-center gap-xs px-2.5 py-0.5 rounded text-xs font-mono font-bold bg-critical-bg border border-critical/30 text-critical shadow-sm animate-pulse";
+                    healthStatus.innerHTML = '<span class="w-2 h-2 rounded-full bg-critical"></span> Offline';
+                }
+            }
+        }
+
+        // Countdown Timer SLA task management
+        let countdownInterval = null;
+        let activeVetoZoneId = null;
+
+        function runTimerCountdown(endTime, duration) {
+            if (countdownInterval) clearInterval(countdownInterval);
+
+            const display = document.getElementById('approveTimer');
+            if (!display) return;
+
+            function updateTimer() {
+                const now = Date.now() / 1000;
+                let remaining = endTime - now;
+                if (remaining < 0) remaining = 0;
+
+                display.textContent = remaining.toFixed(1) + 's';
+
+                // Pulse the display red if timeout is low
+                const timerContainer = display.parentElement;
+                if (remaining <= 1.0) {
+                    timerContainer.className = "bg-td-surface-lowest dark:bg-td-surface-lowest light:bg-el-surface-low px-lg py-md rounded-lg border-2 border-critical flex flex-col items-center justify-center min-w-[110px] pulse-critical shadow-inner";
+                    display.className = "font-mono text-2xl font-bold text-critical animate-ping";
+                } else {
+                    timerContainer.className = "bg-td-surface-lowest dark:bg-td-surface-lowest light:bg-el-surface-low px-lg py-md rounded-lg border border-critical/55 flex flex-col items-center justify-center min-w-[110px] shadow-inner";
+                    display.className = "font-mono text-2xl font-bold text-critical";
+                }
+
+                if (remaining <= 0) {
+                    clearInterval(countdownInterval);
+                }
+            }
+
+            updateTimer();
+            countdownInterval = setInterval(updateTimer, 100);
+        }
+
+        // Apply state data to update entire UI
+        function updateUI() {
+            // 1. Update pillars metrics based on current node data
+            let maxDensity = 0.0;
+            let warningOrCriticalCount = 0;
+            localState.nodes.forEach(node => {
+                if (node.current_density > maxDensity) maxDensity = node.current_density;
+                if (node.status === 'warning' || node.status === 'critical') warningOrCriticalCount++;
+            });
+            document.getElementById('dash-safety-val').textContent = maxDensity.toFixed(1);
+            
+            // Safety trend text
+            const safetyTrend = document.getElementById('dash-safety-trend');
+            if (maxDensity >= 3.0) {
+                safetyTrend.innerHTML = '<span class="material-symbols-outlined text-[16px] animate-bounce">trending_up</span> CRITICAL CONGESTION';
+                safetyTrend.className = "text-xs text-critical flex items-center gap-xs mt-1 font-semibold";
+            } else if (maxDensity >= 1.5) {
+                safetyTrend.innerHTML = '<span class="material-symbols-outlined text-[16px]">trending_up</span> Elevated Density';
+                safetyTrend.className = "text-xs text-warning flex items-center gap-xs mt-1 font-semibold";
+            } else {
+                safetyTrend.innerHTML = '<span class="material-symbols-outlined text-[16px]">trending_flat</span> Stable Egress';
+                safetyTrend.className = "text-xs text-success flex items-center gap-xs mt-1 font-semibold";
+            }
+
+            // Security pillar: veto counts
+            document.getElementById('dash-security-val').textContent = warningOrCriticalCount;
+
+            // Service pillar: mock queue times linked to average density
+            const avgQueueMin = (maxDensity * 1.5).toFixed(1);
+            document.getElementById('dash-service-val').textContent = avgQueueMin;
+
+            // Update graphs in dashboard & venue map SVGs
+            localState.nodes.forEach(node => {
+                updateNodeSvgCircle(`dash-node-${node.zone_id}`, node.status);
+                updateNodeSvgCircle(`map-node-${node.zone_id}`, node.status);
+                
+                // Update text displays
+                const mapLbl = document.getElementById(`map-node-lbl-${node.zone_id}`);
+                const dashLbl = document.getElementById(`dash-node-lbl-${node.zone_id}`);
+                if (mapLbl) mapLbl.textContent = node.current_density.toFixed(1);
+                if (dashLbl) dashLbl.textContent = node.current_density.toFixed(1);
+            });
+
+            // Update edges in SVGs
+            localState.edges.forEach(edge => {
+                updateEdgeSvgLine(`dash-edge-${edge.source}-${edge.target}`, edge.current_flow_rate);
+                updateEdgeSvgLine(`map-edge-${edge.source}-${edge.target}`, edge.current_flow_rate);
+                
+                // Update flow text
+                const textDash = document.getElementById(`dash-edge-flow-${edge.source}-${edge.target}`);
+                const textMap = document.getElementById(`map-edge-flow-${edge.source}-${edge.target}`);
+                const flowStr = `Flow: ${edge.current_flow_rate.toFixed(0)}/${edge.max_flow_rate.toFixed(0)}`;
+                if (textDash) textDash.textContent = flowStr;
+                if (textMap) textMap.textContent = flowStr;
+            });
+
+            // 2. Details Sidebar panel
+            updateNodeDetailsUI(selectedNodeId);
+
+            // 3. System health strip details
+            document.getElementById('footerLlmLatency').textContent = localState.system_health.llm_latency_ms + "ms";
+            document.getElementById('modelopsTTFT').textContent = localState.system_health.llm_latency_ms + "ms";
+            
+            // 4. Approval Queue Logic
+            const approvalPing = document.getElementById('approvalBadgePing');
+            const approvalBadge = document.getElementById('approvalBadge');
+            const queueDot = document.getElementById('approvalQueueStatusDot');
+            const queueText = document.getElementById('approvalQueueStatusText');
+            
+            const activeCount = localState.active_interventions.length;
+            if (activeCount > 0) {
+                // We have an active veto window request!
+                const active = localState.active_interventions[0];
+                activeVetoZoneId = active.zone_id;
+
+                // Show approval badge / alerts
+                approvalPing.classList.remove('hidden');
+                approvalBadge.classList.remove('hidden');
+                queueDot.className = "w-2.5 h-2.5 rounded-full bg-critical animate-pulse";
+                queueText.textContent = `${activeCount} Pending Override`;
+
+                // Display active override request details
+                document.getElementById('approvalEmptyState').classList.add('hidden');
+                document.getElementById('approvalActiveState').classList.remove('hidden');
+
+                // Populate request card
+                document.getElementById('approveTitle').textContent = `Zone ${active.zone_id.replace('_', ' ')} Overload`;
+                document.getElementById('approveID').textContent = `ACTUATOR COMMAND ID: REQ-${active.zone_id}-SLA`;
+                document.getElementById('approveCondition').textContent = `Surge detected: Density ${maxDensity.toFixed(1)} pax/m²`;
+                document.getElementById('approveMode').textContent = active.mode === 'slm' ? 'Grammar constrained SLM' : 'Static Fallback Rule';
+                document.getElementById('approveGateAction').textContent = active.script.gate_action;
+                document.getElementById('approveSignageInstruction').textContent = active.script.signage_instruction;
+                document.getElementById('approveRationale').textContent = active.script.rationale;
+
+                // Handle timer
+                const endTime = active.start_time + active.duration;
+                runTimerCountdown(endTime, active.duration);
+
+                // Show global emergency alert banner if not on approval tab
+                if (currentTab !== 'approval' && !criticalAlertActive) {
+                    triggerGlobalAlert(`CRITICAL DENSITY SURGE: Zone ${active.zone_id.replace('_', ' ')} requires operator override validation!`);
+                }
+            } else {
+                // Clean state
+                activeVetoZoneId = null;
+                if (countdownInterval) {
+                    clearInterval(countdownInterval);
+                    countdownInterval = null;
+                }
+
+                approvalPing.classList.add('hidden');
+                approvalBadge.classList.add('hidden');
+                queueDot.className = "w-2.5 h-2.5 rounded-full bg-success animate-pulse";
+                queueText.textContent = "0 Pending Override";
+
+                document.getElementById('approvalEmptyState').classList.remove('hidden');
+                document.getElementById('approvalActiveState').classList.add('hidden');
+                dismissAlert();
+            }
+
+            // 5. Update incident lists (Overview and full tab)
+            updateIncidentsFeedUI();
+
+            // 6. Actuators control lists
+            updateActuatorsUI();
+
+            // 7. Sensor nodes health list
+            updateSensorHealthUI();
+        }
+
+        function updateNodeSvgCircle(svgId, status) {
+            const circle = document.getElementById(svgId);
+            if (!circle) return;
+
+            if (mapMode === 'heatmap') {
+                // Show radial heat maps
+                if (status === 'critical') {
+                    circle.setAttribute('fill', 'rgba(239, 68, 68, 0.7)');
+                    circle.setAttribute('stroke', '#ef4444');
+                } else if (status === 'warning') {
+                    circle.setAttribute('fill', 'rgba(223, 116, 18, 0.6)');
+                    circle.setAttribute('stroke', '#df7412');
+                } else {
+                    circle.setAttribute('fill', 'rgba(16, 185, 129, 0.4)');
+                    circle.setAttribute('stroke', '#10b981');
+                }
+            } else {
+                // Show clean topology maps
+                if (status === 'critical') {
+                    circle.className.baseVal = "node-circle fill-critical/40 stroke-critical pulse-critical";
+                    circle.setAttribute('stroke', '#ef4444');
+                    circle.setAttribute('fill', 'rgba(239, 68, 68, 0.4)');
+                } else if (status === 'warning') {
+                    circle.className.baseVal = "node-circle fill-warning/40 stroke-warning pulse-warning";
+                    circle.setAttribute('stroke', '#df7412');
+                    circle.setAttribute('fill', 'rgba(223, 116, 18, 0.4)');
+                } else {
+                    circle.className.baseVal = "node-circle fill-success/20 stroke-success";
+                    circle.setAttribute('stroke', '#10b981');
+                    circle.setAttribute('fill', 'rgba(16, 185, 129, 0.2)');
+                }
+            }
+        }
+
+        function updateEdgeSvgLine(svgId, flowRate) {
+            const line = document.getElementById(svgId);
+            if (!line) return;
+
+            if (flowRate >= 100.0) {
+                line.setAttribute('stroke', '#ef4444');
+                line.setAttribute('stroke-width', '4');
+            } else if (flowRate >= 50.0) {
+                line.setAttribute('stroke', '#df7412');
+                line.setAttribute('stroke-width', '3');
+            } else {
+                line.setAttribute('stroke', theme === 'dark' ? '#424754' : '#c3c6d7');
+                line.setAttribute('stroke-width', '2');
+            }
+        }
+
+        function updateNodeDetailsUI(nodeId) {
+            const node = localState.nodes.find(n => n.zone_id === nodeId);
+            if (!node) return;
+
+            const qosEl = document.getElementById('nodePanelQoS');
+            const densityEl = document.getElementById('nodePanelDensity');
+            const flowInEl = document.getElementById('nodePanelFlowIn');
+            const flowOutEl = document.getElementById('nodePanelFlowOut');
+            const rerouteEl = document.getElementById('nodePanelReroute');
+            const statusEl = document.getElementById('nodePanelStatus');
+            const statusBar = document.getElementById('nodePanelStatusBar');
+
+            qosEl.textContent = `QoS ${node.qos}` + (node.qos > 0 ? " (SURGE MOD)" : "");
+            qosEl.className = node.qos > 0 ? "font-mono text-xs font-bold text-critical animate-pulse" : "font-mono text-xs font-bold text-success";
+            
+            densityEl.textContent = `${node.current_density.toFixed(2)} pax/m²`;
+            document.getElementById('nodePanelCapacity').textContent = `${node.capacity.toFixed(1)} pax/m²`;
+
+            // Get connected flows
+            let flowIn = 0;
+            let flowOut = 0;
+            localState.edges.forEach(edge => {
+                if (edge.target === nodeId) flowIn = edge.current_flow_rate;
+                if (edge.source === nodeId) flowOut = edge.current_flow_rate;
+            });
+            flowInEl.textContent = flowIn.toFixed(1);
+            flowOutEl.textContent = flowOut.toFixed(1);
+
+            // Compute rerouting option based on node's edges and capacities
+            let altRoute = "NONE";
+            let bestSpare = 0;
+            localState.edges.forEach(edge => {
+                if (edge.source === nodeId) {
+                    const targetNode = localState.nodes.find(n => n.zone_id === edge.target);
+                    if (targetNode) {
+                        const spare = targetNode.capacity - targetNode.current_density;
+                        if (spare > bestSpare) {
+                            bestSpare = spare;
+                            altRoute = targetNode.zone_id.replace('_', ' ');
+                        }
+                    }
+                }
+            });
+            rerouteEl.textContent = altRoute;
+
+            if (node.status === 'critical') {
+                statusEl.textContent = "CRITICAL LIMIT EXCEEDED";
+                statusEl.className = "inline-block bg-critical/20 text-critical border border-critical font-mono text-[10px] font-bold px-2 py-0.5 rounded uppercase mt-xs animate-pulse";
+                statusBar.className = "h-0.5 w-full bg-critical rounded-full";
+            } else if (node.status === 'warning') {
+                statusEl.textContent = "WARNING LEVEL";
+                statusEl.className = "inline-block bg-warning/20 text-warning border border-warning font-mono text-[10px] font-bold px-2 py-0.5 rounded uppercase mt-xs";
+                statusBar.className = "h-0.5 w-full bg-warning rounded-full";
+            } else {
+                statusEl.textContent = "NOMINAL DENSITY";
+                statusEl.className = "inline-block bg-success/20 text-success border border-success font-mono text-[10px] font-bold px-2 py-0.5 rounded uppercase mt-xs";
+                statusBar.className = "h-0.5 w-full bg-success rounded-full";
+            }
+        }
+
+        // Live Incident stream rendering
+        function updateIncidentsFeedUI() {
+            // Generate list of incidents from node statuses
+            const listEl = document.getElementById('dashIncidentsList');
+            const tableBody = document.getElementById('incidentFeedTableBody');
+            
+            let listHtml = "";
+            let tableHtml = "";
+            let counts = 0;
+
+            localState.nodes.forEach(node => {
+                if (node.status === 'warning' || node.status === 'critical') {
+                    counts++;
+                    const sev = node.status === 'critical' ? 'CRITICAL' : 'HIGH';
+                    const badgeClass = node.status === 'critical' 
+                        ? 'bg-critical/15 text-critical border border-critical/30 font-bold' 
+                        : 'bg-warning/15 text-warning border border-warning/30 font-bold';
+
+                    listHtml += `
+                        <div class="p-sm hover:bg-td-surface-high/30 dark:hover:bg-td-surface-high/30 light:hover:bg-el-surface-high/40 rounded transition-colors flex gap-sm items-start border-l-2 ${node.status === 'critical' ? 'border-critical' : 'border-warning'}">
+                            <span class="material-symbols-outlined ${node.status === 'critical' ? 'text-critical' : 'text-warning'} text-[18px]">warning</span>
+                            <div class="min-w-0">
+                                <p class="text-xs font-bold truncate">Surge Alert: Zone ${node.zone_id.replace('_', ' ')}</p>
+                                <p class="text-[10px] text-td-on-surface-variant dark:text-td-on-surface-variant light:text-el-on-surface-variant font-mono mt-0.5">
+                                    Density reached ${node.current_density.toFixed(1)} people/m².
+                                </p>
+                            </div>
+                        </div>
+                    `;
+
+                    tableHtml += `
+                        <tr class="border-b border-td-outline/30 dark:border-td-outline/30 light:border-el-outline/30 hover:bg-td-surface-high/20">
+                            <td class="p-md text-center">
+                                <span class="material-symbols-outlined ${node.status === 'critical' ? 'text-critical' : 'text-warning'} text-[16px]">warning</span>
+                            </td>
+                            <td class="p-md text-td-on-surface-variant dark:text-td-on-surface-variant light:text-el-on-surface-variant">Just now</td>
+                            <td class="p-md font-bold">${node.zone_id}</td>
+                            <td class="p-md">DENSITY_OVERLOAD</td>
+                            <td class="p-md">
+                                <span class="inline-block px-1.5 py-0.5 rounded text-[10px] uppercase font-bold ${badgeClass}">${sev}</span>
+                            </td>
+                            <td class="p-md text-warning font-bold">${node.status === 'critical' ? 'CLOSE_IMMEDIATELY' : 'SLOW_ENTRY'}</td>
+                            <td class="p-md">${node.current_density >= 1.5 ? 'Corridor_2' : 'NONE'}</td>
+                            <td class="p-md text-critical font-bold">UNACKED</td>
+                        </tr>
+                    `;
+                }
+            });
+
+            // Mock static normal feed elements if empty
+            if (counts === 0) {
+                listHtml = `
+                    <div class="text-center py-md text-td-on-surface-variant dark:text-td-on-surface-variant light:text-el-on-surface-variant font-semibold text-xs py-16">
+                        No active anomalies detected.<br>System health: NOMINAL.
+                    </div>
+                `;
+                tableHtml = `
+                    <tr class="border-b border-td-outline/30 dark:border-td-outline/30 light:border-el-outline/30">
+                        <td class="p-md text-center" colspan="8">
+                            <div class="py-16 text-center text-td-on-surface-variant dark:text-td-on-surface-variant light:text-el-on-surface-variant font-semibold">
+                                Empty stream: No alerts reported in the current quadrant.
+                            </div>
+                        </td>
+                    </tr>
+                `;
+            }
+
+            if (listEl) listEl.innerHTML = listHtml;
+            if (tableBody) tableBody.innerHTML = tableHtml;
+        }
+
+        // Render dynamic panels in the actuators tab
+        function updateActuatorsUI() {
+            const grid = document.getElementById('actuatorSignageGrid');
+            const list = document.getElementById('actuatorGatesList');
+            if (!grid || !list) return;
+
+            let signageHtml = "";
+            let gatesHtml = "";
+
+            localState.nodes.forEach(node => {
+                // Compute mockup instruction
+                let signText = "PLEASE KEEP MOVING - STADIUM DIRECTORY AVAILABLE";
+                let actionColor = "text-success border-success/30 bg-success/5";
+                let gateAction = "OPEN (Egress Route)";
+                let gateBadge = "bg-success-bg text-success border border-success/30";
+
+                if (node.status === 'critical') {
+                    signText = `CRITICAL SURGE IN ${node.zone_id.toUpperCase()}. REROUTE TO CORRIDOR 2!`;
+                    actionColor = "text-critical border-critical/30 bg-critical/5 pulse-critical";
+                    gateAction = "CLOSE_IMMEDIATELY (Emergency Locked)";
+                    gateBadge = "bg-critical-bg text-critical border border-critical/30 animate-pulse";
+                } else if (node.status === 'warning') {
+                    signText = `SLOW TRAFFIC - PROCEED SLOWLY TO SECTOR B`;
+                    actionColor = "text-warning border-warning/30 bg-warning/5 pulse-warning";
+                    gateAction = "SLOW_ENTRY (Flow Control Active)";
+                    gateBadge = "bg-warning-bg text-warning border border-warning/30";
+                }
+
+                signageHtml += `
+                    <div class="border border-td-outline/60 rounded p-sm bg-td-surface-lowest dark:bg-td-surface-lowest light:bg-el-surface-low select-none flex flex-col justify-between min-h-[100px]">
+                        <div class="flex justify-between items-center mb-xs">
+                            <span class="font-bold text-xs">Signage ${node.zone_id}</span>
+                            <span class="font-mono text-[9px] font-bold text-success">ONLINE</span>
+                        </div>
+                        <div class="font-mono text-[11px] text-td-on-surface bg-black/60 border border-td-outline/80 p-sm rounded text-center truncate ${node.status === 'critical' ? 'text-critical' : 'text-primary'}">
+                            ${signText}
+                        </div>
+                        <div class="mt-xs text-[10px] text-td-on-surface-variant dark:text-td-on-surface-variant light:text-el-on-surface-variant flex justify-between font-mono">
+                            <span>Mode: Auto</span>
+                            <span class="text-primary hover:underline cursor-pointer" onclick="openSimPanel()">Manual Override</span>
+                        </div>
+                    </div>
+                `;
+
+                gatesHtml += `
+                    <div class="border border-td-outline/50 rounded-lg p-sm bg-td-surface-lowest dark:bg-td-surface-lowest light:bg-el-surface-low select-none flex justify-between items-center gap-sm">
+                        <div class="min-w-0">
+                            <h4 class="font-bold text-sm truncate">${node.zone_id.replace('_', ' ')} Vomitory</h4>
+                            <span class="inline-block font-mono text-[9px] font-bold py-0.5 px-1.5 mt-xs rounded ${gateBadge}">${gateAction}</span>
+                        </div>
+                        <div class="flex gap-xs">
+                            <button class="bg-td-surface-high hover:bg-td-surface-highest border border-td-outline px-2.5 py-1 text-xs rounded font-bold hover:text-primary transition-colors select-none" onclick="triggerManualGateAction('${node.zone_id}', 'KEEP_OPEN')">Open</button>
+                            <button class="bg-td-surface-high hover:bg-td-surface-highest border border-td-outline px-2.5 py-1 text-xs rounded font-bold hover:text-critical transition-colors select-none" onclick="triggerManualGateAction('${node.zone_id}', 'CLOSE_IMMEDIATELY')">Close</button>
+                        </div>
+                    </div>
+                `;
+            });
+
+            grid.innerHTML = signageHtml;
+            list.innerHTML = gatesHtml;
+        }
+
+        // Render health nodes
+        function updateSensorHealthUI() {
+            const body = document.getElementById('healthSensorsTableBody');
+            if (!body) return;
+
+            let html = "";
+            localState.nodes.forEach(node => {
+                let packetRate = "120 packets/s";
+                let statusBadge = "bg-success-bg text-success border border-success/30";
+                let statusText = "NOMINAL";
+
+                if (node.status === 'critical') {
+                    packetRate = "142 packets/s";
+                    statusBadge = "bg-critical-bg text-critical border border-critical/30 animate-pulse";
+                    statusText = "OVERLOAD SURGE";
+                } else if (node.status === 'warning') {
+                    packetRate = "125 packets/s";
+                    statusBadge = "bg-warning-bg text-warning border border-warning/30";
+                    statusText = "ELEVATED";
+                }
+
+                html += `
+                    <tr class="border-b border-td-outline/20 hover:bg-td-surface-high/10">
+                        <td class="p-sm font-bold text-td-on-surface dark:text-td-on-surface light:text-el-on-surface">${node.zone_id}_SENSOR_01</td>
+                        <td class="p-sm text-td-on-surface-variant dark:text-td-on-surface-variant light:text-el-on-surface-variant">Lidar (Cluster 4)</td>
+                        <td class="p-sm">${packetRate}</td>
+                        <td class="p-sm font-bold text-primary">QoS ${node.qos}</td>
+                        <td class="p-sm">
+                            <span class="inline-block px-1.5 py-0.5 rounded text-[9px] font-bold ${statusBadge}">${statusText}</span>
+                        </td>
+                    </tr>
+                `;
+            });
+
+            body.innerHTML = html;
+        }
+
+        // Audit Logs fetch and display
+        function fetchAuditLogs() {
+            console.log("Fetching audit trail logs...");
+            fetch('/api/audit-logs')
+                .then(res => res.json())
+                .then(logs => {
+                    const container = document.getElementById('auditTrailList');
+                    container.innerHTML = "";
+                    if (logs.length === 0) {
+                        container.innerHTML = `<div class="text-center py-md text-td-on-surface-variant">Ledger is empty. No actuation overrides written.</div>`;
+                        return;
+                    }
+                    
+                    // Render in reverse chronological order (newest first)
+                    logs.slice().reverse().forEach(log => {
+                        addAuditLogEntry(log);
+                    });
+                })
+                .catch(err => {
+                    console.error("Failed to fetch audit logs:", err);
+                });
+        }
+
+        function addAuditLogEntry(log) {
+            const container = document.getElementById('auditTrailList');
+            if (!container) return;
+
+            const timeStr = new Date(log.timestamp * 1000).toISOString();
+            const div = document.createElement('div');
+            div.className = "p-sm rounded bg-td-surface-lowest dark:bg-td-surface-lowest light:bg-el-surface-low border border-td-outline/30 dark:border-td-outline/30 light:border-el-outline/30 mb-sm shadow-sm select-text flex flex-col gap-xs";
+
+            let labelColor = "text-primary";
+            if (log.event_type.includes("veto") || log.event_type.includes("cancel")) {
+                labelColor = "text-critical font-bold";
+            } else if (log.event_type.includes("success") || log.event_type.includes("complete")) {
+                labelColor = "text-success font-bold";
+            } else if (log.event_type.includes("fallback")) {
+                labelColor = "text-warning font-bold";
+            }
+
+            const cleanData = {...log};
+            delete cleanData.timestamp;
+            delete cleanData.event_type;
+
+            div.innerHTML = `
+                <div class="flex justify-between items-center text-[10px]">
+                    <span class="font-mono text-td-on-surface-variant dark:text-td-on-surface-variant light:text-el-on-surface-variant">${timeStr}</span>
+                    <span class="${labelColor} font-mono px-2 py-0.5 bg-black/40 rounded uppercase tracking-wider text-[9px]">${log.event_type}</span>
+                </div>
+                <pre class="whitespace-pre-wrap font-mono text-[11px] text-td-on-surface/90 dark:text-td-on-surface/90 light:text-el-on-surface/90 pl-sm mt-xs">${JSON.stringify(cleanData, null, 2)}</pre>
+            `;
+            
+            container.appendChild(div);
+        }
+
+        // Actions: Submit Veto
+        function sendVeto() {
+            if (!activeVetoZoneId) return;
+            console.log("Sending operator VETO for zone: " + activeVetoZoneId);
+
+            fetch('/api/veto', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ zone_id: activeVetoZoneId })
+            })
+            .then(res => res.json())
+            .then(data => {
+                console.log("Veto response: ", data);
+                if (countdownInterval) {
+                    clearInterval(countdownInterval);
+                    countdownInterval = null;
+                }
+                dismissAlert();
+            })
+            .catch(err => console.error("Veto failed:", err));
+        }
+
+        // Actions: Submit Approval
+        function sendApprove() {
+            if (!activeVetoZoneId) return;
+            console.log("Sending operator manual APPROVAL for zone: " + activeVetoZoneId);
+
+            fetch('/api/approve', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ zone_id: activeVetoZoneId })
+            })
+            .then(res => res.json())
+            .then(data => {
+                console.log("Approve response: ", data);
+                if (countdownInterval) {
+                    clearInterval(countdownInterval);
+                    countdownInterval = null;
+                }
+                dismissAlert();
+            })
+            .catch(err => console.error("Approval failed:", err));
+        }
+
+        // Publish Telemetry Simulation
+        function submitSimTelemetry(event) {
+            event.preventDefault();
+            const zone_id = document.getElementById('simZoneId').value;
+            const crowd_density = parseFloat(document.getElementById('simDensity').value);
+            const flow_rate_in = parseFloat(document.getElementById('simFlowIn').value);
+            const flow_rate_out = parseFloat(document.getElementById('simFlowOut').value);
+
+            console.log("Publishing mock telemetry stream to backend...");
+
+            fetch('/api/telemetry', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    zone_id: zone_id,
+                    crowd_density: crowd_density,
+                    flow_rate_in: flow_rate_in,
+                    flow_rate_out: flow_rate_out,
+                    timestamp: Date.now() / 1000
+                })
+            })
+            .then(res => res.json())
+            .then(data => {
+                console.log("Telemetry sim response:", data);
+                closeSimPanel();
+                // Flash visual success cue
+                const badge = document.getElementById('globalStatusBadge');
+                badge.classList.add('scale-105', 'bg-primary/20', 'border-primary/40');
+                setTimeout(() => {
+                    badge.classList.remove('scale-105', 'bg-primary/20', 'border-primary/40');
+                }, 500);
+            })
+            .catch(err => console.error("Sim telemetry failed:", err));
+        }
+
+        // Manual gate override from Actuators Panel
+        function triggerManualGateAction(zoneId, action) {
+            console.log(`Manual override Gate Action: ${action} on ${zoneId}`);
+            // Mock simulation alert or publish to MQTT
+            fetch('/api/telemetry', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    zone_id: zoneId,
+                    crowd_density: action === 'CLOSE_IMMEDIATELY' ? 3.2 : 0.8,
+                    flow_rate_in: action === 'CLOSE_IMMEDIATELY' ? 80.0 : 20.0,
+                    flow_rate_out: 15.0,
+                    timestamp: Date.now() / 1000
+                })
+            })
+            .then(res => res.json())
+            .then(() => {
+                console.log("Gate action simulation triggered.");
+            });
+        }
+
+        // Trigger Emergency Shutdown override
+        function triggerPanicShutdown() {
+            if (confirm("WARNING: Are you sure you want to trigger a complete Emergency Shut down? All gate access limits will be open for manual egress routing.")) {
+                console.log("EMERGENCY PANIC SHUTDOWN ACTIVATED");
+                triggerGlobalAlert("EMERGENCY SHUTDOWN ACTIVATED: ALL STADIUM PERIMETER GATES RELEASED FOR EGRESS");
+                document.getElementById('globalStatusBadge').className = "flex items-center gap-sm bg-critical-bg border border-critical/30 px-lg py-sm rounded-full shadow-[0_0_8px_rgba(239,68,68,0.4)]";
+                document.getElementById('globalStatusIndicator').className = "w-2.5 h-2.5 rounded-full bg-critical animate-ping";
+                document.getElementById('globalStatusText').textContent = "PANIC SHUTDOWN ENABLED";
+                document.getElementById('globalStatusText').className = "font-mono text-xs font-bold text-critical tracking-widest uppercase";
+            }
+        }
+
+        // Save settings configuration
+        function saveSettings(event) {
+            event.preventDefault();
+            const sla = parseFloat(document.getElementById('settingSlaSec').value);
+            const limit = parseFloat(document.getElementById('settingDensityLimit').value);
+            
+            fetch('/api/config', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    actuation_sla_sec: sla,
+                    fallback_density_limit: limit
+                })
+            })
+            .then(res => res.json())
+            .then(data => {
+                alert("Configuration parameters updated successfully.");
+                console.log("Updated config: ", data);
+            })
+            .catch(err => console.error("Failed to save config:", err));
+        }
+
+        // Start WebSocket loop on load
+        window.addEventListener('DOMContentLoaded', () => {
+            initializeOfflineDemo();
+            connectWebSocket();
+            // Default select Gate A
+            selectNode('Gate_A');
+            // Update settings inputs with active state values
+            fetch('/api/config')
+                .then(res => res.json())
+                .then(cfg => {
+                    document.getElementById('settingSlaSec').value = cfg.actuation_sla_sec;
+                    document.getElementById('settingDensityLimit').value = cfg.fallback_density_limit;
+                })
+                .catch(() => {});
+        });
+    </script>
+</body>
+</html>

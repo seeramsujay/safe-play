@@ -1,0 +1,370 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Stadium Ops Command - Settings</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@400;500;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "surface-bright": "#363941",
+                        "on-secondary-fixed": "#0b1c30",
+                        "primary-fixed-dim": "#adc6ff",
+                        "primary-fixed": "#d8e2ff",
+                        "surface-tint": "#adc6ff",
+                        "surface": "#10131a",
+                        "error-container": "#93000a",
+                        "tertiary-fixed-dim": "#ffb786",
+                        "surface-container-highest": "#32353c",
+                        "inverse-surface": "#e1e2ec",
+                        "surface-container-high": "#272a31",
+                        "inverse-on-surface": "#2e3038",
+                        "surface-dim": "#10131a",
+                        "on-secondary": "#213145",
+                        "error": "#ffb4ab",
+                        "background": "#10131a",
+                        "on-error-container": "#ffdad6",
+                        "on-primary-fixed": "#001a42",
+                        "secondary-container": "#3a4a5f",
+                        "tertiary": "#ffb786",
+                        "on-tertiary-fixed-variant": "#723600",
+                        "surface-variant": "#32353c",
+                        "secondary-fixed": "#d3e4fe",
+                        "surface-container-low": "#191b23",
+                        "on-primary-container": "#00285d",
+                        "surface-container-lowest": "#0b0e15",
+                        "on-surface": "#e1e2ec",
+                        "on-primary": "#002e6a",
+                        "on-surface-variant": "#c2c6d6",
+                        "on-tertiary-container": "#461f00",
+                        "outline-variant": "#424754",
+                        "primary": "#adc6ff",
+                        "on-background": "#e1e2ec",
+                        "primary-container": "#4d8eff",
+                        "secondary": "#b7c8e1",
+                        "secondary-fixed-dim": "#b7c8e1",
+                        "outline": "#8c909f",
+                        "on-tertiary-fixed": "#311400",
+                        "tertiary-container": "#df7412",
+                        "surface-container": "#1d2027",
+                        "inverse-primary": "#005ac2",
+                        "on-secondary-fixed-variant": "#38485d",
+                        "on-error": "#690005",
+                        "on-secondary-container": "#a9bad3",
+                        "on-primary-fixed-variant": "#004395",
+                        "tertiary-fixed": "#ffdcc6",
+                        "on-tertiary": "#502400"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.125rem",
+                        "lg": "0.25rem",
+                        "xl": "0.5rem",
+                        "full": "0.75rem"
+                    },
+                    "spacing": {
+                        "md": "16px",
+                        "lg": "24px",
+                        "gutter": "12px",
+                        "base": "4px",
+                        "xs": "4px",
+                        "xl": "32px",
+                        "margin": "16px",
+                        "sm": "8px"
+                    },
+                    "fontFamily": {
+                        "body-sm": ["Inter"],
+                        "data-md": ["JetBrains Mono"],
+                        "label-caps": ["JetBrains Mono"],
+                        "body-md": ["Inter"],
+                        "data-sm": ["JetBrains Mono"],
+                        "headline-md": ["Inter"],
+                        "data-lg": ["JetBrains Mono"],
+                        "headline-sm": ["Inter"],
+                        "display-lg": ["Inter"]
+                    },
+                    "fontSize": {
+                        "body-sm": ["14px", { "lineHeight": "20px", "fontWeight": "400" }],
+                        "data-md": ["14px", { "lineHeight": "20px", "fontWeight": "500" }],
+                        "label-caps": ["11px", { "lineHeight": "16px", "letterSpacing": "0.1em", "fontWeight": "700" }],
+                        "body-md": ["16px", { "lineHeight": "24px", "fontWeight": "400" }],
+                        "data-sm": ["12px", { "lineHeight": "16px", "fontWeight": "500" }],
+                        "headline-md": ["24px", { "lineHeight": "32px", "fontWeight": "600" }],
+                        "data-lg": ["18px", { "lineHeight": "24px", "fontWeight": "500" }],
+                        "headline-sm": ["18px", { "lineHeight": "24px", "fontWeight": "600" }],
+                        "display-lg": ["48px", { "lineHeight": "56px", "letterSpacing": "-0.02em", "fontWeight": "700" }]
+                    }
+                },
+            },
+        }
+    </script>
+<style>
+        body { background-color: #10131a; color: #e1e2ec; }
+        .glass-panel {
+            background-color: #1e293b;
+            border: 1px solid #334155;
+        }
+        .input-field {
+            background-color: #0f172a;
+            border: 1px solid #334155;
+            color: #e1e2ec;
+        }
+        .input-field:focus {
+            outline: none;
+            border-color: #adc6ff;
+            box-shadow: 0 0 0 2px rgba(173, 198, 255, 0.2);
+        }
+        .btn-primary {
+            background-color: #363941;
+            color: #adc6ff;
+            border: 1px solid #334155;
+        }
+        .btn-primary:hover {
+            background-color: #424754;
+        }
+        .status-bar {
+            height: 2px;
+            width: 100%;
+        }
+        .status-normal { background-color: #adc6ff; }
+        .status-warning { background-color: #df7412; }
+        .status-critical { background-color: #ffb4ab; }
+        
+        /* Custom Checkbox/Toggle Styles */
+        .toggle-checkbox:checked {
+            right: 0;
+            border-color: #adc6ff;
+        }
+        .toggle-checkbox:checked + .toggle-label {
+            background-color: #4d8eff;
+        }
+        .toggle-checkbox:checked + .toggle-label:after {
+            transform: translateX(100%);
+            border-color: white;
+        }
+    </style>
+</head>
+<body class="font-body-md text-body-md bg-background antialiased h-screen overflow-hidden flex">
+<!-- SideNavBar (Suppressed due to context: Settings page is often task-focused or accessed from a top-level nav, but given the prompt, we'll keep it to show full layout if it were a dedicated top-level section, but typically settings is a distinct view. For this high-density dashboard, we'll assume it's a main view accessible via a top app bar action or similar. However, the JSON provides SideNav and TopApp. We'll render TopAppBar and suppress SideNav for focus on settings, or render both if standard. Let's render TopAppBar only to maximize canvas for settings, as per "Task-Focused" rule). -->
+<!-- TopAppBar -->
+<header class="fixed top-0 w-full z-50 bg-surface-container border-b border-outline-variant flex justify-between items-center px-lg h-16 shadow-none">
+<div class="flex items-center gap-md">
+<span class="font-label-caps text-label-caps tracking-widest text-primary">STADIUM OPS COMMAND</span>
+</div>
+<div class="flex items-center gap-lg">
+<nav class="hidden md:flex gap-lg">
+<!-- Navigation Tabs - Highlighted appropriately if this was a main tab, but settings is a utility action -->
+<a class="text-on-surface-variant font-headline-sm text-headline-sm hover:bg-surface-bright transition-colors px-md py-sm rounded-DEFAULT cursor-pointer active:opacity-80" href="#">Dashboard</a>
+<a class="text-on-surface-variant font-headline-sm text-headline-sm hover:bg-surface-bright transition-colors px-md py-sm rounded-DEFAULT cursor-pointer active:opacity-80" href="#">Matrix</a>
+</nav>
+<div class="flex items-center gap-md border-l border-outline-variant pl-lg">
+<button class="text-on-surface-variant hover:text-primary transition-colors cursor-pointer active:opacity-80 p-xs rounded-full hover:bg-surface-bright">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 0;">notifications</span>
+</button>
+<button class="text-on-surface-variant hover:text-primary transition-colors cursor-pointer active:opacity-80 p-xs rounded-full hover:bg-surface-bright">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 0;">wifi_tethering</span>
+</button>
+<button class="text-primary font-bold border-b-2 border-primary transition-colors cursor-pointer active:opacity-80 p-xs rounded-full bg-surface-bright">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">account_circle</span>
+</button>
+</div>
+</div>
+</header>
+<!-- Main Content Canvas -->
+<main class="mt-16 w-full h-[calc(100vh-64px)] overflow-y-auto p-xl bg-surface-dim">
+<div class="max-w-7xl mx-auto space-y-xl">
+<!-- Header Section -->
+<div class="flex justify-between items-end border-b border-outline-variant pb-md">
+<div>
+<h1 class="font-display-lg text-display-lg text-on-surface mb-xs">System Settings</h1>
+<p class="font-body-md text-body-md text-on-surface-variant">Global configuration for stadium operations, thresholds, and network protocols.</p>
+</div>
+<div class="flex gap-md">
+<button class="btn-primary font-data-md text-data-md px-lg py-sm rounded-DEFAULT flex items-center gap-xs">
+<span class="material-symbols-outlined text-[18px]">restore</span> DEFAULT
+                    </button>
+<button class="bg-primary-container text-on-primary-container font-data-md text-data-md px-lg py-sm rounded-DEFAULT flex items-center gap-xs hover:bg-primary transition-colors border border-primary-container">
+<span class="material-symbols-outlined text-[18px]">save</span> APPLY CHANGES
+                    </button>
+</div>
+</div>
+<!-- Bento Grid Layout for Settings -->
+<div class="grid grid-cols-1 md:grid-cols-12 gap-lg">
+<!-- Column 1: Core Ops & Thresholds -->
+<div class="col-span-1 md:col-span-8 flex flex-col gap-lg">
+<!-- Crowd Density Config -->
+<section class="glass-panel rounded-lg overflow-hidden relative">
+<div class="status-bar status-warning absolute top-0 left-0"></div>
+<div class="p-lg">
+<h2 class="font-headline-sm text-headline-sm text-on-surface mb-lg flex items-center gap-sm">
+<span class="material-symbols-outlined text-tertiary-container">group</span> Crowd Density Thresholds
+                            </h2>
+<div class="grid grid-cols-2 gap-lg">
+<div>
+<label class="block font-label-caps text-label-caps text-on-surface-variant mb-xs">GLOBAL ALERT THRESHOLD (PPL/SQM)</label>
+<div class="flex items-center gap-sm">
+<input class="input-field rounded-DEFAULT px-md py-sm w-32 font-data-lg text-data-lg text-center font-bold" step="0.1" type="number" value="3.0"/>
+<span class="font-data-sm text-data-sm text-on-surface-variant">Default: 3.0</span>
+</div>
+</div>
+<div>
+<label class="block font-label-caps text-label-caps text-on-surface-variant mb-xs">AUTO-EXECUTE TIMEOUT (SEC)</label>
+<div class="flex items-center gap-sm">
+<input class="input-field rounded-DEFAULT px-md py-sm w-32 font-data-lg text-data-lg text-center font-bold" step="10" type="number" value="120"/>
+<span class="font-data-sm text-data-sm text-on-surface-variant">Default: 120s</span>
+</div>
+</div>
+</div>
+<div class="mt-lg pt-lg border-t border-outline-variant">
+<h3 class="font-data-md text-data-md text-on-surface mb-md">Zone Overrides</h3>
+<table class="w-full text-left border-collapse">
+<thead>
+<tr class="border-b border-outline-variant">
+<th class="font-label-caps text-label-caps text-on-surface-variant py-xs">ZONE</th>
+<th class="font-label-caps text-label-caps text-on-surface-variant py-xs">THRESHOLD</th>
+<th class="font-label-caps text-label-caps text-on-surface-variant py-xs">STATUS</th>
+</tr>
+</thead>
+<tbody class="font-data-sm text-data-sm">
+<tr class="border-b border-outline-variant/50">
+<td class="py-sm">North Concourse</td>
+<td class="py-sm"><input class="input-field rounded-DEFAULT px-sm py-xs w-20 text-center" step="0.1" type="number" value="3.5"/></td>
+<td class="py-sm"><span class="bg-primary/10 text-primary px-sm py-xs rounded-DEFAULT border border-primary/20">ACTIVE</span></td>
+</tr>
+<tr class="border-b border-outline-variant/50">
+<td class="py-sm">VIP Entrance A</td>
+<td class="py-sm"><input class="input-field rounded-DEFAULT px-sm py-xs w-20 text-center" step="0.1" type="number" value="2.0"/></td>
+<td class="py-sm"><span class="bg-primary/10 text-primary px-sm py-xs rounded-DEFAULT border border-primary/20">ACTIVE</span></td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+</section>
+<!-- QoS Rules -->
+<section class="glass-panel rounded-lg overflow-hidden relative">
+<div class="status-bar status-normal absolute top-0 left-0"></div>
+<div class="p-lg">
+<div class="flex justify-between items-center mb-lg">
+<h2 class="font-headline-sm text-headline-sm text-on-surface flex items-center gap-sm">
+<span class="material-symbols-outlined text-primary">speed</span> QoS Traffic Rules
+                                </h2>
+<button class="text-primary font-data-sm text-data-sm flex items-center gap-xs hover:underline">
+<span class="material-symbols-outlined text-[16px]">add</span> ADD RULE
+                                </button>
+</div>
+<div class="space-y-sm">
+<!-- Rule Item -->
+<div class="bg-surface-container-high border border-outline-variant rounded-DEFAULT p-md flex items-center justify-between">
+<div class="flex items-center gap-md">
+<span class="material-symbols-outlined text-on-surface-variant">videocam</span>
+<div>
+<div class="font-data-md text-data-md text-on-surface">Telemetry &amp; Broadcast Streams</div>
+<div class="font-body-sm text-body-sm text-on-surface-variant">Priority: CRITICAL (DSCP 46)</div>
+</div>
+</div>
+<div class="flex items-center gap-md">
+<span class="font-data-sm text-data-sm bg-error-container/20 text-error px-sm py-xs rounded-DEFAULT border border-error/30">LOCKED</span>
+<div class="relative inline-block w-10 mr-2 align-middle select-none transition duration-200 ease-in">
+<input checked="" class="toggle-checkbox absolute block w-5 h-5 rounded-full bg-white border-4 appearance-none cursor-not-allowed" disabled="" id="qos-1" name="toggle" type="checkbox"/>
+<label class="toggle-label block overflow-hidden h-5 rounded-full bg-surface-variant cursor-not-allowed" for="qos-1"></label>
+</div>
+</div>
+</div>
+<!-- Rule Item -->
+<div class="bg-surface-container-high border border-outline-variant rounded-DEFAULT p-md flex items-center justify-between">
+<div class="flex items-center gap-md">
+<span class="material-symbols-outlined text-on-surface-variant">smartphone</span>
+<div>
+<div class="font-data-md text-data-md text-on-surface">Public Wi-Fi Segregation</div>
+<div class="font-body-sm text-body-sm text-on-surface-variant">Priority: LOW (DSCP 0) / Throttle: 5Mbps/user</div>
+</div>
+</div>
+<div class="flex items-center gap-md">
+<button class="text-on-surface-variant hover:text-primary"><span class="material-symbols-outlined text-[20px]">edit</span></button>
+<div class="relative inline-block w-10 mr-2 align-middle select-none transition duration-200 ease-in">
+<input checked="" class="toggle-checkbox absolute block w-5 h-5 rounded-full bg-white border-4 appearance-none cursor-pointer" id="qos-2" name="toggle" type="checkbox"/>
+<label class="toggle-label block overflow-hidden h-5 rounded-full bg-surface-variant cursor-pointer" for="qos-2"></label>
+</div>
+</div>
+</div>
+</div>
+</div>
+</section>
+</div>
+<!-- Column 2: Network & Access -->
+<div class="col-span-1 md:col-span-4 flex flex-col gap-lg">
+<!-- Network Config (MQTT TLS) -->
+<section class="glass-panel rounded-lg overflow-hidden relative h-full">
+<div class="status-bar status-normal absolute top-0 left-0"></div>
+<div class="p-lg">
+<h2 class="font-headline-sm text-headline-sm text-on-surface mb-lg flex items-center gap-sm">
+<span class="material-symbols-outlined text-primary">router</span> Network Config
+                            </h2>
+<div class="space-y-md">
+<div>
+<label class="block font-label-caps text-label-caps text-on-surface-variant mb-xs">MQTT BROKER URL</label>
+<input class="input-field rounded-DEFAULT px-md py-sm w-full font-data-sm text-data-sm" type="text" value="mqtts://broker.stadium-ops.internal:8883"/>
+</div>
+<div>
+<label class="block font-label-caps text-label-caps text-on-surface-variant mb-xs">TLS CERTIFICATE PATH</label>
+<div class="flex gap-sm">
+<input class="input-field rounded-DEFAULT px-md py-sm w-full font-data-sm text-data-sm opacity-70" readonly="" type="text" value="/etc/ssl/certs/stadium-ops-ca.crt"/>
+<button class="btn-primary px-sm rounded-DEFAULT flex items-center justify-center">
+<span class="material-symbols-outlined text-[18px]">folder_open</span>
+</button>
+</div>
+</div>
+<div class="pt-md border-t border-outline-variant">
+<label class="block font-label-caps text-label-caps text-on-surface-variant mb-xs">CONNECTION STATUS</label>
+<div class="flex items-center gap-sm bg-surface-container-high p-sm rounded-DEFAULT border border-outline-variant">
+<span class="w-2 h-2 rounded-full bg-primary animate-pulse shadow-[0_0_8px_rgba(173,198,255,0.8)]"></span>
+<span class="font-data-sm text-data-sm text-primary">CONNECTED (SECURE)</span>
+</div>
+</div>
+</div>
+</div>
+</section>
+<!-- Venue Management -->
+<section class="glass-panel rounded-lg overflow-hidden relative">
+<div class="status-bar status-normal absolute top-0 left-0"></div>
+<div class="p-lg">
+<h2 class="font-headline-sm text-headline-sm text-on-surface mb-md flex items-center gap-sm">
+<span class="material-symbols-outlined text-primary">stadium</span> Venue Mgmt
+                            </h2>
+<div class="space-y-sm">
+<button class="w-full text-left bg-surface-container-high hover:bg-surface-bright border border-outline-variant rounded-DEFAULT p-md flex items-center justify-between transition-colors">
+<div>
+<div class="font-data-md text-data-md text-on-surface">Lusail Stadium</div>
+<div class="font-body-sm text-body-sm text-on-surface-variant">Active Venue Profile</div>
+</div>
+<span class="material-symbols-outlined text-on-surface-variant">chevron_right</span>
+</button>
+<button class="w-full text-left bg-surface-container border border-outline-variant border-dashed rounded-DEFAULT p-md flex items-center justify-center gap-sm hover:border-primary hover:text-primary text-on-surface-variant transition-colors">
+<span class="material-symbols-outlined">add</span>
+<span class="font-data-md text-data-md">Load Venue Profile</span>
+</button>
+</div>
+</div>
+</section>
+</div>
+</div>
+</div>
+</main>
+<script>
+        // Simple interactions for toggles if needed
+        document.querySelectorAll('.toggle-checkbox').forEach(toggle => {
+            toggle.addEventListener('change', (e) => {
+                if(!e.target.disabled) {
+                    // Logic to handle toggle state change visual updates if beyond CSS
+                }
+            });
+        });
+    </script>
+</body></html>

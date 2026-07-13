@@ -1,0 +1,328 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>EdgePulse 2026 - Live Venue Map</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&amp;family=JetBrains+Mono:wght@500;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "error-container": "#93000a",
+                    "on-primary-fixed": "#001a42",
+                    "background": "#10131a",
+                    "outline-variant": "#424754",
+                    "inverse-primary": "#005ac2",
+                    "secondary-fixed": "#d3e4fe",
+                    "surface-tint": "#adc6ff",
+                    "on-surface": "#e1e2ec",
+                    "tertiary-container": "#df7412",
+                    "surface-bright": "#363941",
+                    "on-tertiary-fixed-variant": "#723600",
+                    "tertiary": "#ffb786",
+                    "primary": "#adc6ff",
+                    "on-secondary-fixed": "#0b1c30",
+                    "surface-variant": "#32353c",
+                    "surface-container-low": "#191b23",
+                    "surface-container-highest": "#32353c",
+                    "inverse-surface": "#e1e2ec",
+                    "surface-dim": "#10131a",
+                    "primary-fixed": "#d8e2ff",
+                    "surface-container-lowest": "#0b0e15",
+                    "secondary-container": "#3a4a5f",
+                    "surface": "#10131a",
+                    "on-primary": "#002e6a",
+                    "surface-container": "#1d2027",
+                    "inverse-on-surface": "#2e3038",
+                    "on-primary-fixed-variant": "#004395",
+                    "surface-container-high": "#272a31",
+                    "on-background": "#e1e2ec",
+                    "outline": "#8c909f",
+                    "tertiary-fixed": "#ffdcc6",
+                    "on-secondary-container": "#a9bad3",
+                    "on-primary-container": "#00285d",
+                    "on-error-container": "#ffdad6",
+                    "on-surface-variant": "#c2c6d6",
+                    "on-tertiary-fixed": "#311400",
+                    "on-secondary": "#213145",
+                    "secondary": "#b7c8e1",
+                    "on-tertiary": "#502400",
+                    "primary-fixed-dim": "#adc6ff",
+                    "secondary-fixed-dim": "#b7c8e1",
+                    "on-tertiary-container": "#461f00",
+                    "tertiary-fixed-dim": "#ffb786",
+                    "primary-container": "#4d8eff",
+                    "error": "#ffb4ab",
+                    "on-error": "#690005",
+                    "on-secondary-fixed-variant": "#38485d"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.125rem",
+                    "lg": "0.25rem",
+                    "xl": "0.5rem",
+                    "full": "0.75rem"
+            },
+            "spacing": {
+                    "margin": "16px",
+                    "xl": "32px",
+                    "md": "16px",
+                    "lg": "24px",
+                    "gutter": "12px",
+                    "sm": "8px",
+                    "base": "4px",
+                    "xs": "4px"
+            },
+            "fontFamily": {
+                    "display-lg": ["Inter"],
+                    "body-md": ["Inter"],
+                    "data-sm": ["JetBrains Mono"],
+                    "data-md": ["JetBrains Mono"],
+                    "data-lg": ["JetBrains Mono"],
+                    "headline-sm": ["Inter"],
+                    "label-caps": ["JetBrains Mono"],
+                    "body-sm": ["Inter"],
+                    "headline-md": ["Inter"]
+            },
+            "fontSize": {
+                    "display-lg": ["48px", {"lineHeight": "56px", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                    "body-md": ["16px", {"lineHeight": "24px", "fontWeight": "400"}],
+                    "data-sm": ["12px", {"lineHeight": "16px", "fontWeight": "500"}],
+                    "data-md": ["14px", {"lineHeight": "20px", "fontWeight": "500"}],
+                    "data-lg": ["18px", {"lineHeight": "24px", "fontWeight": "500"}],
+                    "headline-sm": ["18px", {"lineHeight": "24px", "fontWeight": "600"}],
+                    "label-caps": ["11px", {"lineHeight": "16px", "letterSpacing": "0.1em", "fontWeight": "700"}],
+                    "body-sm": ["14px", {"lineHeight": "20px", "fontWeight": "400"}],
+                    "headline-md": ["24px", {"lineHeight": "32px", "fontWeight": "600"}]
+            }
+          }
+        }
+      }
+    </script>
+<style>
+        .border-glow-primary {
+            box-shadow: 0 0 2px 0 var(--tw-shadow-color);
+            --tw-shadow-color: #adc6ff;
+            border: 1px solid #adc6ff;
+        }
+        .border-glow-error {
+            box-shadow: 0 0 2px 0 var(--tw-shadow-color);
+            --tw-shadow-color: #ffb4ab;
+            border: 1px solid #ffb4ab;
+        }
+        
+        /* Node styles */
+        .node-low { fill: #b7c8e1; } /* secondary */
+        .node-med { fill: #df7412; } /* tertiary-container */
+        .node-high { fill: #ffb4ab; } /* error */
+        
+        .edge-path { stroke: #424754; stroke-width: 2; fill: none; }
+    </style>
+</head>
+<body class="bg-background text-on-surface h-screen overflow-hidden flex font-body-md">
+<!-- SideNavBar (Shared Component) -->
+<nav class="hidden md:flex flex-col h-full py-md px-sm bg-surface-container-low border-r border-outline-variant docked left-0 h-full w-64 z-20 shrink-0">
+<!-- Brand/Header -->
+<div class="mb-xl px-md">
+<div class="font-headline-sm text-headline-sm text-primary mb-1">VOC Command</div>
+<div class="font-data-sm text-data-sm text-on-surface-variant">FIFA World Cup 2026</div>
+</div>
+<!-- Navigation Links -->
+<div class="flex-1 flex flex-col gap-sm overflow-y-auto">
+<a class="flex items-center gap-md text-on-surface-variant p-md hover:bg-surface-variant hover:text-on-surface transition-all rounded" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 0;">dashboard</span>
+<span class="font-label-caps text-label-caps">Dashboard</span>
+</a>
+<!-- Active State: Venue Monitor -->
+<a class="flex items-center gap-md bg-secondary-container text-on-secondary-container rounded-lg p-md border-glow-primary scale-98 transition-all" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">stadium</span>
+<span class="font-label-caps text-label-caps">Venue Monitor</span>
+</a>
+<a class="flex items-center gap-md text-on-surface-variant p-md hover:bg-surface-variant hover:text-on-surface transition-all rounded" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 0;">security</span>
+<span class="font-label-caps text-label-caps">Security Ops</span>
+</a>
+<a class="flex items-center gap-md text-on-surface-variant p-md hover:bg-surface-variant hover:text-on-surface transition-all rounded" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 0;">groups</span>
+<span class="font-label-caps text-label-caps">Crowd Flow</span>
+</a>
+<a class="flex items-center gap-md text-on-surface-variant p-md hover:bg-surface-variant hover:text-on-surface transition-all rounded" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 0;">dns</span>
+<span class="font-label-caps text-label-caps">System Health</span>
+</a>
+<a class="flex items-center gap-md text-on-surface-variant p-md hover:bg-surface-variant hover:text-on-surface transition-all rounded" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 0;">history</span>
+<span class="font-label-caps text-label-caps">Audit Logs</span>
+</a>
+</div>
+<!-- Footer / CTA -->
+<div class="mt-auto pt-lg border-t border-outline-variant flex flex-col gap-sm">
+<button class="w-full bg-surface-variant border-2 border-error text-error hover:bg-error hover:text-on-error font-data-md text-data-md py-sm px-md rounded transition-colors duration-200">
+                Emergency Shutdown
+            </button>
+<div class="flex justify-around mt-sm">
+<a class="text-on-surface-variant hover:text-primary transition-colors p-sm" href="#" title="Support">
+<span class="material-symbols-outlined">help</span>
+</a>
+<a class="text-on-surface-variant hover:text-primary transition-colors p-sm" href="#" title="Manuals">
+<span class="material-symbols-outlined">description</span>
+</a>
+<div class="p-sm">
+<img alt="VOC Commander Profile" class="w-6 h-6 rounded-full object-cover" data-alt="A highly detailed close-up portrait of a security commander in a dimly lit, high-tech control room. The lighting is moody with blue and red screen reflections on their face. They are wearing a dark tactical uniform. Professional, authoritative, cinematic lighting." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDaiiM2Ua3-OTUfr81wmfCVF-cTFGohjZdlrNMnHhmdvXOBbDhLEdxvkCSeEY2TZlnF3aAVvHPFkzUKV3YARCEChm7-ngaLIR4HRLRflEpJfrwAJfpkimbQKKAQvgYBV7PhmHiYhQaisxl2B1pmzYHoiGH5Pj7GbICVktFCMZ3Akj6xGV2qFP1cKrvdVQVlktz88Yd9ikPe0QGANAGCCuhdU82yEfOL7zjGN-uR6zKBiVQ8z71hr252YBB7XV10slX9qo9Dm48j_W8i"/>
+</div>
+</div>
+</div>
+</nav>
+<!-- Main Content Area -->
+<div class="flex-1 flex flex-col relative w-full h-full bg-surface-dim">
+<!-- TopAppBar (Shared Component) -->
+<header class="flex justify-between items-center w-full px-lg h-16 bg-surface-container border-b border-outline-variant docked full-width top-0 z-10 shrink-0">
+<div class="flex items-center gap-lg">
+<div class="font-headline-md text-headline-md font-bold text-primary">EdgePulse 2026</div>
+<!-- Nav Links for Desktop within TopAppBar -->
+<nav class="hidden lg:flex gap-md ml-xl h-full items-end">
+<a class="text-on-surface-variant font-medium hover:bg-surface-variant transition-colors duration-200 px-sm py-2" href="#">S3 Pillars</a>
+<a class="text-on-surface-variant font-medium hover:bg-surface-variant transition-colors duration-200 px-sm py-2" href="#">Incident Audit</a>
+<a class="text-on-surface-variant font-medium hover:bg-surface-variant transition-colors duration-200 px-sm py-2" href="#">Actuator Ops</a>
+</nav>
+</div>
+<div class="flex items-center gap-md">
+<div class="relative hidden md:block">
+<span class="material-symbols-outlined absolute left-2 top-1/2 -translate-y-1/2 text-outline text-[18px]">search</span>
+<input class="bg-[#0f172a] border border-[#334155] rounded pl-8 pr-3 py-1 text-data-sm font-data-sm text-on-surface focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary w-48 transition-all" placeholder="Search resources..." type="text"/>
+</div>
+<button class="p-sm text-on-surface-variant hover:bg-surface-variant rounded transition-colors duration-200"><span class="material-symbols-outlined">notifications</span></button>
+<button class="p-sm text-on-surface-variant hover:bg-surface-variant rounded transition-colors duration-200"><span class="material-symbols-outlined">settings</span></button>
+<button class="p-sm text-on-surface-variant hover:bg-surface-variant rounded transition-colors duration-200"><span class="material-symbols-outlined">account_circle</span></button>
+<button class="ml-sm bg-surface-variant border border-error text-error hover:bg-error hover:text-on-error font-data-sm text-data-sm py-1 px-3 rounded transition-colors duration-200 flex items-center gap-xs">
+<span class="material-symbols-outlined text-[16px]">warning</span>
+                    Simulate Incident
+                </button>
+</div>
+</header>
+<!-- Main Canvas -->
+<main class="flex-1 relative overflow-hidden flex">
+<!-- Map Area -->
+<div class="flex-1 relative bg-[#0a0c11] overflow-hidden" id="map-container">
+<!-- Abstract Map Background pattern -->
+<div class="absolute inset-0 opacity-10" style="background-image: radial-gradient(circle at 2px 2px, #8c909f 1px, transparent 0); background-size: 24px 24px;"></div>
+<!-- Toggle Controls Overlay -->
+<div class="absolute top-md left-md z-10 flex gap-sm bg-surface-container/80 backdrop-blur p-sm rounded border border-outline-variant">
+<button class="font-data-sm text-data-sm px-3 py-1 rounded bg-secondary-container text-on-secondary-container border border-primary">Map View</button>
+<button class="font-data-sm text-data-sm px-3 py-1 rounded bg-surface-variant text-on-surface-variant hover:bg-surface-bright border border-transparent">Heatmap</button>
+<button class="font-data-sm text-data-sm px-3 py-1 rounded bg-surface-variant text-on-surface-variant hover:bg-surface-bright border border-transparent">Hazard Grid</button>
+</div>
+<!-- SVG Graph representation -->
+<svg class="absolute inset-0 z-0" height="100%" width="100%">
+<!-- Edges -->
+<line class="edge-path" x1="20%" x2="40%" y1="30%" y2="50%"></line>
+<line class="edge-path" x1="40%" x2="60%" y1="50%" y2="40%"></line>
+<line class="edge-path" x1="60%" x2="80%" y1="40%" y2="60%"></line>
+<line class="edge-path" x1="40%" x2="30%" y1="50%" y2="70%"></line>
+<line class="edge-path" x1="60%" x2="70%" y1="40%" y2="20%"></line>
+<!-- Nodes -->
+<g class="cursor-pointer" transform="translate(20%, 30%)">
+<circle class="node-low" r="12"></circle>
+<text class="font-data-sm text-data-sm fill-on-surface" text-anchor="middle" y="-20">Gate 1</text>
+</g>
+<g class="cursor-pointer" transform="translate(40%, 50%)">
+<circle class="node-med" r="16"></circle>
+<circle class="animate-[spin_4s_linear_infinite]" fill="none" r="24" stroke="#df7412" stroke-dasharray="4" stroke-width="1"></circle>
+<text class="font-data-sm text-data-sm fill-on-surface" text-anchor="middle" y="-28">Gate 2</text>
+</g>
+<g class="cursor-pointer" transform="translate(60%, 40%)">
+<circle class="node-low" r="12"></circle>
+<text class="font-data-sm text-data-sm fill-on-surface" text-anchor="middle" y="-20">Gate 3</text>
+</g>
+<!-- Selected Node (Gate 4) -->
+<g class="cursor-pointer" transform="translate(80%, 60%)">
+<circle class="node-high" r="18"></circle>
+<circle class="animate-pulse" fill="none" r="28" stroke="#ffb4ab" stroke-width="2"></circle>
+<text class="font-data-sm text-data-sm fill-on-surface font-bold" text-anchor="middle" y="-32">Gate 4</text>
+</g>
+<g class="cursor-pointer" transform="translate(30%, 70%)">
+<circle class="node-low" r="12"></circle>
+<text class="font-data-sm text-data-sm fill-on-surface" text-anchor="middle" y="-20">Gate 5</text>
+</g>
+<g class="cursor-pointer" transform="translate(70%, 20%)">
+<circle class="node-low" r="12"></circle>
+<text class="font-data-sm text-data-sm fill-on-surface" text-anchor="middle" y="-20">Gate 6</text>
+</g>
+</svg>
+</div>
+<!-- Detail Sidebar (Bento style panel) -->
+<aside class="w-80 h-full bg-[#1e293b] border-l border-[#334155] p-md overflow-y-auto shrink-0 flex flex-col gap-md z-10">
+<!-- Header -->
+<div class="flex justify-between items-start mb-sm">
+<div>
+<h2 class="font-headline-sm text-headline-sm text-on-surface mb-1">Gate 4</h2>
+<span class="inline-block bg-error-container/20 text-error border border-error font-label-caps text-label-caps px-2 py-0.5 rounded">HIGH DENSITY</span>
+</div>
+<button class="text-on-surface-variant hover:text-on-surface"><span class="material-symbols-outlined">close</span></button>
+</div>
+<!-- Status Bar -->
+<div class="h-0.5 w-full bg-error rounded-full mb-2"></div>
+<!-- Bento Metric Grid -->
+<div class="grid grid-cols-2 gap-gutter mb-md">
+<div class="bg-surface-container-high border border-[#334155] p-sm rounded flex flex-col justify-between h-24">
+<div class="font-data-sm text-data-sm text-on-surface-variant">Occupancy</div>
+<div class="font-headline-md text-headline-md text-error">85%</div>
+</div>
+<div class="bg-surface-container-high border border-[#334155] p-sm rounded flex flex-col justify-between h-24">
+<div class="font-data-sm text-data-sm text-on-surface-variant">Flow Rate</div>
+<div class="font-data-lg text-data-lg text-tertiary">12<span class="text-data-sm text-on-surface-variant">/min</span></div>
+</div>
+</div>
+<!-- Acoustic Status -->
+<div class="bg-surface-container-high border border-[#334155] p-md rounded mb-md">
+<div class="flex justify-between items-center mb-sm">
+<div class="font-data-sm text-data-sm text-on-surface-variant flex items-center gap-xs">
+<span class="material-symbols-outlined text-[16px]">volume_up</span> Acoustic
+                        </div>
+<span class="font-label-caps text-label-caps text-primary">NORMAL</span>
+</div>
+<!-- Sparkline proxy -->
+<div class="h-8 w-full flex items-end gap-[1px]">
+<div class="w-full h-[40%] bg-outline-variant"></div>
+<div class="w-full h-[60%] bg-outline-variant"></div>
+<div class="w-full h-[30%] bg-outline-variant"></div>
+<div class="w-full h-[50%] bg-outline-variant"></div>
+<div class="w-full h-[70%] bg-outline-variant"></div>
+<div class="w-full h-[45%] bg-outline-variant"></div>
+<div class="w-full h-[35%] bg-primary"></div>
+</div>
+</div>
+<!-- Turnstile Telemetry -->
+<div class="flex-1 bg-surface-container-high border border-[#334155] rounded overflow-hidden flex flex-col">
+<div class="p-sm border-b border-[#334155] font-data-sm text-data-sm text-on-surface-variant">Turnstile Status</div>
+<ul class="flex-1 overflow-y-auto p-sm flex flex-col gap-xs">
+<li class="flex justify-between items-center font-data-sm text-data-sm py-1 border-b border-surface-variant">
+<span>T-01</span>
+<span class="text-primary">Active</span>
+</li>
+<li class="flex justify-between items-center font-data-sm text-data-sm py-1 border-b border-surface-variant">
+<span>T-02</span>
+<span class="text-primary">Active</span>
+</li>
+<li class="flex justify-between items-center font-data-sm text-data-sm py-1 border-b border-surface-variant">
+<span>T-03</span>
+<span class="text-error">Jammed</span>
+</li>
+<li class="flex justify-between items-center font-data-sm text-data-sm py-1">
+<span>T-04</span>
+<span class="text-primary">Active</span>
+</li>
+</ul>
+</div>
+<button class="w-full bg-[#1e293b] border border-outline-variant text-on-surface hover:bg-surface-variant font-data-md text-data-md py-sm px-md rounded transition-colors duration-200 mt-auto">
+                    Dispatch Unit
+                </button>
+</aside>
+</main>
+</div>
+</body></html>

@@ -1,0 +1,413 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Approval Queue - EdgePulse 2026</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@400;500;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+          darkMode: "class",
+          theme: {
+            extend: {
+              "colors": {
+                      "error-container": "#93000a",
+                      "on-primary-fixed": "#001a42",
+                      "background": "#10131a",
+                      "outline-variant": "#424754",
+                      "inverse-primary": "#005ac2",
+                      "secondary-fixed": "#d3e4fe",
+                      "surface-tint": "#adc6ff",
+                      "on-surface": "#e1e2ec",
+                      "tertiary-container": "#df7412",
+                      "surface-bright": "#363941",
+                      "on-tertiary-fixed-variant": "#723600",
+                      "tertiary": "#ffb786",
+                      "primary": "#adc6ff",
+                      "on-secondary-fixed": "#0b1c30",
+                      "surface-variant": "#32353c",
+                      "surface-container-low": "#191b23",
+                      "surface-container-highest": "#32353c",
+                      "inverse-surface": "#e1e2ec",
+                      "surface-dim": "#10131a",
+                      "primary-fixed": "#d8e2ff",
+                      "surface-container-lowest": "#0b0e15",
+                      "secondary-container": "#3a4a5f",
+                      "surface": "#10131a",
+                      "on-primary": "#002e6a",
+                      "surface-container": "#1d2027",
+                      "inverse-on-surface": "#2e3038",
+                      "on-primary-fixed-variant": "#004395",
+                      "surface-container-high": "#272a31",
+                      "on-background": "#e1e2ec",
+                      "outline": "#8c909f",
+                      "tertiary-fixed": "#ffdcc6",
+                      "on-secondary-container": "#a9bad3",
+                      "on-primary-container": "#00285d",
+                      "on-error-container": "#ffdad6",
+                      "on-surface-variant": "#c2c6d6",
+                      "on-tertiary-fixed": "#311400",
+                      "on-secondary": "#213145",
+                      "secondary": "#b7c8e1",
+                      "on-tertiary": "#502400",
+                      "primary-fixed-dim": "#adc6ff",
+                      "secondary-fixed-dim": "#b7c8e1",
+                      "on-tertiary-container": "#461f00",
+                      "tertiary-fixed-dim": "#ffb786",
+                      "primary-container": "#4d8eff",
+                      "error": "#ffb4ab",
+                      "on-error": "#690005",
+                      "on-secondary-fixed-variant": "#38485d"
+              },
+              "borderRadius": {
+                      "DEFAULT": "0.125rem",
+                      "lg": "0.25rem",
+                      "xl": "0.5rem",
+                      "full": "0.75rem"
+              },
+              "spacing": {
+                      "margin": "16px",
+                      "xl": "32px",
+                      "md": "16px",
+                      "lg": "24px",
+                      "gutter": "12px",
+                      "sm": "8px",
+                      "base": "4px",
+                      "xs": "4px"
+              },
+              "fontFamily": {
+                      "display-lg": [
+                              "Inter"
+                      ],
+                      "body-md": [
+                              "Inter"
+                      ],
+                      "data-sm": [
+                              "JetBrains Mono"
+                      ],
+                      "data-md": [
+                              "JetBrains Mono"
+                      ],
+                      "data-lg": [
+                              "JetBrains Mono"
+                      ],
+                      "headline-sm": [
+                              "Inter"
+                      ],
+                      "label-caps": [
+                              "JetBrains Mono"
+                      ],
+                      "body-sm": [
+                              "Inter"
+                      ],
+                      "headline-md": [
+                              "Inter"
+                      ]
+              },
+              "fontSize": {
+                      "display-lg": [
+                              "48px",
+                              {
+                                      "lineHeight": "56px",
+                                      "letterSpacing": "-0.02em",
+                                      "fontWeight": "700"
+                              }
+                      ],
+                      "body-md": [
+                              "16px",
+                              {
+                                      "lineHeight": "24px",
+                                      "fontWeight": "400"
+                              }
+                      ],
+                      "data-sm": [
+                              "12px",
+                              {
+                                      "lineHeight": "16px",
+                                      "fontWeight": "500"
+                              }
+                      ],
+                      "data-md": [
+                              "14px",
+                              {
+                                      "lineHeight": "20px",
+                                      "fontWeight": "500"
+                              }
+                      ],
+                      "data-lg": [
+                              "18px",
+                              {
+                                      "lineHeight": "24px",
+                                      "fontWeight": "500"
+                              }
+                      ],
+                      "headline-sm": [
+                              "18px",
+                              {
+                                      "lineHeight": "24px",
+                                      "fontWeight": "600"
+                              }
+                      ],
+                      "label-caps": [
+                              "11px",
+                              {
+                                      "lineHeight": "16px",
+                                      "letterSpacing": "0.1em",
+                                      "fontWeight": "700"
+                              }
+                      ],
+                      "body-sm": [
+                              "14px",
+                              {
+                                      "lineHeight": "20px",
+                                      "fontWeight": "400"
+                              }
+                      ],
+                      "headline-md": [
+                              "24px",
+                              {
+                                      "lineHeight": "32px",
+                                      "fontWeight": "600"
+                              }
+                      ]
+              }
+      },
+          },
+        }
+      </script>
+<style>
+        .border-glow-primary {
+            box-shadow: 0 0 0 1px theme('colors.primary'), 0 0 4px 1px theme('colors.primary');
+        }
+        .border-glow-error {
+            box-shadow: 0 0 0 1px theme('colors.error'), 0 0 4px 1px theme('colors.error');
+        }
+        .border-glow-tertiary {
+            box-shadow: 0 0 0 1px theme('colors.tertiary-container'), 0 0 4px 1px theme('colors.tertiary-container');
+        }
+      </style>
+</head>
+<body class="bg-background text-on-background min-h-screen flex flex-col md:flex-row overflow-hidden font-body-md">
+<!-- SideNavBar (Hidden on Mobile, Visible on Desktop) -->
+<nav class="hidden md:flex flex-col h-full py-md px-sm bg-surface-container-low dark:bg-surface-container-low border-r border-outline-variant dark:border-outline-variant docked left-0 w-64 z-20 sticky top-0">
+<!-- Header -->
+<div class="mb-lg px-md">
+<div class="flex items-center gap-sm mb-xs">
+<span class="font-headline-sm text-headline-sm text-primary">VOC Command</span>
+</div>
+<div class="text-on-surface-variant font-label-caps text-label-caps opacity-80">FIFA World Cup 2026</div>
+</div>
+<!-- Main Nav Tabs -->
+<ul class="flex-1 space-y-sm">
+<li>
+<a class="flex items-center gap-md text-on-surface-variant p-md hover:bg-surface-variant hover:text-on-surface transition-all rounded-lg" href="#">
+<span class="material-symbols-outlined">dashboard</span>
+<span class="font-data-md text-data-md">Dashboard</span>
+</a>
+</li>
+<li>
+<a class="flex items-center gap-md text-on-surface-variant p-md hover:bg-surface-variant hover:text-on-surface transition-all rounded-lg" href="#">
+<span class="material-symbols-outlined">stadium</span>
+<span class="font-data-md text-data-md">Venue Monitor</span>
+</a>
+</li>
+<li>
+<a class="flex items-center gap-md text-on-surface-variant p-md hover:bg-surface-variant hover:text-on-surface transition-all rounded-lg" href="#">
+<span class="material-symbols-outlined">security</span>
+<span class="font-data-md text-data-md">Security Ops</span>
+</a>
+</li>
+<li>
+<a class="flex items-center gap-md text-on-surface-variant p-md hover:bg-surface-variant hover:text-on-surface transition-all rounded-lg" href="#">
+<span class="material-symbols-outlined">groups</span>
+<span class="font-data-md text-data-md">Crowd Flow</span>
+</a>
+</li>
+<li>
+<a class="flex items-center gap-md text-on-surface-variant p-md hover:bg-surface-variant hover:text-on-surface transition-all rounded-lg" href="#">
+<span class="material-symbols-outlined">dns</span>
+<span class="font-data-md text-data-md">System Health</span>
+</a>
+</li>
+<li>
+<a class="flex items-center gap-md bg-secondary-container text-on-secondary-container rounded-lg p-md border-glow-primary scale-98 transition-all" href="#">
+<span class="material-symbols-outlined">history</span>
+<span class="font-data-md text-data-md">Audit Logs</span>
+</a>
+</li>
+</ul>
+<!-- Footer Actions -->
+<div class="mt-auto space-y-sm pt-md border-t border-outline-variant">
+<button class="w-full flex items-center justify-center gap-sm bg-surface-variant text-on-surface p-sm rounded-lg hover:bg-surface-bright transition-colors border border-outline-variant text-error font-data-sm text-data-sm">
+<span class="material-symbols-outlined text-error">warning</span>
+                Emergency Shutdown
+            </button>
+<ul class="flex flex-col gap-xs">
+<li>
+<a class="flex items-center gap-md text-on-surface-variant p-sm hover:bg-surface-variant hover:text-on-surface transition-all rounded-lg" href="#">
+<span class="material-symbols-outlined">help</span>
+<span class="font-data-sm text-data-sm">Support</span>
+</a>
+</li>
+<li>
+<a class="flex items-center gap-md text-on-surface-variant p-sm hover:bg-surface-variant hover:text-on-surface transition-all rounded-lg" href="#">
+<span class="material-symbols-outlined">description</span>
+<span class="font-data-sm text-data-sm">Manuals</span>
+</a>
+</li>
+</ul>
+</div>
+</nav>
+<!-- Main Content Canvas -->
+<div class="flex-1 flex flex-col h-screen overflow-hidden">
+<!-- TopAppBar (Visible on Mobile & Desktop as Context Header) -->
+<header class="bg-surface-container dark:bg-surface-container flex justify-between items-center w-full px-lg h-16 border-b border-outline-variant dark:border-outline-variant z-10 shrink-0">
+<div class="flex items-center gap-md">
+<!-- Mobile Menu Trigger (hidden on desktop) -->
+<button class="md:hidden text-on-surface-variant hover:text-on-surface transition-colors p-sm">
+<span class="material-symbols-outlined">menu</span>
+</button>
+<div class="font-headline-md text-headline-md font-bold text-primary dark:text-primary tracking-tight">EdgePulse 2026</div>
+</div>
+<nav class="hidden md:flex gap-lg h-full">
+<a class="text-on-surface-variant font-medium flex items-center h-full hover:bg-surface-variant transition-colors duration-200 px-md font-data-md text-data-md" href="#">S3 Pillars</a>
+<a class="text-primary font-bold border-b-2 border-primary pb-1 flex items-center h-full hover:bg-surface-variant transition-colors duration-200 px-md font-data-md text-data-md" href="#">Incident Audit</a>
+<a class="text-on-surface-variant font-medium flex items-center h-full hover:bg-surface-variant transition-colors duration-200 px-md font-data-md text-data-md" href="#">Actuator Ops</a>
+</nav>
+<div class="flex items-center gap-sm">
+<button class="text-on-surface-variant hover:text-on-surface p-sm rounded-full transition-colors relative">
+<span class="material-symbols-outlined">notifications</span>
+<span class="absolute top-1 right-1 w-2 h-2 bg-error rounded-full animate-pulse"></span>
+</button>
+<button class="text-on-surface-variant hover:text-on-surface p-sm rounded-full transition-colors hidden md:block">
+<span class="material-symbols-outlined">settings</span>
+</button>
+<button class="text-on-surface-variant hover:text-on-surface p-sm rounded-full transition-colors">
+<span class="material-symbols-outlined">account_circle</span>
+</button>
+</div>
+</header>
+<!-- Page Content -->
+<main class="flex-1 overflow-y-auto p-md md:p-lg lg:p-xl bg-surface-dim relative">
+<!-- Background Grid Pattern for Technical Feel -->
+<div class="absolute inset-0 pointer-events-none opacity-5 z-0" style="background-image: linear-gradient(theme('colors.outline') 1px, transparent 1px), linear-gradient(90deg, theme('colors.outline') 1px, transparent 1px); background-size: 20px 20px;"></div>
+<div class="max-w-4xl mx-auto w-full relative z-10 flex flex-col h-full justify-center">
+<div class="mb-lg flex flex-col md:flex-row justify-between items-start md:items-end gap-md">
+<div>
+<h1 class="font-display-lg text-display-lg text-on-surface mb-xs flex items-center gap-sm">
+<span class="material-symbols-outlined text-4xl text-tertiary-container">policy</span>
+                            Approval Queue
+                        </h1>
+<p class="font-body-md text-body-md text-on-surface-variant">Critical Human-in-the-Loop Interventions Required.</p>
+</div>
+<div class="flex gap-sm">
+<div class="bg-surface-container-high border border-outline-variant rounded-full px-md py-sm flex items-center gap-sm">
+<span class="w-2 h-2 rounded-full bg-error animate-pulse"></span>
+<span class="font-data-sm text-data-sm text-on-surface">1 Pending</span>
+</div>
+</div>
+</div>
+<!-- Approval Card -->
+<div class="bg-[#1e293b] border border-outline-variant rounded-xl overflow-hidden shadow-2xl relative border-glow-tertiary animate-pulse-slow">
+<!-- Status Bar Top -->
+<div class="h-1 w-full bg-tertiary-container"></div>
+<div class="p-lg md:p-xl">
+<!-- Card Header -->
+<div class="flex justify-between items-start mb-lg border-b border-outline-variant pb-md">
+<div>
+<div class="font-label-caps text-label-caps text-tertiary-container mb-xs">URGENT ACTUATION REQUEST</div>
+<h2 class="font-headline-md text-headline-md text-on-surface">Gate 12 Emergency Egress</h2>
+<p class="font-data-md text-data-md text-on-surface-variant mt-xs">ID: REQ-8894-ALPHA</p>
+</div>
+<div class="bg-surface-container px-lg py-md rounded-lg border border-tertiary-container flex flex-col items-center justify-center min-w-[100px]">
+<span class="font-label-caps text-label-caps text-on-surface-variant mb-xs">TIMEOUT IN</span>
+<span class="font-data-lg text-data-lg text-tertiary font-bold" id="countdownTimer">45s</span>
+</div>
+</div>
+<!-- Card Body (Bento Layout) -->
+<div class="grid grid-cols-1 md:grid-cols-2 gap-lg mb-xl">
+<!-- Context / Trigger -->
+<div class="bg-surface-container-low border border-outline-variant rounded-lg p-md flex flex-col gap-sm relative overflow-hidden">
+<div class="absolute right-0 top-0 opacity-10 pointer-events-none">
+<span class="material-symbols-outlined text-9xl">warning</span>
+</div>
+<div class="flex items-center gap-sm text-error">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">sensors</span>
+<span class="font-data-sm text-data-sm uppercase font-bold tracking-widest">Trigger Condition</span>
+</div>
+<div class="font-headline-sm text-headline-sm text-on-surface">High density detected in Zone 3</div>
+<div class="font-data-sm text-data-sm text-on-surface-variant mt-auto pt-sm border-t border-outline-variant border-opacity-50">
+                                    Sensor Cluster 3B-N reading 4.8 pax/sqm for &gt; 180s.
+                                </div>
+</div>
+<!-- Reasoning / Recommendation -->
+<div class="bg-surface-container-low border border-outline-variant rounded-lg p-md flex flex-col gap-sm">
+<div class="flex items-center gap-sm text-primary">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">psychology</span>
+<span class="font-data-sm text-data-sm uppercase font-bold tracking-widest">Model Reasoning</span>
+</div>
+<div class="font-body-md text-body-md text-on-surface">Model suggests opening auxiliary Gate 12 to relieve pressure and re-route flow away from Sector Alpha.</div>
+<!-- Telemetry visualization placeholder -->
+<div class="mt-auto h-16 w-full flex items-end gap-[2px] opacity-70">
+<div class="w-full h-[20%] bg-outline-variant rounded-t-sm"></div>
+<div class="w-full h-[30%] bg-outline-variant rounded-t-sm"></div>
+<div class="w-full h-[45%] bg-outline-variant rounded-t-sm"></div>
+<div class="w-full h-[60%] bg-outline-variant rounded-t-sm"></div>
+<div class="w-full h-[80%] bg-tertiary-container rounded-t-sm"></div>
+<div class="w-full h-[95%] bg-error rounded-t-sm animate-pulse"></div>
+</div>
+</div>
+</div>
+<!-- Action Buttons -->
+<div class="flex flex-col sm:flex-row gap-md justify-end">
+<button class="flex-1 sm:flex-none flex items-center justify-center gap-sm px-xl py-md rounded-lg font-headline-sm text-headline-sm uppercase tracking-wider border-2 border-error text-error hover:bg-error hover:text-on-error transition-colors duration-200">
+<span class="material-symbols-outlined">block</span>
+                                Veto
+                            </button>
+<button class="flex-1 sm:flex-none flex items-center justify-center gap-sm px-xl py-md rounded-lg font-headline-sm text-headline-sm uppercase tracking-wider bg-surface-variant text-on-surface border-2 border-[#10b981] text-[#10b981] hover:bg-[#10b981] hover:text-[#064e3b] transition-colors duration-200" style="box-shadow: 0 0 0 1px #10b981, 0 0 4px 1px rgba(16, 185, 129, 0.5);">
+<span class="material-symbols-outlined">check_circle</span>
+                                Approve
+                            </button>
+</div>
+</div>
+</div>
+<!-- History Context (Faded out below) -->
+<div class="mt-lg opacity-50 blur-[1px] pointer-events-none">
+<div class="bg-surface-container-high border border-outline-variant rounded-lg p-md flex items-center justify-between">
+<div class="flex items-center gap-md">
+<span class="material-symbols-outlined text-outline">done_all</span>
+<div>
+<div class="font-data-md text-data-md text-on-surface">HVAC Override - Sector G</div>
+<div class="font-data-sm text-data-sm text-outline">Approved by SysAdmin • 12m ago</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</main>
+</div>
+<script>
+        // Simple countdown logic for visual effect
+        let timeLeft = 45;
+        const timerDisplay = document.getElementById('countdownTimer');
+        
+        const countdown = setInterval(() => {
+            timeLeft--;
+            timerDisplay.textContent = timeLeft + 's';
+            
+            if (timeLeft <= 15) {
+                timerDisplay.classList.remove('text-tertiary');
+                timerDisplay.classList.add('text-error', 'animate-pulse');
+            }
+            
+            if (timeLeft <= 0) {
+                clearInterval(countdown);
+                timerDisplay.textContent = '0s';
+                // Trigger auto-veto or similar visually in a real app
+            }
+        }, 1000);
+    </script>
+</body></html>

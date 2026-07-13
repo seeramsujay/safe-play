@@ -1,0 +1,387 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>EdgePulse 2026 - Overview Dashboard</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&amp;family=JetBrains+Mono:wght@500;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "error-container": "#93000a",
+                        "on-primary-fixed": "#001a42",
+                        "background": "#10131a",
+                        "outline-variant": "#424754",
+                        "inverse-primary": "#005ac2",
+                        "secondary-fixed": "#d3e4fe",
+                        "surface-tint": "#adc6ff",
+                        "on-surface": "#e1e2ec",
+                        "tertiary-container": "#df7412",
+                        "surface-bright": "#363941",
+                        "on-tertiary-fixed-variant": "#723600",
+                        "tertiary": "#ffb786",
+                        "primary": "#adc6ff",
+                        "on-secondary-fixed": "#0b1c30",
+                        "surface-variant": "#32353c",
+                        "surface-container-low": "#191b23",
+                        "surface-container-highest": "#32353c",
+                        "inverse-surface": "#e1e2ec",
+                        "surface-dim": "#10131a",
+                        "primary-fixed": "#d8e2ff",
+                        "surface-container-lowest": "#0b0e15",
+                        "secondary-container": "#3a4a5f",
+                        "surface": "#10131a",
+                        "on-primary": "#002e6a",
+                        "surface-container": "#1d2027",
+                        "inverse-on-surface": "#2e3038",
+                        "on-primary-fixed-variant": "#004395",
+                        "surface-container-high": "#272a31",
+                        "on-background": "#e1e2ec",
+                        "outline": "#8c909f",
+                        "tertiary-fixed": "#ffdcc6",
+                        "on-secondary-container": "#a9bad3",
+                        "on-primary-container": "#00285d",
+                        "on-error-container": "#ffdad6",
+                        "on-surface-variant": "#c2c6d6",
+                        "on-tertiary-fixed": "#311400",
+                        "on-secondary": "#213145",
+                        "secondary": "#b7c8e1",
+                        "on-tertiary": "#502400",
+                        "primary-fixed-dim": "#adc6ff",
+                        "secondary-fixed-dim": "#b7c8e1",
+                        "on-tertiary-container": "#461f00",
+                        "tertiary-fixed-dim": "#ffb786",
+                        "primary-container": "#4d8eff",
+                        "error": "#ffb4ab",
+                        "on-error": "#690005",
+                        "on-secondary-fixed-variant": "#38485d"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.125rem",
+                        "lg": "0.25rem",
+                        "xl": "0.5rem",
+                        "full": "0.75rem"
+                    },
+                    "spacing": {
+                        "margin": "16px",
+                        "xl": "32px",
+                        "md": "16px",
+                        "lg": "24px",
+                        "gutter": "12px",
+                        "sm": "8px",
+                        "base": "4px",
+                        "xs": "4px"
+                    },
+                    "fontFamily": {
+                        "display-lg": ["Inter"],
+                        "body-md": ["Inter"],
+                        "data-sm": ["JetBrains Mono"],
+                        "data-md": ["JetBrains Mono"],
+                        "data-lg": ["JetBrains Mono"],
+                        "headline-sm": ["Inter"],
+                        "label-caps": ["JetBrains Mono"],
+                        "body-sm": ["Inter"],
+                        "headline-md": ["Inter"]
+                    },
+                    "fontSize": {
+                        "display-lg": ["48px", { "lineHeight": "56px", "letterSpacing": "-0.02em", "fontWeight": "700" }],
+                        "body-md": ["16px", { "lineHeight": "24px", "fontWeight": "400" }],
+                        "data-sm": ["12px", { "lineHeight": "16px", "fontWeight": "500" }],
+                        "data-md": ["14px", { "lineHeight": "20px", "fontWeight": "500" }],
+                        "data-lg": ["18px", { "lineHeight": "24px", "fontWeight": "500" }],
+                        "headline-sm": ["18px", { "lineHeight": "24px", "fontWeight": "600" }],
+                        "label-caps": ["11px", { "lineHeight": "16px", "letterSpacing": "0.1em", "fontWeight": "700" }],
+                        "body-sm": ["14px", { "lineHeight": "20px", "fontWeight": "400" }],
+                        "headline-md": ["24px", { "lineHeight": "32px", "fontWeight": "600" }]
+                    }
+                },
+            },
+        }
+    </script>
+<style>
+        /* Custom Sparkline Animations */
+        @keyframes drawLine {
+            to { stroke-dashoffset: 0; }
+        }
+        .sparkline path {
+            stroke-dasharray: 100;
+            stroke-dashoffset: 100;
+            animation: drawLine 2s ease-out forwards;
+        }
+        
+        /* Map Pulse Effect */
+        @keyframes pulse-amber {
+            0% { opacity: 0.4; }
+            50% { opacity: 0.8; }
+            100% { opacity: 0.4; }
+        }
+        .pulse-zone-2 {
+            animation: pulse-amber 3s infinite ease-in-out;
+        }
+
+        /* Border Glow Utility */
+        .border-glow-primary {
+            box-shadow: 0 0 4px 1px theme('colors.primary');
+        }
+        .border-glow-error {
+            box-shadow: 0 0 4px 1px theme('colors.error');
+        }
+        .border-glow-tertiary {
+            box-shadow: 0 0 4px 1px theme('colors.tertiary');
+        }
+    </style>
+</head>
+<body class="bg-background text-on-background min-h-screen flex flex-col md:flex-row font-body-md overflow-hidden selection:bg-primary-container selection:text-on-primary-container">
+<!-- SideNavBar (Docked Left) -->
+<nav class="hidden md:flex flex-col h-full py-md px-sm bg-surface-container-low border-r border-outline-variant docked left-0 h-full w-64 z-20 shrink-0">
+<!-- Brand / Header -->
+<div class="px-md mb-lg">
+<h1 class="font-headline-sm text-headline-sm text-primary tracking-tight">EdgePulse 2026</h1>
+<div class="flex items-center gap-sm mt-md">
+<div class="w-10 h-10 rounded-full bg-surface-container-high border border-outline flex items-center justify-center overflow-hidden shrink-0">
+<span class="material-symbols-outlined text-on-surface-variant" style="font-variation-settings: 'FILL' 1;">account_circle</span>
+</div>
+<div>
+<p class="font-label-caps text-label-caps text-on-surface">VOC Command</p>
+<p class="font-data-sm text-data-sm text-on-surface-variant">FIFA World Cup 2026</p>
+</div>
+</div>
+</div>
+<!-- Navigation Links -->
+<ul class="flex-1 space-y-xs overflow-y-auto">
+<li>
+<a aria-current="page" class="flex items-center gap-md bg-secondary-container text-on-secondary-container rounded-lg p-md border border-glow-primary transform scale-[0.98] transition-all" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">dashboard</span>
+<span class="font-data-md text-data-md">Dashboard</span>
+</a>
+</li>
+<li>
+<a class="flex items-center gap-md text-on-surface-variant p-md hover:bg-surface-variant hover:text-on-surface transition-all rounded-lg border border-transparent" href="#">
+<span class="material-symbols-outlined">stadium</span>
+<span class="font-data-md text-data-md">Venue Monitor</span>
+</a>
+</li>
+<li>
+<a class="flex items-center gap-md text-on-surface-variant p-md hover:bg-surface-variant hover:text-on-surface transition-all rounded-lg border border-transparent" href="#">
+<span class="material-symbols-outlined">security</span>
+<span class="font-data-md text-data-md">Security Ops</span>
+</a>
+</li>
+<li>
+<a class="flex items-center gap-md text-on-surface-variant p-md hover:bg-surface-variant hover:text-on-surface transition-all rounded-lg border border-transparent" href="#">
+<span class="material-symbols-outlined">groups</span>
+<span class="font-data-md text-data-md">Crowd Flow</span>
+</a>
+</li>
+<li>
+<a class="flex items-center gap-md text-on-surface-variant p-md hover:bg-surface-variant hover:text-on-surface transition-all rounded-lg border border-transparent" href="#">
+<span class="material-symbols-outlined">dns</span>
+<span class="font-data-md text-data-md">System Health</span>
+</a>
+</li>
+<li>
+<a class="flex items-center gap-md text-on-surface-variant p-md hover:bg-surface-variant hover:text-on-surface transition-all rounded-lg border border-transparent" href="#">
+<span class="material-symbols-outlined">history</span>
+<span class="font-data-md text-data-md">Audit Logs</span>
+</a>
+</li>
+</ul>
+<!-- Footer / CTA -->
+<div class="mt-auto pt-md space-y-sm">
+<button class="w-full flex justify-center items-center gap-sm bg-surface-container border-2 border-error text-error p-sm rounded-lg hover:bg-error hover:text-on-error transition-colors font-data-md text-data-md group">
+<span class="material-symbols-outlined group-hover:animate-pulse">warning</span>
+                Emergency Shutdown
+            </button>
+<div class="flex flex-col gap-xs pt-sm border-t border-outline-variant">
+<a class="flex items-center gap-md text-on-surface-variant px-md py-sm hover:text-on-surface transition-colors" href="#">
+<span class="material-symbols-outlined text-[18px]">help</span>
+<span class="font-data-sm text-data-sm">Support</span>
+</a>
+<a class="flex items-center gap-md text-on-surface-variant px-md py-sm hover:text-on-surface transition-colors" href="#">
+<span class="material-symbols-outlined text-[18px]">description</span>
+<span class="font-data-sm text-data-sm">Manuals</span>
+</a>
+</div>
+</div>
+</nav>
+<!-- Main Content Canvas -->
+<main class="flex-1 flex flex-col h-screen overflow-hidden bg-background relative">
+<!-- TopAppBar (Docked Top - Web Header Alternative / Global Banner) -->
+<header class="flex justify-between items-center w-full px-lg h-16 bg-surface-container border-b border-outline-variant shrink-0 z-10">
+<!-- Mobile Brand -->
+<div class="md:hidden flex items-center">
+<span class="font-headline-md text-headline-md font-bold text-primary tracking-tight">EdgePulse 2026</span>
+</div>
+<!-- Global Alert Banner -->
+<div class="flex-1 flex justify-center">
+<div class="flex items-center gap-sm bg-[#0f2c1f] border border-[#166534] px-lg py-sm rounded-full shadow-[0_0_8px_rgba(22,101,52,0.4)]">
+<span class="w-2 h-2 rounded-full bg-[#22c55e] animate-pulse"></span>
+<span class="font-label-caps text-label-caps text-[#4ade80] tracking-widest">NORMAL OPS</span>
+</div>
+</div>
+<!-- Trailing Actions -->
+<div class="flex items-center gap-md">
+<button class="text-on-surface-variant hover:text-primary transition-colors duration-200 hover:bg-surface-variant p-sm rounded-full active:scale-95 duration-100">
+<span class="material-symbols-outlined">notifications</span>
+</button>
+<button class="text-on-surface-variant hover:text-primary transition-colors duration-200 hover:bg-surface-variant p-sm rounded-full active:scale-95 duration-100 md:hidden">
+<span class="material-symbols-outlined">menu</span>
+</button>
+</div>
+</header>
+<!-- Scrollable Canvas Content -->
+<div class="flex-1 overflow-y-auto p-md lg:p-lg space-y-lg relative">
+<!-- Bento Grid Layout -->
+<div class="grid grid-cols-1 md:grid-cols-12 gap-gutter">
+<!-- Pillar 1: Safety (Row 1, Cols 1-4) -->
+<div class="col-span-1 md:col-span-4 bg-[#1e293b] border border-[#334155] rounded-lg p-md relative overflow-hidden flex flex-col gap-sm">
+<div class="absolute top-0 left-0 w-full h-[2px] bg-tertiary"></div>
+<div class="flex justify-between items-start">
+<div>
+<h2 class="font-label-caps text-label-caps text-on-surface-variant">SAFETY PILLAR</h2>
+<p class="font-headline-md text-headline-md text-on-surface mt-xs">Density 1.8</p>
+<span class="font-data-sm text-data-sm text-tertiary flex items-center gap-xs mt-1">
+<span class="material-symbols-outlined text-[16px]">trending_up</span>
+                                Rising trend
+                            </span>
+</div>
+<div class="bg-tertiary-container/20 border border-tertiary/30 p-sm rounded-md">
+<span class="material-symbols-outlined text-tertiary" style="font-variation-settings: 'FILL' 1;">warning</span>
+</div>
+</div>
+<div class="mt-auto pt-md h-12 sparkline">
+<svg class="w-full h-full" preserveaspectratio="none" viewbox="0 0 100 30">
+<path d="M0,25 Q10,20 20,25 T40,20 T60,15 T80,10 T100,5" fill="none" stroke="theme('colors.tertiary')" stroke-width="2" vector-effect="non-scaling-stroke"></path>
+</svg>
+</div>
+</div>
+<!-- Pillar 2: Security (Row 1, Cols 5-8) -->
+<div class="col-span-1 md:col-span-4 bg-[#1e293b] border border-[#334155] rounded-lg p-md relative overflow-hidden flex flex-col gap-sm">
+<div class="absolute top-0 left-0 w-full h-[2px] bg-[#4ade80]"></div>
+<div class="flex justify-between items-start">
+<div>
+<h2 class="font-label-caps text-label-caps text-on-surface-variant">SECURITY PILLAR</h2>
+<p class="font-headline-md text-headline-md text-on-surface mt-xs">0 Active</p>
+<span class="font-data-sm text-data-sm text-[#4ade80] flex items-center gap-xs mt-1">
+<span class="material-symbols-outlined text-[16px]">trending_flat</span>
+                                Stable
+                            </span>
+</div>
+<div class="bg-[#166534]/30 border border-[#22c55e]/30 p-sm rounded-md">
+<span class="material-symbols-outlined text-[#4ade80]" style="font-variation-settings: 'FILL' 1;">security</span>
+</div>
+</div>
+<div class="mt-auto pt-md h-12 sparkline">
+<svg class="w-full h-full" preserveaspectratio="none" viewbox="0 0 100 30">
+<path d="M0,25 L20,25 L40,24 L60,25 L80,25 L100,25" fill="none" stroke="#4ade80" stroke-width="2" vector-effect="non-scaling-stroke"></path>
+</svg>
+</div>
+</div>
+<!-- Pillar 3: Service (Row 1, Cols 9-12) -->
+<div class="col-span-1 md:col-span-4 bg-[#1e293b] border border-[#334155] rounded-lg p-md relative overflow-hidden flex flex-col gap-sm">
+<div class="absolute top-0 left-0 w-full h-[2px] bg-primary"></div>
+<div class="flex justify-between items-start">
+<div>
+<h2 class="font-label-caps text-label-caps text-on-surface-variant">SERVICE PILLAR</h2>
+<p class="font-headline-md text-headline-md text-on-surface mt-xs">Queue 4m</p>
+<span class="font-data-sm text-data-sm text-primary flex items-center gap-xs mt-1">
+<span class="material-symbols-outlined text-[16px]">trending_down</span>
+                                Improving
+                            </span>
+</div>
+<div class="bg-primary-container/20 border border-primary/30 p-sm rounded-md">
+<span class="material-symbols-outlined text-primary" style="font-variation-settings: 'FILL' 1;">groups</span>
+</div>
+</div>
+<div class="mt-auto pt-md h-12 sparkline">
+<svg class="w-full h-full" preserveaspectratio="none" viewbox="0 0 100 30">
+<path d="M0,10 Q20,15 40,12 T80,20 T100,25" fill="none" stroke="theme('colors.primary')" stroke-width="2" vector-effect="non-scaling-stroke"></path>
+</svg>
+</div>
+</div>
+<!-- Schematic Heatmap (Row 2, Cols 1-12) -->
+<div class="col-span-1 md:col-span-12 bg-[#1e293b] border border-[#334155] rounded-lg p-md flex flex-col min-h-[400px]">
+<div class="flex justify-between items-center mb-md border-b border-outline-variant pb-sm">
+<h2 class="font-headline-sm text-headline-sm text-on-surface">Venue Schematic: Sector Alpha</h2>
+<div class="flex gap-sm">
+<span class="px-2 py-1 bg-surface-container border border-outline-variant rounded font-data-sm text-data-sm text-on-surface-variant flex items-center gap-xs"><span class="w-2 h-2 rounded-full bg-[#4ade80]"></span> Zone 1: Clear</span>
+<span class="px-2 py-1 bg-surface-container border border-outline-variant rounded font-data-sm text-data-sm text-on-surface-variant flex items-center gap-xs"><span class="w-2 h-2 rounded-full bg-tertiary"></span> Zone 2: Moderate</span>
+<span class="px-2 py-1 bg-surface-container border border-outline-variant rounded font-data-sm text-data-sm text-on-surface-variant flex items-center gap-xs"><span class="w-2 h-2 rounded-full bg-outline-variant"></span> Zone 3: Offline</span>
+</div>
+</div>
+<div class="flex-1 relative flex items-center justify-center bg-surface-dim rounded border border-outline-variant/50 overflow-hidden">
+<!-- Abstract Stadium Schematic SVG -->
+<svg class="w-full max-h-full opacity-80 mix-blend-screen" viewbox="0 0 800 400">
+<!-- Background Grid -->
+<pattern height="40" id="grid" patternunits="userSpaceOnUse" width="40">
+<path d="M 40 0 L 0 0 0 40" fill="none" stroke="rgba(66, 71, 84, 0.2)" stroke-width="1"></path>
+</pattern>
+<rect fill="url(#grid)" height="100%" width="100%"></rect>
+<!-- Base Geometry -->
+<g fill="none" stroke="theme('colors.outline-variant')" stroke-width="2">
+<rect height="300" rx="150" width="600" x="100" y="50"></rect>
+<rect height="200" rx="80" width="400" x="200" y="100"></rect>
+<path d="M400,50 L400,350 M100,200 L700,200" opacity="0.5" stroke-dasharray="4 4"></path>
+</g>
+<!-- Zones Overlay -->
+<g fill="none" stroke-width="4">
+<!-- Zone 1 (Green / Clear) -->
+<path d="M100,200 A150,150 0 0,1 250,50" opacity="0.6" stroke="#4ade80"></path>
+<text class="font-data-md text-data-md" fill="#4ade80" stroke="none" x="150" y="120">Z1</text>
+<!-- Zone 2 (Amber / Moderate / Pulsing) -->
+<path class="pulse-zone-2" d="M250,50 L400,50 A150,150 0 0,1 400,350 L250,350 A150,150 0 0,1 100,200" stroke="theme('colors.tertiary')" stroke-linecap="round" stroke-width="8"></path>
+<text class="font-data-md text-data-md" fill="theme('colors.tertiary')" stroke="none" x="320" y="200">Z2</text>
+<!-- Zone 3 (Grey / Offline) -->
+<path d="M400,50 L550,50 A150,150 0 0,1 700,200 A150,150 0 0,1 550,350 L400,350" opacity="0.4" stroke="theme('colors.outline-variant')"></path>
+<text class="font-data-md text-data-md" fill="theme('colors.outline-variant')" stroke="none" x="550" y="200">Z3</text>
+</g>
+<!-- Telemetry Nodes -->
+<g fill="theme('colors.primary')">
+<circle class="animate-ping" cx="300" cy="150" r="4" style="animation-duration: 2s;"></circle>
+<circle cx="300" cy="150" r="2"></circle>
+<circle class="animate-ping" cx="350" cy="250" r="4" style="animation-duration: 3s; animation-delay: 1s;"></circle>
+<circle cx="350" cy="250" r="2"></circle>
+</g>
+</svg>
+</div>
+</div>
+</div> <!-- End Bento Grid -->
+</div> <!-- End Scrollable Canvas -->
+<!-- Bottom System Health / Ticker Strip -->
+<footer class="h-10 bg-surface-container-lowest border-t border-[#334155] flex items-center justify-between px-md shrink-0 font-data-sm text-data-sm text-on-surface-variant overflow-hidden z-10">
+<!-- Ticker -->
+<div class="flex-1 flex items-center overflow-hidden border-r border-[#334155] pr-md mr-md">
+<span class="text-tertiary font-label-caps mr-sm shrink-0">INCIDENT LOG:</span>
+<div class="whitespace-nowrap animate-[marquee_20s_linear_infinite]">
+<span class="mr-lg">10:42 Z1 Gate B flow rate optimal.</span>
+<span class="mr-lg text-tertiary">10:38 Z2 Concourse minor congestion detected. Re-routing recommended.</span>
+<span class="mr-lg">10:30 Routine sweep complete.</span>
+</div>
+</div>
+<!-- System Health -->
+<div class="flex items-center gap-md shrink-0">
+<div class="flex items-center gap-xs">
+<span class="material-symbols-outlined text-[14px]">router</span>
+<span>MQTT: 22%</span>
+</div>
+<div class="w-px h-4 bg-[#334155]"></div>
+<div class="flex items-center gap-xs">
+<span class="material-symbols-outlined text-[14px]">memory</span>
+<span>LLM TTFT: 88ms</span>
+</div>
+</div>
+</footer>
+<style>
+            @keyframes marquee {
+                0% { transform: translateX(100%); }
+                100% { transform: translateX(-100%); }
+            }
+        </style>
+</main>
+</body></html>

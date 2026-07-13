@@ -1,0 +1,504 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Stadium Ops Command - Sensor &amp; Node Health</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&amp;family=JetBrains+Mono:wght@500;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+          darkMode: "class",
+          theme: {
+            extend: {
+              "colors": {
+                      "surface-bright": "#363941",
+                      "on-secondary-fixed": "#0b1c30",
+                      "primary-fixed-dim": "#adc6ff",
+                      "primary-fixed": "#d8e2ff",
+                      "surface-tint": "#adc6ff",
+                      "surface": "#10131a",
+                      "error-container": "#93000a",
+                      "tertiary-fixed-dim": "#ffb786",
+                      "surface-container-highest": "#32353c",
+                      "inverse-surface": "#e1e2ec",
+                      "surface-container-high": "#272a31",
+                      "inverse-on-surface": "#2e3038",
+                      "surface-dim": "#10131a",
+                      "on-secondary": "#213145",
+                      "error": "#ffb4ab",
+                      "background": "#10131a",
+                      "on-error-container": "#ffdad6",
+                      "on-primary-fixed": "#001a42",
+                      "secondary-container": "#3a4a5f",
+                      "tertiary": "#ffb786",
+                      "on-tertiary-fixed-variant": "#723600",
+                      "surface-variant": "#32353c",
+                      "secondary-fixed": "#d3e4fe",
+                      "surface-container-low": "#191b23",
+                      "on-primary-container": "#00285d",
+                      "surface-container-lowest": "#0b0e15",
+                      "on-surface": "#e1e2ec",
+                      "on-primary": "#002e6a",
+                      "on-surface-variant": "#c2c6d6",
+                      "on-tertiary-container": "#461f00",
+                      "outline-variant": "#424754",
+                      "primary": "#adc6ff",
+                      "on-background": "#e1e2ec",
+                      "primary-container": "#4d8eff",
+                      "secondary": "#b7c8e1",
+                      "secondary-fixed-dim": "#b7c8e1",
+                      "outline": "#8c909f",
+                      "on-tertiary-fixed": "#311400",
+                      "tertiary-container": "#df7412",
+                      "surface-container": "#1d2027",
+                      "inverse-primary": "#005ac2",
+                      "on-secondary-fixed-variant": "#38485d",
+                      "on-error": "#690005",
+                      "on-secondary-container": "#a9bad3",
+                      "on-primary-fixed-variant": "#004395",
+                      "tertiary-fixed": "#ffdcc6",
+                      "on-tertiary": "#502400"
+              },
+              "borderRadius": {
+                      "DEFAULT": "0.125rem",
+                      "lg": "0.25rem",
+                      "xl": "0.5rem",
+                      "full": "0.75rem"
+              },
+              "spacing": {
+                      "md": "16px",
+                      "lg": "24px",
+                      "gutter": "12px",
+                      "base": "4px",
+                      "xs": "4px",
+                      "xl": "32px",
+                      "margin": "16px",
+                      "sm": "8px"
+              },
+              "fontFamily": {
+                      "body-sm": [
+                              "Inter"
+                      ],
+                      "data-md": [
+                              "JetBrains Mono"
+                      ],
+                      "label-caps": [
+                              "JetBrains Mono"
+                      ],
+                      "body-md": [
+                              "Inter"
+                      ],
+                      "data-sm": [
+                              "JetBrains Mono"
+                      ],
+                      "headline-md": [
+                              "Inter"
+                      ],
+                      "data-lg": [
+                              "JetBrains Mono"
+                      ],
+                      "headline-sm": [
+                              "Inter"
+                      ],
+                      "display-lg": [
+                              "Inter"
+                      ]
+              },
+              "fontSize": {
+                      "body-sm": [
+                              "14px",
+                              {
+                                      "lineHeight": "20px",
+                                      "fontWeight": "400"
+                              }
+                      ],
+                      "data-md": [
+                              "14px",
+                              {
+                                      "lineHeight": "20px",
+                                      "fontWeight": "500"
+                              }
+                      ],
+                      "label-caps": [
+                              "11px",
+                              {
+                                      "lineHeight": "16px",
+                                      "letterSpacing": "0.1em",
+                                      "fontWeight": "700"
+                              }
+                      ],
+                      "body-md": [
+                              "16px",
+                              {
+                                      "lineHeight": "24px",
+                                      "fontWeight": "400"
+                              }
+                      ],
+                      "data-sm": [
+                              "12px",
+                              {
+                                      "lineHeight": "16px",
+                                      "fontWeight": "500"
+                              }
+                      ],
+                      "headline-md": [
+                              "24px",
+                              {
+                                      "lineHeight": "32px",
+                                      "fontWeight": "600"
+                              }
+                      ],
+                      "data-lg": [
+                              "18px",
+                              {
+                                      "lineHeight": "24px",
+                                      "fontWeight": "500"
+                              }
+                      ],
+                      "headline-sm": [
+                              "18px",
+                              {
+                                      "lineHeight": "24px",
+                                      "fontWeight": "600"
+                              }
+                      ],
+                      "display-lg": [
+                              "48px",
+                              {
+                                      "lineHeight": "56px",
+                                      "letterSpacing": "-0.02em",
+                                      "fontWeight": "700"
+                              }
+                      ]
+              }
+      },
+          },
+        }
+    </script>
+<style>
+        /* Custom High-Contrast Scrollbar for Dark Tactical Theme */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #10131a; 
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #424754; 
+            border-radius: 0.125rem;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #8c909f; 
+        }
+        
+        .glow-active {
+            box-shadow: 0 0 2px 0px currentColor;
+        }
+        .glow-error {
+            box-shadow: 0 0 2px 0px #ffb4ab;
+        }
+        
+        /* Status Bar Mixins */
+        .status-bar-top {
+            border-top: 2px solid;
+        }
+        .status-ok { border-color: #adc6ff; } /* Primary as OK for this theme */
+        .status-warn { border-color: #df7412; }
+        .status-crit { border-color: #ffb4ab; }
+    </style>
+</head>
+<body class="bg-background text-on-surface h-screen w-screen overflow-hidden flex font-body-sm">
+<!-- SideNav (Docked Left) -->
+<nav class="bg-surface-container-low dark:bg-surface-container-low docked fixed left-0 h-full w-64 border-r border-outline-variant flat no shadows transition-all duration-150 ease-in-out flex flex-col h-screen py-md z-40">
+<!-- Header -->
+<div class="px-md mb-xl">
+<h1 class="font-headline-sm text-headline-sm font-bold text-on-surface mb-xs">Lusail Stadium</h1>
+<p class="font-data-sm text-data-sm text-on-surface-variant">Operational Phase 4</p>
+<div class="mt-md flex items-center gap-sm">
+<div class="w-8 h-8 rounded-full bg-surface-container-high border border-outline-variant flex items-center justify-center overflow-hidden">
+<span class="material-symbols-outlined text-[16px] text-on-surface-variant" data-icon="account_circle">account_circle</span>
+</div>
+<span class="font-data-sm text-data-sm text-on-surface-variant">Venue Commander</span>
+</div>
+</div>
+<!-- Main Tabs -->
+<div class="flex-1 overflow-y-auto">
+<ul class="flex flex-col gap-xs px-sm">
+<li>
+<a class="flex items-center gap-md px-md py-sm rounded text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-all duration-150 ease-in-out" href="#">
+<span class="material-symbols-outlined" data-icon="group">group</span>
+<span class="font-data-sm text-data-sm">Crowd Density</span>
+</a>
+</li>
+<li>
+<a class="flex items-center gap-md px-md py-sm rounded text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-all duration-150 ease-in-out" href="#">
+<span class="material-symbols-outlined" data-icon="shield">shield</span>
+<span class="font-data-sm text-data-sm">Security Matrix</span>
+</a>
+</li>
+<li>
+<a class="flex items-center gap-md px-md py-sm rounded text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-all duration-150 ease-in-out" href="#">
+<span class="material-symbols-outlined" data-icon="bolt">bolt</span>
+<span class="font-data-sm text-data-sm">Power &amp; HVAC</span>
+</a>
+</li>
+<li>
+<a class="flex items-center gap-md px-md py-sm rounded bg-secondary-container text-on-secondary-container border-l-4 border-tertiary-container transition-all duration-150 ease-in-out" href="#">
+<span class="material-symbols-outlined" data-icon="settings_input_antenna" style="font-variation-settings: 'FILL' 1;">settings_input_antenna</span>
+<span class="font-data-sm text-data-sm font-bold">Pitch Tech</span> <!-- Intent match: Sensor Health maps closest to Tech/Infrastructure -->
+</a>
+</li>
+<li>
+<a class="flex items-center gap-md px-md py-sm rounded text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-all duration-150 ease-in-out" href="#">
+<span class="material-symbols-outlined" data-icon="sports_soccer">sports_soccer</span>
+<span class="font-data-sm text-data-sm">Broadcast Hub</span>
+</a>
+</li>
+<li>
+<a class="flex items-center gap-md px-md py-sm rounded text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-all duration-150 ease-in-out" href="#">
+<span class="material-symbols-outlined" data-icon="local_shipping">local_shipping</span>
+<span class="font-data-sm text-data-sm">Logistics</span>
+</a>
+</li>
+</ul>
+</div>
+<!-- Footer & CTA -->
+<div class="px-sm mt-auto flex flex-col gap-sm">
+<button class="w-full py-sm px-md border-2 border-error text-error font-label-caps text-label-caps rounded hover:bg-error hover:text-on-error transition-colors text-center">
+                EMERGENCY OVERRIDE
+            </button>
+<ul class="flex flex-col gap-xs pt-sm border-t border-outline-variant mt-sm">
+<li>
+<a class="flex items-center gap-md px-md py-sm rounded text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-all duration-150 ease-in-out" href="#">
+<span class="material-symbols-outlined" data-icon="terminal">terminal</span>
+<span class="font-data-sm text-data-sm">System Health</span>
+</a>
+</li>
+<li>
+<a class="flex items-center gap-md px-md py-sm rounded text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-all duration-150 ease-in-out" href="#">
+<span class="material-symbols-outlined" data-icon="help_center">help_center</span>
+<span class="font-data-sm text-data-sm">Support</span>
+</a>
+</li>
+</ul>
+</div>
+</nav>
+<!-- Main Content Canvas -->
+<div class="flex-1 ml-64 flex flex-col h-screen overflow-hidden">
+<!-- TopAppBar -->
+<header class="bg-surface-container dark:bg-surface-container docked full-width top-0 border-b border-outline-variant flat no shadows flex justify-between items-center px-lg h-16 w-full z-50 shrink-0">
+<!-- Brand/Logo -->
+<div class="flex items-center gap-md">
+<span class="font-label-caps text-label-caps tracking-widest text-primary dark:text-primary">STADIUM OPS COMMAND</span>
+</div>
+<!-- Search (Left aligned relative to trailing actions) -->
+<div class="flex-1 max-w-md ml-lg mr-auto relative">
+<span class="material-symbols-outlined absolute left-sm top-1/2 -translate-y-1/2 text-on-surface-variant" data-icon="search">search</span>
+<input class="w-full bg-[#0f172a] border border-outline-variant rounded pl-xl pr-sm py-xs text-body-sm text-on-surface focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary glow-active transition-all placeholder:text-on-surface-variant" placeholder="Search nodes, IDs..." type="text"/>
+</div>
+<!-- Trailing Actions -->
+<div class="flex items-center gap-sm">
+<button class="p-xs text-on-surface-variant hover:bg-surface-bright transition-colors cursor-pointer active:opacity-80 rounded flex items-center justify-center">
+<span class="material-symbols-outlined" data-icon="notifications">notifications</span>
+</button>
+<button class="p-xs text-on-surface-variant hover:bg-surface-bright transition-colors cursor-pointer active:opacity-80 rounded flex items-center justify-center">
+<span class="material-symbols-outlined" data-icon="wifi_tethering">wifi_tethering</span>
+</button>
+<button class="p-xs text-on-surface-variant hover:bg-surface-bright transition-colors cursor-pointer active:opacity-80 rounded flex items-center justify-center">
+<span class="material-symbols-outlined" data-icon="account_circle">account_circle</span>
+</button>
+</div>
+</header>
+<!-- Page Content Scrollable Area -->
+<main class="flex-1 overflow-y-auto p-lg bg-background">
+<div class="mb-lg">
+<h2 class="font-headline-md text-headline-md text-on-surface">Sensor &amp; Node Health</h2>
+<p class="font-body-md text-body-md text-on-surface-variant">Real-time telemetry for edge infrastructure and MQTT broker.</p>
+</div>
+<div class="grid grid-cols-12 gap-gutter">
+<!-- MQTT Broker Panel (Spans 12 cols top) -->
+<section class="col-span-12 bg-[#1e293b] border border-outline-variant rounded-lg p-margin flex flex-col gap-md status-bar-top status-ok relative">
+<div class="flex justify-between items-center border-b border-outline-variant pb-sm">
+<div class="flex items-center gap-sm">
+<span class="material-symbols-outlined text-primary" data-icon="hub">hub</span>
+<h3 class="font-data-md text-data-md text-on-surface">MQTT BROKER CORE</h3>
+</div>
+<span class="font-label-caps text-label-caps bg-primary/15 text-primary px-xs py-1 rounded">ONLINE</span>
+</div>
+<div class="grid grid-cols-4 gap-lg">
+<div>
+<p class="font-label-caps text-label-caps text-on-surface-variant mb-xs">MSG/SEC (IN/OUT)</p>
+<p class="font-data-lg text-data-lg text-on-surface">14.2k / 18.5k</p>
+</div>
+<div>
+<p class="font-label-caps text-label-caps text-on-surface-variant mb-xs">ACTIVE CONN</p>
+<p class="font-data-lg text-data-lg text-on-surface">4,092 <span class="text-error text-[12px]">(-12)</span></p>
+</div>
+<div class="col-span-2">
+<p class="font-label-caps text-label-caps text-on-surface-variant mb-xs">QoS DISTRIBUTION</p>
+<div class="flex h-4 w-full bg-surface-container-highest rounded overflow-hidden mt-xs">
+<div class="bg-primary h-full" style="width: 70%;" title="QoS 0: 70%"></div>
+<div class="bg-tertiary h-full" style="width: 25%;" title="QoS 1: 25%"></div>
+<div class="bg-error h-full" style="width: 5%;" title="QoS 2: 5%"></div>
+</div>
+<div class="flex justify-between mt-xs font-label-caps text-label-caps text-on-surface-variant">
+<span>Q0: 70%</span>
+<span>Q1: 25%</span>
+<span>Q2: 5%</span>
+</div>
+</div>
+</div>
+</section>
+<!-- ESP32 Edge Nodes Grid (Spans 8 cols) -->
+<section class="col-span-12 xl:col-span-8 flex flex-col gap-md">
+<h3 class="font-data-md text-data-md text-on-surface border-b border-outline-variant pb-xs">ESP32 EDGE FLEET</h3>
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-gutter">
+<!-- Node 1 -->
+<div class="bg-[#1e293b] border border-outline-variant rounded p-sm flex flex-col gap-sm status-bar-top status-ok">
+<div class="flex justify-between items-start">
+<div>
+<span class="font-label-caps text-label-caps text-primary block">ESP-Z1-001</span>
+<span class="font-data-sm text-data-sm text-on-surface-variant">North Gate</span>
+</div>
+<span class="material-symbols-outlined text-primary text-[18px]" data-icon="wifi">wifi</span>
+</div>
+<div class="flex gap-xs flex-wrap">
+<span class="font-label-caps text-label-caps bg-surface-container-highest px-xs py-[2px] rounded text-on-surface border border-outline-variant">TEMP</span>
+<span class="font-label-caps text-label-caps bg-surface-container-highest px-xs py-[2px] rounded text-on-surface border border-outline-variant">HUM</span>
+<span class="font-label-caps text-label-caps bg-surface-container-highest px-xs py-[2px] rounded text-on-surface border border-outline-variant">PIR</span>
+</div>
+<div class="flex justify-between items-end mt-auto pt-sm border-t border-outline-variant">
+<span class="font-data-sm text-data-sm text-on-surface-variant">HB: 2s ago</span>
+<span class="font-data-sm text-data-sm text-primary">-65 dBm</span>
+</div>
+</div>
+<!-- Node 2 (Warning) -->
+<div class="bg-[#1e293b] border border-outline-variant rounded p-sm flex flex-col gap-sm status-bar-top status-warn">
+<div class="flex justify-between items-start">
+<div>
+<span class="font-label-caps text-label-caps text-tertiary block">ESP-Z2-042</span>
+<span class="font-data-sm text-data-sm text-on-surface-variant">East Concourse</span>
+</div>
+<span class="material-symbols-outlined text-tertiary text-[18px]" data-icon="wifi_1_bar">wifi_1_bar</span>
+</div>
+<div class="flex gap-xs flex-wrap">
+<span class="font-label-caps text-label-caps bg-surface-container-highest px-xs py-[2px] rounded text-on-surface border border-outline-variant">CO2</span>
+<span class="font-label-caps text-label-caps bg-surface-container-highest px-xs py-[2px] rounded text-on-surface border border-outline-variant">VOC</span>
+</div>
+<div class="flex justify-between items-end mt-auto pt-sm border-t border-outline-variant">
+<span class="font-data-sm text-data-sm text-tertiary">HB: 14s ago</span>
+<span class="font-data-sm text-data-sm text-tertiary">-82 dBm</span>
+</div>
+</div>
+<!-- Node 3 (Critical) -->
+<div class="bg-[#1e293b] border border-error glow-error rounded p-sm flex flex-col gap-sm status-bar-top status-crit">
+<div class="flex justify-between items-start">
+<div>
+<span class="font-label-caps text-label-caps text-error block">ESP-Z3-019</span>
+<span class="font-data-sm text-data-sm text-on-surface-variant">Pitch Level S</span>
+</div>
+<span class="material-symbols-outlined text-error text-[18px]" data-icon="wifi_off">wifi_off</span>
+</div>
+<div class="flex gap-xs flex-wrap">
+<span class="font-label-caps text-label-caps bg-surface-container-highest px-xs py-[2px] rounded text-on-surface border border-outline-variant">VIB</span>
+<span class="font-label-caps text-label-caps bg-surface-container-highest px-xs py-[2px] rounded text-on-surface border border-outline-variant">NOISE</span>
+</div>
+<div class="flex justify-between items-end mt-auto pt-sm border-t border-error/50">
+<span class="font-data-sm text-data-sm text-error">HB: 4m ago</span>
+<span class="font-data-sm text-data-sm text-error">N/A</span>
+</div>
+</div>
+<!-- Node 4 -->
+<div class="bg-[#1e293b] border border-outline-variant rounded p-sm flex flex-col gap-sm status-bar-top status-ok">
+<div class="flex justify-between items-start">
+<div>
+<span class="font-label-caps text-label-caps text-primary block">ESP-Z1-002</span>
+<span class="font-data-sm text-data-sm text-on-surface-variant">North Gate B</span>
+</div>
+<span class="material-symbols-outlined text-primary text-[18px]" data-icon="wifi">wifi</span>
+</div>
+<div class="flex gap-xs flex-wrap">
+<span class="font-label-caps text-label-caps bg-surface-container-highest px-xs py-[2px] rounded text-on-surface border border-outline-variant">TEMP</span>
+<span class="font-label-caps text-label-caps bg-surface-container-highest px-xs py-[2px] rounded text-on-surface border border-outline-variant">PIR</span>
+</div>
+<div class="flex justify-between items-end mt-auto pt-sm border-t border-outline-variant">
+<span class="font-data-sm text-data-sm text-on-surface-variant">HB: 1s ago</span>
+<span class="font-data-sm text-data-sm text-primary">-61 dBm</span>
+</div>
+</div>
+</div>
+</section>
+<!-- Quad-gate Micro-servers (Spans 4 cols) -->
+<section class="col-span-12 xl:col-span-4 flex flex-col gap-md">
+<h3 class="font-data-md text-data-md text-on-surface border-b border-outline-variant pb-xs">QUAD-GATE COMPUTE</h3>
+<div class="flex flex-col gap-gutter">
+<!-- Server Card 1 -->
+<div class="bg-[#1e293b] border border-outline-variant rounded p-margin status-bar-top status-ok">
+<div class="flex justify-between items-center mb-sm">
+<span class="font-data-md text-data-md text-on-surface">QG-NODE-ALPHA</span>
+<span class="font-label-caps text-label-caps bg-primary/15 text-primary px-xs py-1 rounded">PRI</span>
+</div>
+<div class="space-y-xs font-data-sm text-data-sm">
+<div class="flex justify-between">
+<span class="text-on-surface-variant">UPTIME</span>
+<span class="text-on-surface">45d 12h 30m</span>
+</div>
+<div class="flex justify-between">
+<span class="text-on-surface-variant">SLOTS</span>
+<span class="text-on-surface">4/4 ACTIVE</span>
+</div>
+<div class="flex justify-between items-center">
+<span class="text-on-surface-variant">VRAM</span>
+<div class="flex items-center gap-xs w-24">
+<div class="h-1 bg-surface-container-highest flex-1 rounded overflow-hidden">
+<div class="h-full bg-primary" style="width: 65%;"></div>
+</div>
+<span class="text-[10px]">65%</span>
+</div>
+</div>
+<div class="flex justify-between">
+<span class="text-on-surface-variant">TTFT</span>
+<span class="text-primary">12ms</span>
+</div>
+</div>
+</div>
+<!-- Server Card 2 (Fallback Active) -->
+<div class="bg-[#1e293b] border border-outline-variant rounded p-margin status-bar-top status-warn">
+<div class="flex justify-between items-center mb-sm">
+<span class="font-data-md text-data-md text-on-surface">QG-NODE-BETA</span>
+<span class="font-label-caps text-label-caps bg-tertiary/15 text-tertiary border border-tertiary px-xs py-1 rounded glow-active">FALLBACK</span>
+</div>
+<div class="space-y-xs font-data-sm text-data-sm">
+<div class="flex justify-between">
+<span class="text-on-surface-variant">UPTIME</span>
+<span class="text-on-surface">12d 04h 15m</span>
+</div>
+<div class="flex justify-between">
+<span class="text-on-surface-variant">SLOTS</span>
+<span class="text-tertiary">3/4 ACTIVE</span>
+</div>
+<div class="flex justify-between items-center">
+<span class="text-on-surface-variant">VRAM</span>
+<div class="flex items-center gap-xs w-24">
+<div class="h-1 bg-surface-container-highest flex-1 rounded overflow-hidden">
+<div class="h-full bg-tertiary" style="width: 88%;"></div>
+</div>
+<span class="text-[10px]">88%</span>
+</div>
+</div>
+<div class="flex justify-between">
+<span class="text-on-surface-variant">TTFT</span>
+<span class="text-tertiary">45ms</span>
+</div>
+</div>
+</div>
+</div>
+</section>
+</div>
+</main>
+</div>
+</body></html>

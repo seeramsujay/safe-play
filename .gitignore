@@ -1,0 +1,19 @@
+# Python-generated files
+__pycache__/
+*.py[oc]
+build/
+dist/
+wheels/
+*.egg-info
+.python-version
+
+# Virtual environments
+.venv
+.sp/
+
+# Project-specific ignores
+models/
+config/schema.json
+uv.lock
+ui.zip
+*.zip

@@ -1,0 +1,341 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Model Ops - Stadium Ops Command</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@400;500;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "surface-bright": "#363941",
+                    "on-secondary-fixed": "#0b1c30",
+                    "primary-fixed-dim": "#adc6ff",
+                    "primary-fixed": "#d8e2ff",
+                    "surface-tint": "#adc6ff",
+                    "surface": "#10131a",
+                    "error-container": "#93000a",
+                    "tertiary-fixed-dim": "#ffb786",
+                    "surface-container-highest": "#32353c",
+                    "inverse-surface": "#e1e2ec",
+                    "surface-container-high": "#272a31",
+                    "inverse-on-surface": "#2e3038",
+                    "surface-dim": "#10131a",
+                    "on-secondary": "#213145",
+                    "error": "#ffb4ab",
+                    "background": "#10131a",
+                    "on-error-container": "#ffdad6",
+                    "on-primary-fixed": "#001a42",
+                    "secondary-container": "#3a4a5f",
+                    "tertiary": "#ffb786",
+                    "on-tertiary-fixed-variant": "#723600",
+                    "surface-variant": "#32353c",
+                    "secondary-fixed": "#d3e4fe",
+                    "surface-container-low": "#191b23",
+                    "on-primary-container": "#00285d",
+                    "surface-container-lowest": "#0b0e15",
+                    "on-surface": "#e1e2ec",
+                    "on-primary": "#002e6a",
+                    "on-surface-variant": "#c2c6d6",
+                    "on-tertiary-container": "#461f00",
+                    "outline-variant": "#424754",
+                    "primary": "#adc6ff",
+                    "on-background": "#e1e2ec",
+                    "primary-container": "#4d8eff",
+                    "secondary": "#b7c8e1",
+                    "secondary-fixed-dim": "#b7c8e1",
+                    "outline": "#8c909f",
+                    "on-tertiary-fixed": "#311400",
+                    "tertiary-container": "#df7412",
+                    "surface-container": "#1d2027",
+                    "inverse-primary": "#005ac2",
+                    "on-secondary-fixed-variant": "#38485d",
+                    "on-error": "#690005",
+                    "on-secondary-container": "#a9bad3",
+                    "on-primary-fixed-variant": "#004395",
+                    "tertiary-fixed": "#ffdcc6",
+                    "on-tertiary": "#502400"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.125rem",
+                    "lg": "0.25rem",
+                    "xl": "0.5rem",
+                    "full": "0.75rem"
+            },
+            "spacing": {
+                    "md": "16px",
+                    "lg": "24px",
+                    "gutter": "12px",
+                    "base": "4px",
+                    "xs": "4px",
+                    "xl": "32px",
+                    "margin": "16px",
+                    "sm": "8px"
+            },
+            "fontFamily": {
+                    "body-sm": ["Inter"],
+                    "data-md": ["JetBrains Mono"],
+                    "label-caps": ["JetBrains Mono"],
+                    "body-md": ["Inter"],
+                    "data-sm": ["JetBrains Mono"],
+                    "headline-md": ["Inter"],
+                    "data-lg": ["JetBrains Mono"],
+                    "headline-sm": ["Inter"],
+                    "display-lg": ["Inter"]
+            },
+            "fontSize": {
+                    "body-sm": ["14px", {"lineHeight": "20px", "fontWeight": "400"}],
+                    "data-md": ["14px", {"lineHeight": "20px", "fontWeight": "500"}],
+                    "label-caps": ["11px", {"lineHeight": "16px", "letterSpacing": "0.1em", "fontWeight": "700"}],
+                    "body-md": ["16px", {"lineHeight": "24px", "fontWeight": "400"}],
+                    "data-sm": ["12px", {"lineHeight": "16px", "fontWeight": "500"}],
+                    "headline-md": ["24px", {"lineHeight": "32px", "fontWeight": "600"}],
+                    "data-lg": ["18px", {"lineHeight": "24px", "fontWeight": "500"}],
+                    "headline-sm": ["18px", {"lineHeight": "24px", "fontWeight": "600"}],
+                    "display-lg": ["48px", {"lineHeight": "56px", "letterSpacing": "-0.02em", "fontWeight": "700"}]
+            }
+          }
+        }
+      }
+    </script>
+<style>
+        body { background-color: #09090b; color: #e1e2ec; }
+        .data-card { background-color: #1e293b; border: 1px solid #334155; }
+        .status-bar-active { border-top: 2px solid #adc6ff; }
+        .status-bar-warning { border-top: 2px solid #df7412; }
+        .status-bar-critical { border-top: 2px solid #ffb4ab; }
+        .border-glow-primary { box-shadow: 0 0 2px 0px #adc6ff; }
+        .border-glow-warning { box-shadow: 0 0 2px 0px #df7412; }
+        .ghost-button-trigger { border: 2px solid #93000a; background: transparent; color: #ffb4ab; transition: all 0.2s; }
+        .ghost-button-trigger:hover { background: #93000a; color: #ffffff; }
+        
+        /* Custom scrollbar for data tables */
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: #10131a; }
+        ::-webkit-scrollbar-thumb { background: #32353c; border-radius: 3px; }
+        ::-webkit-scrollbar-thumb:hover { background: #424754; }
+    </style>
+</head>
+<body class="font-body-md h-screen overflow-hidden flex">
+<!-- SideNavBar -->
+<nav class="bg-surface-container-low text-primary docked fixed left-0 h-full w-64 border-r border-outline-variant flex flex-col h-screen py-md z-40 hidden md:flex transition-all duration-150 ease-in-out">
+<div class="px-md pb-lg">
+<h1 class="font-headline-sm text-headline-sm font-bold text-on-surface">Lusail Stadium</h1>
+<p class="font-data-sm text-data-sm text-on-surface-variant mt-xs">Operational Phase 4</p>
+<p class="font-data-sm text-data-sm text-on-surface-variant mt-xs">Venue Commander</p>
+</div>
+<div class="flex-1 overflow-y-auto mt-md">
+<ul class="space-y-sm">
+<li>
+<a class="flex items-center px-lg py-sm text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-all duration-150 ease-in-out" href="#">
+<span class="material-symbols-outlined mr-md" style="font-variation-settings: 'FILL' 0;">group</span>
+<span class="font-data-sm text-data-sm">Crowd Density</span>
+</a>
+</li>
+<li>
+<a class="flex items-center px-lg py-sm text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-all duration-150 ease-in-out" href="#">
+<span class="material-symbols-outlined mr-md" style="font-variation-settings: 'FILL' 0;">shield</span>
+<span class="font-data-sm text-data-sm">Security Matrix</span>
+</a>
+</li>
+<li>
+<a class="flex items-center px-lg py-sm text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-all duration-150 ease-in-out" href="#">
+<span class="material-symbols-outlined mr-md" style="font-variation-settings: 'FILL' 0;">bolt</span>
+<span class="font-data-sm text-data-sm">Power &amp; HVAC</span>
+</a>
+</li>
+<li>
+<a class="flex items-center px-lg py-sm bg-secondary-container text-on-secondary-container border-l-4 border-tertiary-container transition-all duration-150 ease-in-out" href="#">
+<span class="material-symbols-outlined mr-md" style="font-variation-settings: 'FILL' 1;">sports_soccer</span>
+<span class="font-data-sm text-data-sm">Pitch Tech</span>
+</a>
+</li>
+<li>
+<a class="flex items-center px-lg py-sm text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-all duration-150 ease-in-out" href="#">
+<span class="material-symbols-outlined mr-md" style="font-variation-settings: 'FILL' 0;">settings_input_antenna</span>
+<span class="font-data-sm text-data-sm">Broadcast Hub</span>
+</a>
+</li>
+<li>
+<a class="flex items-center px-lg py-sm text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-all duration-150 ease-in-out" href="#">
+<span class="material-symbols-outlined mr-md" style="font-variation-settings: 'FILL' 0;">local_shipping</span>
+<span class="font-data-sm text-data-sm">Logistics</span>
+</a>
+</li>
+</ul>
+</div>
+<div class="px-md mt-auto pt-md border-t border-outline-variant">
+<button class="w-full ghost-button-trigger font-label-caps text-label-caps py-sm px-md rounded-DEFAULT uppercase tracking-widest text-center">EMERGENCY OVERRIDE</button>
+<ul class="space-y-sm mt-md">
+<li>
+<a class="flex items-center px-sm py-xs text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-all duration-150 ease-in-out rounded" href="#">
+<span class="material-symbols-outlined mr-sm text-[18px]" style="font-variation-settings: 'FILL' 0;">terminal</span>
+<span class="font-data-sm text-data-sm">System Health</span>
+</a>
+</li>
+<li>
+<a class="flex items-center px-sm py-xs text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-all duration-150 ease-in-out rounded" href="#">
+<span class="material-symbols-outlined mr-sm text-[18px]" style="font-variation-settings: 'FILL' 0;">help_center</span>
+<span class="font-data-sm text-data-sm">Support</span>
+</a>
+</li>
+</ul>
+</div>
+</nav>
+<!-- Main Content Area -->
+<div class="flex-1 md:ml-64 flex flex-col h-screen overflow-hidden bg-background">
+<!-- TopAppBar -->
+<header class="bg-surface-container flex justify-between items-center px-lg h-16 w-full z-50 border-b border-outline-variant">
+<div class="flex items-center">
+<span class="font-label-caps text-label-caps tracking-widest text-primary">STADIUM OPS COMMAND</span>
+</div>
+<div class="flex items-center space-x-md">
+<span class="material-symbols-outlined text-primary cursor-pointer active:opacity-80 hover:bg-surface-bright transition-colors p-sm rounded-full" data-icon="notifications">notifications</span>
+<span class="material-symbols-outlined text-primary cursor-pointer active:opacity-80 hover:bg-surface-bright transition-colors p-sm rounded-full" data-icon="wifi_tethering">wifi_tethering</span>
+<span class="material-symbols-outlined text-primary cursor-pointer active:opacity-80 hover:bg-surface-bright transition-colors p-sm rounded-full" data-icon="account_circle">account_circle</span>
+</div>
+</header>
+<!-- Canvas -->
+<main class="flex-1 overflow-y-auto p-lg">
+<div class="mb-lg flex justify-between items-end">
+<div>
+<h2 class="font-headline-md text-headline-md text-on-surface">Model Operations</h2>
+<p class="font-data-sm text-data-sm text-on-surface-variant mt-xs">Sector-specific LLM deployment and inference telemetry.</p>
+</div>
+<div class="flex space-x-sm">
+<span class="inline-flex items-center px-sm py-xs rounded bg-surface-variant text-on-surface font-label-caps text-label-caps">GLOBAL STATUS: <span class="text-primary ml-xs">NOMINAL</span></span>
+</div>
+</div>
+<!-- Bento Grid Layout -->
+<div class="grid grid-cols-1 md:grid-cols-12 gap-gutter">
+<!-- Quadrant Deployments -->
+<div class="col-span-1 md:col-span-8 grid grid-cols-2 gap-gutter">
+<!-- North Quad -->
+<div class="data-card status-bar-active rounded-lg p-md flex flex-col">
+<div class="flex justify-between items-start mb-md">
+<div>
+<h3 class="font-data-md text-data-md text-on-surface">NORTH QUADRANT</h3>
+<p class="font-data-sm text-data-sm text-on-surface-variant">Security &amp; Access</p>
+</div>
+<span class="bg-primary-container/20 text-primary px-2 py-1 rounded font-label-caps text-label-caps border border-primary/30">ACTIVE</span>
+</div>
+<div class="flex items-baseline space-x-sm mb-md">
+<span class="font-headline-sm text-headline-sm text-primary">Qwen-2.5-7B-Instruct</span>
+<span class="font-data-sm text-data-sm text-on-surface-variant">v2.4.1</span>
+</div>
+<div class="mt-auto flex space-x-sm">
+<button class="flex-1 bg-surface-variant hover:bg-surface-bright text-on-surface font-data-sm text-data-sm py-xs rounded border border-outline-variant transition-colors">Config</button>
+<button class="flex-1 bg-surface-variant hover:bg-surface-bright text-on-surface font-data-sm text-data-sm py-xs rounded border border-outline-variant transition-colors">Rollback</button>
+</div>
+</div>
+<!-- South Quad -->
+<div class="data-card status-bar-warning rounded-lg p-md flex flex-col">
+<div class="flex justify-between items-start mb-md">
+<div>
+<h3 class="font-data-md text-data-md text-on-surface">SOUTH QUADRANT</h3>
+<p class="font-data-sm text-data-sm text-on-surface-variant">Crowd Analytics</p>
+</div>
+<span class="bg-tertiary-container/20 text-tertiary px-2 py-1 rounded font-label-caps text-label-caps border border-tertiary/30">CANARY (15%)</span>
+</div>
+<div class="flex items-baseline space-x-sm mb-md">
+<span class="font-headline-sm text-headline-sm text-tertiary">Llama-3-8B-Vision</span>
+<span class="font-data-sm text-data-sm text-on-surface-variant">v3.0.0-rc2</span>
+</div>
+<div class="mt-auto flex space-x-sm">
+<button class="flex-1 bg-surface-variant hover:bg-surface-bright text-on-surface font-data-sm text-data-sm py-xs rounded border border-outline-variant transition-colors">Promote</button>
+<button class="flex-1 bg-surface-variant hover:bg-surface-bright text-error font-data-sm text-data-sm py-xs rounded border border-outline-variant transition-colors">Abort</button>
+</div>
+</div>
+<!-- East Quad -->
+<div class="data-card status-bar-active rounded-lg p-md flex flex-col">
+<div class="flex justify-between items-start mb-md">
+<div>
+<h3 class="font-data-md text-data-md text-on-surface">EAST QUADRANT</h3>
+<p class="font-data-sm text-data-sm text-on-surface-variant">Logistics &amp; Supply</p>
+</div>
+<span class="bg-primary-container/20 text-primary px-2 py-1 rounded font-label-caps text-label-caps border border-primary/30">ACTIVE</span>
+</div>
+<div class="flex items-baseline space-x-sm mb-md">
+<span class="font-headline-sm text-headline-sm text-primary">Mistral-Nemo-12B</span>
+<span class="font-data-sm text-data-sm text-on-surface-variant">v1.2.9</span>
+</div>
+<div class="mt-auto flex space-x-sm">
+<button class="flex-1 bg-surface-variant hover:bg-surface-bright text-on-surface font-data-sm text-data-sm py-xs rounded border border-outline-variant transition-colors">Config</button>
+<button class="flex-1 bg-surface-variant hover:bg-surface-bright text-on-surface font-data-sm text-data-sm py-xs rounded border border-outline-variant transition-colors">Rollback</button>
+</div>
+</div>
+<!-- West Quad -->
+<div class="data-card status-bar-active rounded-lg p-md flex flex-col">
+<div class="flex justify-between items-start mb-md">
+<div>
+<h3 class="font-data-md text-data-md text-on-surface">WEST QUADRANT</h3>
+<p class="font-data-sm text-data-sm text-on-surface-variant">Broadcast Telemetry</p>
+</div>
+<span class="bg-primary-container/20 text-primary px-2 py-1 rounded font-label-caps text-label-caps border border-primary/30">ACTIVE</span>
+</div>
+<div class="flex items-baseline space-x-sm mb-md">
+<span class="font-headline-sm text-headline-sm text-primary">Qwen-2.5-7B-Instruct</span>
+<span class="font-data-sm text-data-sm text-on-surface-variant">v2.4.1</span>
+</div>
+<div class="mt-auto flex space-x-sm">
+<button class="flex-1 bg-surface-variant hover:bg-surface-bright text-on-surface font-data-sm text-data-sm py-xs rounded border border-outline-variant transition-colors">Config</button>
+<button class="flex-1 bg-surface-variant hover:bg-surface-bright text-on-surface font-data-sm text-data-sm py-xs rounded border border-outline-variant transition-colors">Rollback</button>
+</div>
+</div>
+</div>
+<!-- Latency Stats Panel -->
+<div class="col-span-1 md:col-span-4 data-card status-bar-active rounded-lg p-md flex flex-col">
+<h3 class="font-data-md text-data-md text-on-surface mb-md border-b border-outline-variant pb-xs">INFERENCE LATENCY (Global P95)</h3>
+<div class="space-y-md mt-sm flex-1">
+<div>
+<div class="flex justify-between font-data-sm text-data-sm mb-1">
+<span class="text-on-surface-variant">Prefill (TTFT)</span>
+<span class="text-primary">145ms</span>
+</div>
+<div class="w-full bg-surface-container-high rounded-full h-1.5">
+<div class="bg-primary h-1.5 rounded-full" style="width: 35%"></div>
+</div>
+</div>
+<div>
+<div class="flex justify-between font-data-sm text-data-sm mb-1">
+<span class="text-on-surface-variant">Decode (TPOT)</span>
+<span class="text-tertiary">22ms/tok</span>
+</div>
+<div class="w-full bg-surface-container-high rounded-full h-1.5">
+<div class="bg-tertiary h-1.5 rounded-full" style="width: 55%"></div>
+</div>
+</div>
+<div>
+<div class="flex justify-between font-data-sm text-data-sm mb-1">
+<span class="text-on-surface-variant">Round-Trip Total</span>
+<span class="text-on-surface">850ms</span>
+</div>
+<div class="w-full bg-surface-container-high rounded-full h-1.5">
+<div class="bg-secondary h-1.5 rounded-full" style="width: 45%"></div>
+</div>
+</div>
+</div>
+<div class="mt-lg pt-md border-t border-outline-variant">
+<h3 class="font-data-md text-data-md text-on-surface mb-sm">GBNF GRAMMAR VALIDATION</h3>
+<div class="flex justify-between items-center">
+<div class="text-center">
+<span class="block font-headline-md text-headline-md text-primary">99.8%</span>
+<span class="block font-data-sm text-data-sm text-on-surface-variant">Success Rate</span>
+</div>
+<div class="text-center">
+<span class="block font-headline-md text-headline-md text-error">12</span>
+<span class="block font-data-sm text-data-sm text-on-surface-variant">Parse Errors/hr</span>
+</div>
+</div>
+</div>
+</div>
+</div>
+</main>
+</div>
+</body></html>

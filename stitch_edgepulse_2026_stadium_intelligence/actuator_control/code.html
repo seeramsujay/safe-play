@@ -1,0 +1,382 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Stadium Ops Command - Actuator Control</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&amp;family=JetBrains+Mono:wght@500;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "surface-bright": "#363941",
+                    "on-secondary-fixed": "#0b1c30",
+                    "primary-fixed-dim": "#adc6ff",
+                    "primary-fixed": "#d8e2ff",
+                    "surface-tint": "#adc6ff",
+                    "surface": "#10131a",
+                    "error-container": "#93000a",
+                    "tertiary-fixed-dim": "#ffb786",
+                    "surface-container-highest": "#32353c",
+                    "inverse-surface": "#e1e2ec",
+                    "surface-container-high": "#272a31",
+                    "inverse-on-surface": "#2e3038",
+                    "surface-dim": "#10131a",
+                    "on-secondary": "#213145",
+                    "error": "#ffb4ab",
+                    "background": "#10131a",
+                    "on-error-container": "#ffdad6",
+                    "on-primary-fixed": "#001a42",
+                    "secondary-container": "#3a4a5f",
+                    "tertiary": "#ffb786",
+                    "on-tertiary-fixed-variant": "#723600",
+                    "surface-variant": "#32353c",
+                    "secondary-fixed": "#d3e4fe",
+                    "surface-container-low": "#191b23",
+                    "on-primary-container": "#00285d",
+                    "surface-container-lowest": "#0b0e15",
+                    "on-surface": "#e1e2ec",
+                    "on-primary": "#002e6a",
+                    "on-surface-variant": "#c2c6d6",
+                    "on-tertiary-container": "#461f00",
+                    "outline-variant": "#424754",
+                    "primary": "#adc6ff",
+                    "on-background": "#e1e2ec",
+                    "primary-container": "#4d8eff",
+                    "secondary": "#b7c8e1",
+                    "secondary-fixed-dim": "#b7c8e1",
+                    "outline": "#8c909f",
+                    "on-tertiary-fixed": "#311400",
+                    "tertiary-container": "#df7412",
+                    "surface-container": "#1d2027",
+                    "inverse-primary": "#005ac2",
+                    "on-secondary-fixed-variant": "#38485d",
+                    "on-error": "#690005",
+                    "on-secondary-container": "#a9bad3",
+                    "on-primary-fixed-variant": "#004395",
+                    "tertiary-fixed": "#ffdcc6",
+                    "on-tertiary": "#502400"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.125rem",
+                    "lg": "0.25rem",
+                    "xl": "0.5rem",
+                    "full": "0.75rem"
+            },
+            "spacing": {
+                    "md": "16px",
+                    "lg": "24px",
+                    "gutter": "12px",
+                    "base": "4px",
+                    "xs": "4px",
+                    "xl": "32px",
+                    "margin": "16px",
+                    "sm": "8px"
+            },
+            "fontFamily": {
+                    "body-sm": ["Inter"],
+                    "data-md": ["JetBrains Mono"],
+                    "label-caps": ["JetBrains Mono"],
+                    "body-md": ["Inter"],
+                    "data-sm": ["JetBrains Mono"],
+                    "headline-md": ["Inter"],
+                    "data-lg": ["JetBrains Mono"],
+                    "headline-sm": ["Inter"],
+                    "display-lg": ["Inter"]
+            },
+            "fontSize": {
+                    "body-sm": ["14px", {"lineHeight": "20px", "fontWeight": "400"}],
+                    "data-md": ["14px", {"lineHeight": "20px", "fontWeight": "500"}],
+                    "label-caps": ["11px", {"lineHeight": "16px", "letterSpacing": "0.1em", "fontWeight": "700"}],
+                    "body-md": ["16px", {"lineHeight": "24px", "fontWeight": "400"}],
+                    "data-sm": ["12px", {"lineHeight": "16px", "fontWeight": "500"}],
+                    "headline-md": ["24px", {"lineHeight": "32px", "fontWeight": "600"}],
+                    "data-lg": ["18px", {"lineHeight": "24px", "fontWeight": "500"}],
+                    "headline-sm": ["18px", {"lineHeight": "24px", "fontWeight": "600"}],
+                    "display-lg": ["48px", {"lineHeight": "56px", "letterSpacing": "-0.02em", "fontWeight": "700"}]
+            }
+          }
+        }
+      }
+    </script>
+<style>
+        body { background-color: #09090b; color: #e1e2ec; }
+        .data-card { background-color: #1e293b; border: 1px solid #334155; }
+        .glow-active { box-shadow: 0 0 2px 0px var(--tw-shadow-color); border-color: var(--tw-shadow-color); }
+        
+        /* Custom scrollbar for data density */
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: #10131a; }
+        ::-webkit-scrollbar-thumb { background: #32353c; border-radius: 3px; }
+        ::-webkit-scrollbar-thumb:hover { background: #424754; }
+    </style>
+</head>
+<body class="bg-background text-on-background font-body-md antialiased overflow-hidden flex h-screen">
+<!-- SideNavBar -->
+<nav class="bg-surface-container-low dark:bg-surface-container-low docked fixed left-0 h-full w-64 border-r border-outline-variant flat no shadows flex flex-col h-screen py-md transition-all duration-150 ease-in-out z-40 hidden md:flex">
+<div class="px-lg mb-xl">
+<h1 class="font-headline-sm text-headline-sm font-bold text-on-surface">Lusail Stadium</h1>
+<p class="font-data-sm text-data-sm text-on-surface-variant mt-1">Operational Phase 4</p>
+</div>
+<div class="flex-1 overflow-y-auto">
+<ul class="space-y-sm px-sm">
+<li>
+<a class="flex items-center px-md py-sm rounded text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface" href="#">
+<span class="material-symbols-outlined mr-sm text-[20px]" data-icon="group">group</span>
+<span class="font-data-md text-data-md">Crowd Density</span>
+</a>
+</li>
+<li>
+<a class="flex items-center px-md py-sm rounded text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface" href="#">
+<span class="material-symbols-outlined mr-sm text-[20px]" data-icon="shield">shield</span>
+<span class="font-data-md text-data-md">Security Matrix</span>
+</a>
+</li>
+<li>
+<a class="flex items-center px-md py-sm rounded text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface" href="#">
+<span class="material-symbols-outlined mr-sm text-[20px]" data-icon="bolt">bolt</span>
+<span class="font-data-md text-data-md">Power &amp; HVAC</span>
+</a>
+</li>
+<li>
+<a class="flex items-center px-md py-sm rounded text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface" href="#">
+<span class="material-symbols-outlined mr-sm text-[20px]" data-icon="sports_soccer">sports_soccer</span>
+<span class="font-data-md text-data-md">Pitch Tech</span>
+</a>
+</li>
+<li>
+<a class="flex items-center px-md py-sm rounded text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface" href="#">
+<span class="material-symbols-outlined mr-sm text-[20px]" data-icon="settings_input_antenna">settings_input_antenna</span>
+<span class="font-data-md text-data-md">Broadcast Hub</span>
+</a>
+</li>
+<li>
+<a class="flex items-center px-md py-sm rounded bg-secondary-container text-on-secondary-container border-l-4 border-tertiary-container shadow-sm" href="#">
+<span class="material-symbols-outlined mr-sm text-[20px]" data-icon="local_shipping">local_shipping</span>
+<span class="font-data-md text-data-md">Logistics</span>
+</a>
+</li>
+</ul>
+</div>
+<div class="px-md mt-auto pt-md border-t border-outline-variant">
+<button class="w-full border-2 border-error text-error py-sm rounded font-label-caps text-label-caps hover:bg-error hover:text-on-error transition-colors flex justify-center items-center">
+<span class="material-symbols-outlined mr-xs text-[16px]" data-icon="warning">warning</span>
+                EMERGENCY OVERRIDE
+            </button>
+<ul class="mt-md space-y-sm">
+<li>
+<a class="flex items-center px-sm py-xs text-on-surface-variant hover:text-on-surface" href="#">
+<span class="material-symbols-outlined mr-sm text-[16px]" data-icon="terminal">terminal</span>
+<span class="font-data-sm text-data-sm">System Health</span>
+</a>
+</li>
+<li>
+<a class="flex items-center px-sm py-xs text-on-surface-variant hover:text-on-surface" href="#">
+<span class="material-symbols-outlined mr-sm text-[16px]" data-icon="help_center">help_center</span>
+<span class="font-data-sm text-data-sm">Support</span>
+</a>
+</li>
+</ul>
+</div>
+</nav>
+<!-- Main Canvas -->
+<div class="flex-1 flex flex-col md:ml-64 relative w-full h-full">
+<!-- TopAppBar -->
+<header class="bg-surface-container dark:bg-surface-container text-primary dark:text-primary docked full-width top-0 border-b border-outline-variant flat no shadows flex justify-between items-center px-lg h-16 w-full z-50">
+<div class="flex items-center">
+<span class="font-label-caps text-label-caps tracking-widest text-primary dark:text-primary">STADIUM OPS COMMAND</span>
+</div>
+<div class="flex-1 flex justify-center px-lg hidden md:flex">
+<nav class="flex space-x-lg">
+<!-- Top nav hidden on this specific sub-page layout, usually redundant with side nav in this strict setup -->
+</nav>
+</div>
+<div class="flex items-center space-x-sm">
+<button class="p-sm text-on-surface-variant hover:bg-surface-bright transition-colors cursor-pointer active:opacity-80 rounded">
+<span class="material-symbols-outlined" data-icon="notifications">notifications</span>
+</button>
+<button class="p-sm text-on-surface-variant hover:bg-surface-bright transition-colors cursor-pointer active:opacity-80 rounded">
+<span class="material-symbols-outlined" data-icon="wifi_tethering">wifi_tethering</span>
+</button>
+<button class="p-sm text-on-surface-variant hover:bg-surface-bright transition-colors cursor-pointer active:opacity-80 rounded">
+<span class="material-symbols-outlined" data-icon="account_circle">account_circle</span>
+</button>
+</div>
+</header>
+<!-- Content Area -->
+<main class="flex-1 overflow-y-auto p-lg pt-xl">
+<div class="max-w-[1600px] mx-auto">
+<!-- Page Header & Bulk Actions -->
+<div class="flex flex-col md:flex-row justify-between items-start md:items-end mb-xl border-b border-outline-variant pb-md">
+<div>
+<h2 class="font-display-lg text-display-lg text-on-surface">Actuator Control</h2>
+<p class="font-body-md text-body-md text-on-surface-variant mt-sm max-w-2xl">Manual override panel for digital signage and electronic gate controls. Ensure visual confirmation before executing zone-wide commands.</p>
+</div>
+<div class="mt-md md:mt-0 flex space-x-md">
+<button class="bg-surface-container-high border border-outline-variant text-on-surface px-md py-sm rounded font-data-md text-data-md flex items-center hover:bg-surface-bright transition-colors">
+<span class="material-symbols-outlined mr-sm text-[18px]" data-icon="sync">sync</span>
+                            REFRESH STATUS
+                        </button>
+<button class="bg-error-container text-on-error-container border border-error px-md py-sm rounded font-data-md text-data-md flex items-center hover:bg-error hover:text-on-error transition-colors shadow-[0_0_8px_rgba(147,0,10,0.5)]" onclick="document.getElementById('bulk-egress-modal').classList.remove('hidden')">
+<span class="material-symbols-outlined mr-sm text-[18px]" data-icon="door_open">door_open</span>
+                            BULK OPEN EGRESS GATES
+                        </button>
+</div>
+</div>
+<!-- Bento Grid Layout -->
+<div class="grid grid-cols-1 lg:grid-cols-12 gap-lg">
+<!-- Gate Controls Zone A -->
+<div class="col-span-1 lg:col-span-8 space-y-md">
+<div class="flex items-center justify-between mb-sm">
+<h3 class="font-headline-sm text-headline-sm text-on-surface">Egress Gates - Zone Alpha</h3>
+<span class="font-label-caps text-label-caps px-sm py-xs bg-primary-container/20 text-primary border border-primary/30 rounded">SECURE</span>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-2 gap-md">
+<!-- Gate 1 -->
+<div class="data-card rounded flex flex-col relative overflow-hidden">
+<div class="h-[2px] w-full bg-primary absolute top-0 left-0"></div>
+<div class="p-md flex justify-between items-start border-b border-outline-variant/50">
+<div>
+<div class="font-label-caps text-label-caps text-on-surface-variant">GATE A-01</div>
+<div class="font-data-lg text-data-lg text-on-surface mt-xs">North Plaza Main</div>
+</div>
+<div class="flex items-center space-x-xs">
+<span class="h-2 w-2 rounded-full bg-primary animate-pulse"></span>
+<span class="font-data-sm text-data-sm text-primary">ONLINE</span>
+</div>
+</div>
+<div class="p-md grid grid-cols-2 gap-md bg-surface/50">
+<div>
+<div class="font-label-caps text-label-caps text-on-surface-variant mb-xs">CURRENT STATE</div>
+<div class="font-data-md text-data-md text-on-surface flex items-center">
+<span class="material-symbols-outlined mr-xs text-[16px] text-error" data-icon="lock">lock</span>
+                                            LOCKED
+                                        </div>
+</div>
+<div>
+<div class="font-label-caps text-label-caps text-on-surface-variant mb-xs">LAST CMD</div>
+<div class="font-data-md text-data-md text-on-surface">AUTO (Sys)</div>
+</div>
+</div>
+<div class="p-md flex space-x-sm border-t border-outline-variant/50">
+<button class="flex-1 bg-surface-container border border-outline-variant text-on-surface py-xs rounded font-data-sm text-data-sm hover:bg-surface-bright">UNLOCK</button>
+<button class="flex-1 bg-surface-container border border-outline-variant text-on-surface py-xs rounded font-data-sm text-data-sm opacity-50 cursor-not-allowed">LOCK</button>
+</div>
+</div>
+<!-- Gate 2 -->
+<div class="data-card rounded flex flex-col relative overflow-hidden border-error/50 shadow-[0_0_4px_rgba(255,180,171,0.2)]">
+<div class="h-[2px] w-full bg-error absolute top-0 left-0"></div>
+<div class="p-md flex justify-between items-start border-b border-outline-variant/50">
+<div>
+<div class="font-label-caps text-label-caps text-on-surface-variant">GATE A-02</div>
+<div class="font-data-lg text-data-lg text-on-surface mt-xs">North Plaza VIP</div>
+</div>
+<div class="flex items-center space-x-xs">
+<span class="h-2 w-2 rounded-full bg-error"></span>
+<span class="font-data-sm text-data-sm text-error">OPEN</span>
+</div>
+</div>
+<div class="p-md grid grid-cols-2 gap-md bg-surface/50">
+<div>
+<div class="font-label-caps text-label-caps text-on-surface-variant mb-xs">CURRENT STATE</div>
+<div class="font-data-md text-data-md text-on-surface flex items-center">
+<span class="material-symbols-outlined mr-xs text-[16px] text-tertiary" data-icon="lock_open">lock_open</span>
+                                            UNLOCKED
+                                        </div>
+</div>
+<div>
+<div class="font-label-caps text-label-caps text-on-surface-variant mb-xs">LAST CMD</div>
+<div class="font-data-md text-data-md text-tertiary">MANUAL (Opr_7)</div>
+</div>
+</div>
+<div class="p-md flex space-x-sm border-t border-outline-variant/50">
+<button class="flex-1 bg-surface-container border border-outline-variant text-on-surface py-xs rounded font-data-sm text-data-sm opacity-50 cursor-not-allowed">UNLOCK</button>
+<button class="flex-1 bg-surface-container border border-outline-variant text-on-surface py-xs rounded font-data-sm text-data-sm hover:bg-surface-bright">LOCK</button>
+</div>
+</div>
+</div>
+</div>
+<!-- Signage Controls -->
+<div class="col-span-1 lg:col-span-4 space-y-md">
+<div class="flex items-center justify-between mb-sm">
+<h3 class="font-headline-sm text-headline-sm text-on-surface">Digital Signage</h3>
+<span class="font-label-caps text-label-caps px-sm py-xs bg-surface-container text-on-surface-variant border border-outline-variant rounded">3 ACTIVE</span>
+</div>
+<div class="data-card rounded p-md">
+<div class="space-y-md">
+<!-- Sign 1 -->
+<div class="flex items-center justify-between p-sm bg-surface/50 border border-outline-variant/50 rounded">
+<div>
+<div class="font-data-sm text-data-sm text-on-surface">Concourse Display 01</div>
+<div class="font-label-caps text-label-caps text-on-surface-variant mt-xs">CMD: MATCH_DAY_DEF</div>
+</div>
+<div class="flex space-x-xs">
+<button class="p-xs bg-surface-container border border-outline-variant rounded hover:bg-primary-container/20 text-on-surface" title="Override">
+<span class="material-symbols-outlined text-[16px]" data-icon="edit_note">edit_note</span>
+</button>
+<button class="p-xs bg-surface-container border border-outline-variant rounded hover:bg-error-container/20 text-on-surface" title="Blank Screen">
+<span class="material-symbols-outlined text-[16px]" data-icon="desktop_access_disabled">desktop_access_disabled</span>
+</button>
+</div>
+</div>
+<!-- Sign 2 -->
+<div class="flex items-center justify-between p-sm bg-surface/50 border border-outline-variant/50 rounded">
+<div>
+<div class="font-data-sm text-data-sm text-on-surface">Concourse Display 02</div>
+<div class="font-label-caps text-label-caps text-tertiary mt-xs">CMD: EVAC_LEFT (OVR)</div>
+</div>
+<div class="flex space-x-xs">
+<button class="p-xs bg-surface-container border border-outline-variant rounded hover:bg-primary-container/20 text-on-surface" title="Override">
+<span class="material-symbols-outlined text-[16px]" data-icon="edit_note">edit_note</span>
+</button>
+<button class="p-xs bg-surface-container border border-outline-variant rounded hover:bg-error-container/20 text-on-surface" title="Blank Screen">
+<span class="material-symbols-outlined text-[16px]" data-icon="desktop_access_disabled">desktop_access_disabled</span>
+</button>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</main>
+</div>
+<!-- Double Confirmation Modal for Bulk Action -->
+<div class="fixed inset-0 bg-background/80 backdrop-blur-sm z-[100] hidden flex items-center justify-center p-md" id="bulk-egress-modal">
+<div class="bg-surface-container-high border-2 border-error w-full max-w-lg rounded shadow-2xl overflow-hidden flex flex-col">
+<div class="bg-error-container p-md flex items-center border-b border-error">
+<span class="material-symbols-outlined text-on-error-container text-[32px] mr-md" data-icon="warning">warning</span>
+<div>
+<h3 class="font-headline-md text-headline-md text-on-error-container">CRITICAL ACTION</h3>
+<p class="font-label-caps text-label-caps text-on-error-container/80">Bulk Egress Gate Override</p>
+</div>
+</div>
+<div class="p-lg space-y-md">
+<p class="font-body-md text-body-md text-on-surface">You are about to manually command ALL egress gates in Zone Alpha and Beta to <strong class="text-error">UNLOCK AND OPEN</strong>.</p>
+<div class="bg-surface p-md rounded border border-outline-variant font-data-sm text-data-sm text-on-surface-variant space-y-xs">
+<div class="flex justify-between border-b border-outline-variant/30 pb-xs"><span>Affected Gates:</span> <span class="text-on-surface">14</span></div>
+<div class="flex justify-between border-b border-outline-variant/30 pb-xs"><span>Current Source:</span> <span class="text-on-surface">AUTO (Sys)</span></div>
+<div class="flex justify-between"><span>New Source:</span> <span class="text-tertiary">MANUAL (Opr_Local)</span></div>
+</div>
+<div class="pt-md">
+<label class="flex items-start space-x-sm cursor-pointer">
+<input class="mt-1 form-checkbox bg-surface border-outline-variant text-error rounded-sm focus:ring-error focus:ring-offset-surface-container-high" id="confirm-check" onchange="document.getElementById('exec-btn').disabled = !this.checked; document.getElementById('exec-btn').classList.toggle('opacity-50');" type="checkbox"/>
+<span class="font-body-sm text-body-sm text-on-surface-variant">I confirm visual clearance via CCTV feeds and authorize this override protocol.</span>
+</label>
+</div>
+</div>
+<div class="p-md bg-surface-container flex justify-end space-x-md border-t border-outline-variant">
+<button class="px-md py-sm rounded border border-outline-variant text-on-surface font-data-md text-data-md hover:bg-surface-bright" onclick="document.getElementById('bulk-egress-modal').classList.add('hidden')">CANCEL</button>
+<button class="px-md py-sm rounded bg-error text-on-error font-data-md text-data-md flex items-center opacity-50 transition-opacity" disabled="" id="exec-btn">
+<span class="material-symbols-outlined mr-sm text-[18px]" data-icon="lock_open">lock_open</span>
+                    EXECUTE OVERRIDE
+                </button>
+</div>
+</div>
+</div>
+</body></html>
