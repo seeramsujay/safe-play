@@ -1192,6 +1192,9 @@
             if (tabId === 'audit') {
                 fetchAuditLogs();
             }
+            if (tabId === 'approval') {
+                dismissAlert();
+            }
             // Close mobile nav drawer if open
             const overlay = document.getElementById('mobileNavOverlay');
             if (!overlay.classList.contains('hidden')) {
