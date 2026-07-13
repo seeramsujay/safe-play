@@ -181,59 +181,59 @@
         </div>
 
         <!-- Navigation Links -->
-        <ul class="flex-1 space-y-xs overflow-y-auto px-1" id="navLinks">
-            <li>
-                <a class="flex items-center gap-md rounded p-md bg-primary/10 text-primary border border-primary/20 scale-[0.98] transition-all cursor-pointer font-medium" id="nav-dashboard" onclick="switchTab('dashboard')">
+        <ul class="flex-1 space-y-xs overflow-y-auto px-1" id="navLinks" role="tablist" aria-label="Tactical dashboard navigation">
+            <li role="presentation">
+                <a class="flex items-center gap-md rounded p-md bg-primary/10 text-primary border border-primary/20 scale-[0.98] transition-all cursor-pointer font-medium" id="nav-dashboard" onclick="switchTab('dashboard')" href="javascript:void(0)" role="tab" aria-selected="true">
                     <span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">dashboard</span>
                     <span class="text-sm">Dashboard</span>
                 </a>
             </li>
-            <li>
-                <a class="flex items-center gap-md rounded p-md text-td-on-surface-variant dark:text-td-on-surface-variant light:text-el-on-surface-variant hover:bg-td-surface-high dark:hover:bg-td-surface-high light:hover:bg-el-surface-high transition-all cursor-pointer" id="nav-map" onclick="switchTab('map')">
+            <li role="presentation">
+                <a class="flex items-center gap-md rounded p-md text-td-on-surface-variant dark:text-td-on-surface-variant light:text-el-on-surface-variant hover:bg-td-surface-high dark:hover:bg-td-surface-high light:hover:bg-el-surface-high transition-all cursor-pointer" id="nav-map" onclick="switchTab('map')" href="javascript:void(0)" role="tab" aria-selected="false">
                     <span class="material-symbols-outlined">map</span>
                     <span class="text-sm">Venue Map</span>
                 </a>
             </li>
-            <li>
-                <a class="flex items-center gap-md rounded p-md text-td-on-surface-variant dark:text-td-on-surface-variant light:text-el-on-surface-variant hover:bg-td-surface-high dark:hover:bg-td-surface-high light:hover:bg-el-surface-high transition-all cursor-pointer relative" id="nav-approval" onclick="switchTab('approval')">
+            <li role="presentation">
+                <a class="flex items-center gap-md rounded p-md text-td-on-surface-variant dark:text-td-on-surface-variant light:text-el-on-surface-variant hover:bg-td-surface-high dark:hover:bg-td-surface-high light:hover:bg-el-surface-high transition-all cursor-pointer relative" id="nav-approval" onclick="switchTab('approval')" href="javascript:void(0)" role="tab" aria-selected="false">
                     <span class="material-symbols-outlined">policy</span>
                     <span class="text-sm">Approval Queue</span>
                     <span class="absolute right-3 top-3.5 w-2.5 h-2.5 rounded-full bg-critical animate-ping hidden" id="approvalBadgePing"></span>
                     <span class="absolute right-3 top-3.5 w-2.5 h-2.5 rounded-full bg-critical hidden" id="approvalBadge"></span>
                 </a>
             </li>
-            <li>
-                <a class="flex items-center gap-md rounded p-md text-td-on-surface-variant dark:text-td-on-surface-variant light:text-el-on-surface-variant hover:bg-td-surface-high dark:hover:bg-td-surface-high light:hover:bg-el-surface-high transition-all cursor-pointer" id="nav-incidents" onclick="switchTab('incidents')">
+            <li role="presentation">
+                <a class="flex items-center gap-md rounded p-md text-td-on-surface-variant dark:text-td-on-surface-variant light:text-el-on-surface-variant hover:bg-td-surface-high dark:hover:bg-td-surface-high light:hover:bg-el-surface-high transition-all cursor-pointer" id="nav-incidents" onclick="switchTab('incidents')" href="javascript:void(0)" role="tab" aria-selected="false">
                     <span class="material-symbols-outlined">warning</span>
                     <span class="text-sm">Incident Feed</span>
                 </a>
             </li>
-            <li>
-                <a class="flex items-center gap-md rounded p-md text-td-on-surface-variant dark:text-td-on-surface-variant light:text-el-on-surface-variant hover:bg-td-surface-high dark:hover:bg-td-surface-high light:hover:bg-el-surface-high transition-all cursor-pointer" id="nav-actuators" onclick="switchTab('actuators')">
+            <li role="presentation">
+                <a class="flex items-center gap-md rounded p-md text-td-on-surface-variant dark:text-td-on-surface-variant light:text-el-on-surface-variant hover:bg-td-surface-high dark:hover:bg-td-surface-high light:hover:bg-el-surface-high transition-all cursor-pointer" id="nav-actuators" onclick="switchTab('actuators')" href="javascript:void(0)" role="tab" aria-selected="false">
                     <span class="material-symbols-outlined">settings_input_component</span>
                     <span class="text-sm">Actuators</span>
                 </a>
             </li>
-            <li>
-                <a class="flex items-center gap-md rounded p-md text-td-on-surface-variant dark:text-td-on-surface-variant light:text-el-on-surface-variant hover:bg-td-surface-high dark:hover:bg-td-surface-high light:hover:bg-el-surface-high transition-all cursor-pointer" id="nav-health" onclick="switchTab('health')">
+            <li role="presentation">
+                <a class="flex items-center gap-md rounded p-md text-td-on-surface-variant dark:text-td-on-surface-variant light:text-el-on-surface-variant hover:bg-td-surface-high dark:hover:bg-td-surface-high light:hover:bg-el-surface-high transition-all cursor-pointer" id="nav-health" onclick="switchTab('health')" href="javascript:void(0)" role="tab" aria-selected="false">
                     <span class="material-symbols-outlined">health_metrics</span>
                     <span class="text-sm">Sensor Health</span>
                 </a>
             </li>
-            <li>
-                <a class="flex items-center gap-md rounded p-md text-td-on-surface-variant dark:text-td-on-surface-variant light:text-el-on-surface-variant hover:bg-td-surface-high dark:hover:bg-td-surface-high light:hover:bg-el-surface-high transition-all cursor-pointer" id="nav-modelops" onclick="switchTab('modelops')">
+            <li role="presentation">
+                <a class="flex items-center gap-md rounded p-md text-td-on-surface-variant dark:text-td-on-surface-variant light:text-el-on-surface-variant hover:bg-td-surface-high dark:hover:bg-td-surface-high light:hover:bg-el-surface-high transition-all cursor-pointer" id="nav-modelops" onclick="switchTab('modelops')" href="javascript:void(0)" role="tab" aria-selected="false">
                     <span class="material-symbols-outlined">memory</span>
                     <span class="text-sm">Model Ops</span>
                 </a>
             </li>
-            <li>
-                <a class="flex items-center gap-md rounded p-md text-td-on-surface-variant dark:text-td-on-surface-variant light:text-el-on-surface-variant hover:bg-td-surface-high dark:hover:bg-td-surface-high light:hover:bg-el-surface-high transition-all cursor-pointer" id="nav-audit" onclick="switchTab('audit')">
+            <li role="presentation">
+                <a class="flex items-center gap-md rounded p-md text-td-on-surface-variant dark:text-td-on-surface-variant light:text-el-on-surface-variant hover:bg-td-surface-high dark:hover:bg-td-surface-high light:hover:bg-el-surface-high transition-all cursor-pointer" id="nav-audit" onclick="switchTab('audit')" href="javascript:void(0)" role="tab" aria-selected="false">
                     <span class="material-symbols-outlined">history</span>
                     <span class="text-sm">Audit Trail</span>
                 </a>
             </li>
-            <li>
-                <a class="flex items-center gap-md rounded p-md text-td-on-surface-variant dark:text-td-on-surface-variant light:text-el-on-surface-variant hover:bg-td-surface-high dark:hover:bg-td-surface-high light:hover:bg-el-surface-high transition-all cursor-pointer" id="nav-settings" onclick="switchTab('settings')">
+            <li role="presentation">
+                <a class="flex items-center gap-md rounded p-md text-td-on-surface-variant dark:text-td-on-surface-variant light:text-el-on-surface-variant hover:bg-td-surface-high dark:hover:bg-td-surface-high light:hover:bg-el-surface-high transition-all cursor-pointer" id="nav-settings" onclick="switchTab('settings')" href="javascript:void(0)" role="tab" aria-selected="false">
                     <span class="material-symbols-outlined">settings</span>
                     <span class="text-sm">Settings</span>
                 </a>
@@ -1136,10 +1136,12 @@
             links.forEach(link => {
                 if (link.id === `nav-${tabId}`) {
                     link.className = "flex items-center gap-md rounded p-md bg-primary/10 text-primary border border-primary/20 scale-[0.98] transition-all cursor-pointer font-bold";
+                    link.setAttribute('aria-selected', 'true');
                     const icon = link.querySelector('.material-symbols-outlined');
                     if (icon) icon.style.fontVariationSettings = "'FILL' 1";
                 } else {
                     link.className = "flex items-center gap-md rounded p-md text-td-on-surface-variant dark:text-td-on-surface-variant light:text-el-on-surface-variant hover:bg-td-surface-high dark:hover:bg-td-surface-high light:hover:bg-el-surface-high transition-all cursor-pointer";
+                    link.setAttribute('aria-selected', 'false');
                     const icon = link.querySelector('.material-symbols-outlined');
                     if (icon) icon.style.fontVariationSettings = "'FILL' 0";
                 }
@@ -1150,8 +1152,10 @@
             mobileLinks.forEach(link => {
                 if (link.id === `mobile-nav-${tabId}`) {
                     link.className = "flex items-center gap-md rounded p-md bg-primary/10 text-primary border border-primary/20 scale-[0.98] transition-all cursor-pointer font-bold";
+                    link.setAttribute('aria-selected', 'true');
                 } else {
                     link.className = "flex items-center gap-md rounded p-md text-td-on-surface-variant dark:text-td-on-surface-variant light:text-el-on-surface-variant hover:bg-td-surface-high dark:hover:bg-td-surface-high light:hover:bg-el-surface-high transition-all cursor-pointer";
+                    link.setAttribute('aria-selected', 'false');
                 }
             });
 
