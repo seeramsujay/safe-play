@@ -183,4 +183,38 @@ async def test_api_panic_mode():
     assert response.json()["panic_mode"] is False
     assert orchestrator.panic_mode is False
 
+@pytest.mark.anyio
+async def test_dynamic_qos_subscription_calls():
+    from unittest.mock import MagicMock
+    orchestrator = SafePlayOrchestrator("config/schema.json", "127.0.0.1", 1883)
+    mock_mqtt_client = MagicMock()
+    orchestrator.mqtt_client = mock_mqtt_client
+    
+    # 1. Low density: no subscription calls should occur
+    payload_low = {
+        "zone_id": "Gate_A",
+        "crowd_density": 1.2,
+        "flow_rate_in": 20.0,
+        "flow_rate_out": 15.0,
+        "timestamp": 1720875600.0
+    }
+    await orchestrator.process_telemetry(json.dumps(payload_low))
+    mock_mqtt_client.subscribe.assert_not_called()
+    
+    # 2. High density: should subscribe to Gate_A topic at QoS 1
+    payload_high = {
+        "zone_id": "Gate_A",
+        "crowd_density": 2.5,
+        "flow_rate_in": 80.0,
+        "flow_rate_out": 20.0,
+        "timestamp": 1720875600.0
+    }
+    await orchestrator.process_telemetry(json.dumps(payload_high))
+    mock_mqtt_client.subscribe.assert_called_once_with("stadium/Gate_A/telemetry", qos=1)
+    mock_mqtt_client.subscribe.reset_mock()
+    
+    # 3. Low density again: should unsubscribe from Gate_A topic
+    await orchestrator.process_telemetry(json.dumps(payload_low))
+    mock_mqtt_client.unsubscribe.assert_called_once_with("stadium/Gate_A/telemetry")
+
 

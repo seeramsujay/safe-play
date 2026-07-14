@@ -46,11 +46,16 @@ class ConnectionManager:
             self.active_connections.remove(websocket)
 
     async def broadcast(self, message: dict):
-        for connection in self.active_connections:
+        async def send(conn: WebSocket):
             try:
-                await connection.send_json(message)
+                await conn.send_json(message)
             except Exception:
                 pass
+        
+        # Copy the list to prevent modification during iteration
+        connections = list(self.active_connections)
+        if connections:
+            await asyncio.gather(*(send(c) for c in connections))
 
 class SafePlayOrchestrator:
     def __init__(self, config_path: str, broker: str, port: int):
@@ -101,6 +106,17 @@ class SafePlayOrchestrator:
         self.last_llm_latency_ms = 0.0
         self.last_llm_status = True
         self.mqtt_connected = False
+        self.mqtt_client: Optional[mqtt.Client] = None
+
+    @property
+    def http_client(self) -> httpx.AsyncClient:
+        if not hasattr(self, "_http_client") or self._http_client.is_closed:
+            self._http_client = httpx.AsyncClient()
+        return self._http_client
+
+    async def close(self):
+        if hasattr(self, "_http_client") and not self._http_client.is_closed:
+            await self._http_client.aclose()
         
     def write_audit_log(self, log_type: str, data: dict):
         """Append-only audit trail logging"""
@@ -159,17 +175,20 @@ class SafePlayOrchestrator:
         if rc == 0:
             logger.info("Connected to MQTT Broker successfully")
             self.mqtt_connected = True
+            self.mqtt_client = client
             client.subscribe("stadium/+/telemetry", qos=0)
             client.subscribe("stadium/operator/veto", qos=1)
         else:
             logger.error(f"MQTT connection failed with code {rc}")
             self.mqtt_connected = False
+            self.mqtt_client = None
         if loop and loop.is_running():
             asyncio.run_coroutine_threadsafe(self.broadcast_state(), loop)
 
     def on_mqtt_disconnect(self, client, userdata, flags, rc, properties=None):
         logger.warning(f"Disconnected from MQTT Broker: rc={rc}")
         self.mqtt_connected = False
+        self.mqtt_client = None
         loop = userdata.get("loop")
         if loop and loop.is_running():
             asyncio.run_coroutine_threadsafe(self.broadcast_state(), loop)
@@ -276,12 +295,11 @@ class SafePlayOrchestrator:
         
         start_time = time.time()
         try:
-            async with httpx.AsyncClient() as client:
-                response = await client.post(
-                    url, 
-                    json=req_payload, 
-                    timeout=INFERENCE_TIMEOUT_SEC
-                )
+            response = await self.http_client.post(
+                url, 
+                json=req_payload, 
+                timeout=INFERENCE_TIMEOUT_SEC
+            )
                 
             latency_ms = (time.time() - start_time) * 1000.0
             
@@ -453,11 +471,25 @@ class SafePlayOrchestrator:
             if payload.crowd_density >= 2.0 and current_qos == 0:
                 logger.warning(f"High surge detected in {payload.zone_id} ({payload.crowd_density} people/m^2). Toggling QoS to 1.")
                 self.zone_qos[payload.zone_id] = 1
+                if self.mqtt_client:
+                    topic = f"stadium/{payload.zone_id}/telemetry"
+                    try:
+                        self.mqtt_client.subscribe(topic, qos=1)
+                        logger.info(f"Dynamically subscribed to QoS 1 for topic: {topic}")
+                    except Exception as e:
+                        logger.error(f"Failed to subscribe to QoS 1 for {topic}: {e}")
                 self.write_audit_log("qos_escalated", {"zone_id": payload.zone_id, "qos": 1})
                 await self.broadcast_state()
             elif payload.crowd_density < 1.5 and current_qos == 1:
                 logger.info(f"Crowd cleared in {payload.zone_id} ({payload.crowd_density} people/m^2). Toggling QoS back to 0.")
                 self.zone_qos[payload.zone_id] = 0
+                if self.mqtt_client:
+                    topic = f"stadium/{payload.zone_id}/telemetry"
+                    try:
+                        self.mqtt_client.unsubscribe(topic)
+                        logger.info(f"Dynamically unsubscribed from topic: {topic} (falling back to QoS 0 wildcard)")
+                    except Exception as e:
+                        logger.error(f"Failed to unsubscribe from {topic}: {e}")
                 self.write_audit_log("qos_deescalated", {"zone_id": payload.zone_id, "qos": 0})
                 await self.broadcast_state()
             
@@ -612,11 +644,12 @@ def create_app(orchestrator: SafePlayOrchestrator) -> FastAPI:
             await orchestrator.broadcast_state()
             while True:
                 # Keep connection alive
-                data = await websocket.receive_text()
+                await websocket.receive_text()
         except WebSocketDisconnect:
-            orchestrator.manager.disconnect(websocket)
+            pass
         except Exception as e:
             logger.error(f"WebSocket error: {e}")
+        finally:
             orchestrator.manager.disconnect(websocket)
 
     @app.post("/api/veto")
@@ -734,6 +767,7 @@ async def main():
     finally:
         if mqtt_started:
             client.loop_stop()
+        await orchestrator.close()
         logger.info("Orchestrator shut down.")
 
 if __name__ == "__main__":
