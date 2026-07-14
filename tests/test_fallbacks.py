@@ -77,3 +77,24 @@ async def test_orchestrator_slm_failure_fallback():
         fallback_script = orchestrator.get_static_fallback_recommendation(telemetry)
         assert fallback_script.hazard_level == "critical"
         assert fallback_script.gate_action == "CLOSE_IMMEDIATELY"
+
+def test_spatial_graph_alternative_route_no_candidate():
+    nodes = [
+        SpatialNode(zone_id="Gate_A", capacity=2.5, current_density=3.2),
+        SpatialNode(zone_id="Corridor_1", capacity=4.0, current_density=4.5)
+    ]
+    edges = [
+        SpatialEdge(source="Gate_A", target="Corridor_1", max_flow_rate=100.0)
+    ]
+    graph = SpatialGraph(nodes, edges)
+    alt_route = graph.get_alternative_route("Gate_A")
+    assert alt_route is None
+
+def test_spatial_graph_alternative_route_no_edges():
+    nodes = [
+        SpatialNode(zone_id="Gate_A", capacity=2.5, current_density=3.2)
+    ]
+    graph = SpatialGraph(nodes, [])
+    alt_route = graph.get_alternative_route("Gate_A")
+    assert alt_route is None
+

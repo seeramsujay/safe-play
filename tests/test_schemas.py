@@ -1,7 +1,7 @@
 import json
 import pytest
 from pydantic import ValidationError
-from src.models import TelemetryPayload, InterventionScript
+from src.models import TelemetryPayload, InterventionScript, SpatialNode, SpatialEdge
 
 def test_telemetry_payload_valid():
     # A valid payload
@@ -80,3 +80,23 @@ def test_compiled_schema_integrity():
     assert "signage_instruction" in schema["properties"]
     assert "gate_action" in schema["properties"]
     assert "rationale" in schema["properties"]
+
+def test_spatial_node_validation():
+    node = SpatialNode(zone_id="Gate_A", capacity=2.5)
+    assert node.zone_id == "Gate_A"
+    assert node.capacity == 2.5
+    assert node.current_density == 0.0
+    
+    with pytest.raises(ValidationError):
+        SpatialNode(zone_id="Gate_A")
+
+def test_spatial_edge_validation():
+    edge = SpatialEdge(source="Gate_A", target="Corridor_1", max_flow_rate=120.0)
+    assert edge.source == "Gate_A"
+    assert edge.target == "Corridor_1"
+    assert edge.max_flow_rate == 120.0
+    assert edge.current_flow_rate == 0.0
+    
+    with pytest.raises(ValidationError):
+        SpatialEdge(source="Gate_A", target="Corridor_1")
+

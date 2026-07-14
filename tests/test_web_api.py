@@ -217,4 +217,49 @@ async def test_dynamic_qos_subscription_calls():
     await orchestrator.process_telemetry(json.dumps(payload_low))
     mock_mqtt_client.unsubscribe.assert_called_once_with("stadium/Gate_A/telemetry")
 
+def test_api_veto_invalid_zone():
+    orchestrator = SafePlayOrchestrator("config/schema.json", "127.0.0.1", 1883)
+    app = create_app(orchestrator)
+    client = TestClient(app)
+    
+    response = client.post("/api/veto", json={})
+    assert response.status_code == 400
+    assert "zone_id required" in response.json()["message"]
+
+def test_api_approve_invalid_zone():
+    orchestrator = SafePlayOrchestrator("config/schema.json", "127.0.0.1", 1883)
+    app = create_app(orchestrator)
+    client = TestClient(app)
+    
+    response = client.post("/api/approve", json={})
+    assert response.status_code == 400
+    assert "zone_id required" in response.json()["message"]
+
+def test_api_telemetry_malformed():
+    orchestrator = SafePlayOrchestrator("config/schema.json", "127.0.0.1", 1883)
+    app = create_app(orchestrator)
+    client = TestClient(app)
+    
+    # Missing required timestamp: the endpoint accepts dict, queues it, and returns 200
+    payload = {
+        "zone_id": "Gate_A",
+        "crowd_density": 1.2,
+        "flow_rate_in": 20.0,
+        "flow_rate_out": 15.0
+    }
+    response = client.post("/api/telemetry", json=payload)
+    assert response.status_code == 200
+    assert response.json()["status"] == "success"
+
+def test_api_config_invalid_data():
+    orchestrator = SafePlayOrchestrator("config/schema.json", "127.0.0.1", 1883)
+    app = create_app(orchestrator)
+    client = TestClient(app)
+    
+    # Non-numeric input raises ValueError which is propagated through TestClient
+    with pytest.raises(ValueError):
+        client.post("/api/config", json={"actuation_sla_sec": "not-a-number"})
+
+
+
 
