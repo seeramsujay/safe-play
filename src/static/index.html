@@ -157,7 +157,9 @@
         .onboarding-overlay {
             position: fixed;
             inset: 0;
-            background: rgba(0, 0, 0, 0.8);
+            background: rgba(15, 23, 42, 0.45);
+            backdrop-filter: blur(2px);
+            -webkit-backdrop-filter: blur(2px);
             z-index: 900;
             pointer-events: auto;
             transition: opacity 0.25s ease;
@@ -180,8 +182,8 @@
         .onboarding-highlight {
             position: relative;
             z-index: 920 !important;
-            box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.75) !important;
-            outline: 4px solid var(--primary) !important;
+            box-shadow: 0 0 20px 5px rgba(59, 130, 246, 0.6) !important;
+            outline: 3px solid var(--primary) !important;
             outline-offset: 4px !important;
             pointer-events: none !important;
         }
@@ -574,7 +576,7 @@
                                 <g class="cursor-pointer focus:outline-none" transform="translate(670, 185)" onclick="selectNode('Main_Concourse')" tabindex="0" role="button" aria-label="Main Concourse, click or press enter to view details" onkeydown="if(event.key==='Enter'||event.key===' '){selectNode('Main_Concourse');event.preventDefault();}">
                                     <circle class="node-circle fill-success/40 stroke-success" r="22" stroke-width="2" id="dash-node-Main_Concourse"></circle>
                                     <text class="font-mono font-bold text-[10px] fill-current" text-anchor="middle" y="4" id="dash-node-lbl-Main_Concourse">MC</text>
-                                    <text class="font-sans text-[11px] font-semibold fill-current" text-anchor="middle" y="-30">Main Concourse</text>
+                                    <text class="font-sans text-[11px] font-semibold fill-current" text-anchor="middle" y="34">Main Concourse</text>
                                 </g>>
                             </svg>
                         </div>
@@ -678,7 +680,7 @@
                         <g class="cursor-pointer focus:outline-none" transform="translate(750, 250)" onclick="selectNode('Main_Concourse')" tabindex="0" role="button" aria-label="Main Concourse, click or press enter to view details" onkeydown="if(event.key==='Enter'||event.key===' '){selectNode('Main_Concourse');event.preventDefault();}">
                             <circle class="node-circle fill-success/35 stroke-success" r="32" stroke-width="2.5" id="map-node-Main_Concourse"></circle>
                             <text class="font-mono font-bold text-xs fill-current" text-anchor="middle" y="4" id="map-node-lbl-Main_Concourse">MC</text>
-                            <text class="font-sans text-xs font-semibold fill-current" text-anchor="middle" y="-42">Main Concourse</text>
+                            <text class="font-sans text-xs font-semibold fill-current" text-anchor="middle" y="46">Main Concourse</text>
                         </g>
                     </svg>
                 </div>
@@ -1156,7 +1158,10 @@
                             <input class="w-full bg-td-surface-lowest dark:bg-td-surface-lowest light:bg-el-surface-low border border-td-outline dark:border-td-outline light:border-el-outline rounded p-sm focus:outline-none focus:border-primary text-sm font-mono" id="settingLlmUrl" type="text" value="http://localhost:8080/completion"/>
                         </div>
 
-                        <div class="flex justify-end pt-md border-t border-td-outline dark:border-td-outline light:border-el-outline">
+                        <div class="flex justify-between items-center pt-md border-t border-td-outline dark:border-td-outline light:border-el-outline">
+                            <button class="bg-td-surface-high dark:bg-td-surface-high light:bg-el-surface-high border border-td-outline dark:border-td-outline light:border-el-outline hover:bg-td-surface-highest dark:hover:bg-td-surface-highest light:hover:bg-el-surface-highest text-td-on-surface dark:text-td-on-surface light:text-el-on-surface font-bold px-lg py-2 rounded shadow transition-all duration-150 active:scale-95 flex items-center gap-xs" type="button" onclick="startOnboarding()" aria-label="Start the onboarding interactive walkthrough tour">
+                                <span class="material-symbols-outlined text-[18px]">explore</span> Restart Tour
+                            </button>
                             <button class="bg-primary hover:bg-blue-600 text-white font-bold px-lg py-2 rounded shadow transition-all duration-150 active:scale-95" type="submit">
                                 Save Settings
                             </button>
@@ -1550,10 +1555,10 @@
             const step = onboardingSteps[index];
             document.getElementById('onboardingTitle').innerHTML = `
                 <span class="material-symbols-outlined text-[18px]">explore</span>
-                \${step.title}
+                ${step.title}
             `;
             document.getElementById('onboardingDescription').textContent = step.description;
-            document.getElementById('onboardingStepIndicator').textContent = `Step \${index + 1} of \${onboardingSteps.length}`;
+            document.getElementById('onboardingStepIndicator').textContent = `Step ${index + 1} of ${onboardingSteps.length}`;
             
             // Adjust buttons
             document.getElementById('onboardingBackBtn').style.visibility = (index === 0) ? 'hidden' : 'visible';
@@ -1568,8 +1573,8 @@
                     
                     // Position the card relative to the target
                     const rect = el.getBoundingClientRect();
-                    const cardWidth = 350;
-                    const cardHeight = 160; // approximate
+                    const cardWidth = card.offsetWidth || 350;
+                    const cardHeight = card.offsetHeight || 220;
                     
                     let top = 0;
                     let left = 0;
@@ -1578,10 +1583,10 @@
                         top = rect.bottom + 12;
                         left = rect.left + (rect.width / 2) - (cardWidth / 2);
                     } else if (step.placement === 'right') {
-                        top = rect.top + (rect.height / 2) - 80;
+                        top = rect.top + (rect.height / 2) - (cardHeight / 2);
                         left = rect.right + 12;
                     } else if (step.placement === 'left') {
-                        top = rect.top + (rect.height / 2) - 80;
+                        top = rect.top + (rect.height / 2) - (cardHeight / 2);
                         left = rect.left - cardWidth - 12;
                     } else { // top or center fallback
                         top = rect.top - cardHeight - 12;
@@ -1593,8 +1598,8 @@
                     left = Math.max(margin, Math.min(left, window.innerWidth - cardWidth - margin));
                     top = Math.max(margin, Math.min(top, window.innerHeight - cardHeight - margin));
                     
-                    card.style.top = `\${top}px`;
-                    card.style.left = `\${left}px`;
+                    card.style.top = `${top}px`;
+                    card.style.left = `${left}px`;
                     card.style.transform = 'none';
                 } else {
                     centerCard();

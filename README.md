@@ -67,7 +67,7 @@ Launch the local llama-server instance (optimized for prompt reuse):
 
 Execute the core asynchronous middleware engine:
 ```bash
-python src/orchestrator.py
+PYTHONPATH=. python -m src.orchestrator
 ```
 Once the orchestrator starts, it launches the FastAPI server and serves the **EdgePulse 2026** command center dashboard at `http://localhost:8000/`.
 
