@@ -21,3 +21,7 @@ config/schema.json
 uv.lock
 ui.zip
 *.zip
+
+# Cython compiled files
+src/*.c
+src/*.so

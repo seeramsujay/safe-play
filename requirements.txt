@@ -14,6 +14,8 @@ certifi==2026.6.17
     #   httpx
 click==8.4.2
     # via uvicorn
+cython==3.2.8
+    # via safe-play (pyproject.toml)
 fastapi==0.139.0
     # via safe-play (pyproject.toml)
 h11==0.16.0

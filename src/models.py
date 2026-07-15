@@ -1,6 +1,12 @@
 from typing import Dict, List, Optional
 from pydantic import BaseModel, Field, ConfigDict
 
+try:
+    from src.routing import get_alternative_route_cy
+    HAS_CYTHON = True
+except ImportError:
+    HAS_CYTHON = False
+
 # TelemetryPayload represents high-frequency metrics from edge turnstiles and cameras
 class TelemetryPayload(BaseModel):
     model_config = ConfigDict(extra="forbid")
@@ -58,6 +64,12 @@ class SpatialGraph:
         """
         Finds adjacent zones with density below capacity limits to reroute flow.
         """
+        if HAS_CYTHON:
+            try:
+                return get_alternative_route_cy(self.nodes, self.adjacency, overloaded_zone)
+            except Exception:
+                pass
+
         if overloaded_zone not in self.adjacency:
             return None
         

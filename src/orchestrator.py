@@ -14,7 +14,7 @@ from fastapi import FastAPI, WebSocket, WebSocketDisconnect
 from fastapi.responses import HTMLResponse, JSONResponse
 import uvicorn
 
-from src.models import TelemetryPayload, InterventionScript, SpatialGraph, SpatialNode, SpatialEdge
+from src.models import TelemetryPayload, InterventionScript, HAS_CYTHON, SpatialGraph, SpatialNode, SpatialEdge
 
 # Setup structured logging
 logging.basicConfig(
@@ -163,7 +163,8 @@ class SafePlayOrchestrator:
                 "system_health": {
                     "mqtt_connected": self.mqtt_connected,
                     "llm_latency_ms": self.last_llm_latency_ms,
-                    "llm_status": "online" if self.last_llm_status else "offline"
+                    "llm_status": "online" if self.last_llm_status else "offline",
+                    "cython_optimized": HAS_CYTHON
                 }
             }
             await self.manager.broadcast(state)
