@@ -53,6 +53,27 @@ The **EdgePulse 2026** command-and-control dashboard has been overhauled to prov
 
 ---
 
+## Safety, Security & Stability Hardening
+
+For production-grade deployment at World Cup venues, the system has been hardened against edge-case failures, thread contention, and memory exhaustion:
+
+### 🛡️ API Validation & Security Shield
+To block execution-level injection and ensure absolute data integrity, all entry-point endpoints are validated using strict **Pydantic V2 schemas**:
+- **`TelemetryRequest`**: Enforces strict positive numeric bounds on densities (`0.0 <= density <= 20.0`), input/output flow rates, and epoch timestamp sanity.
+- **`ConfigUpdateRequest`**: Guards threshold modifications, clamping human-in-the-loop validation times (`2.0s <= SLA <= 300.0s`) and density limits (`0.5 <= density <= 10.0`) to prevent operational lockouts.
+- **`ZoneActionRequest`**: Restricts physical zones to length-validated alphanumeric strings. Invalid or missing properties automatically raise `422 Unprocessable Entity` responses.
+
+### 🧵 Thread-Safe Event Handlers
+The orchestrator isolates the network-level MQTT ingestion callbacks from the asynchronous event loop thread. Veto signals are dispatched thread-safely back to the main event loop using `asyncio.get_running_loop()` paired with thread-safe coroutine submission, falling back gracefully if called before initialization.
+
+### 💾 Resource Leak & Memory Limits
+To survive indefinite runs under high-frequency telemetry streams:
+- **Rolling Audit Log Window**: Log reads dynamically enforce a sliding memory-bounded window capped at `500` entries. This prevents the server from experiencing Out-Of-Memory (OOM) failures when loading large historical trace streams.
+- **HTTP Client Connection Pool**: The async HTTP client is configured with strict socket reuse and connection pool limits (`max_connections=10`, `max_keepalive_connections=5`) to prevent socket descriptor exhaustion during dense inference cycles.
+- **Safe Directory Scaffolding**: Folder creation scripts resolve directory paths dynamically using local path expansion, preventing system startup failures on empty or non-absolute folder paths.
+
+---
+
 ## Usage
 
 Start the local telemetry broker:
