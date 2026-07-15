@@ -778,7 +778,7 @@ async def main():
     # Connect to local broker (optional on boot, to permit cloud running)
     mqtt_started = False
     try:
-        client.connect(orchestrator.broker, orchestrator.port, keepalive=60)
+        client.connect_async(orchestrator.broker, orchestrator.port, keepalive=60)
         client.loop_start()
         mqtt_started = True
     except Exception as e:

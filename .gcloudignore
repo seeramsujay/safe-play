@@ -1,0 +1,22 @@
+# Gcloud build upload ignore list
+.gcloudignore
+.git
+.gitignore
+.vercelignore
+.pytest_cache/
+.venv/
+.sp/
+build/
+logs/
+docs/
+tests/
+ui.zip
+vercel.json
+netlify.toml
+public/
+post.md
+README.md
+
+# Cython compiled files
+src/*.c
+src/*.so

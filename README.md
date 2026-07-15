@@ -2,6 +2,8 @@
 
 Decentralized edge-intelligence mesh for stadium crowd safety and automated incident triage.
 
+**Live Deployment (Google Cloud Run):** [https://safe-play-453397284615.us-central1.run.app](https://safe-play-453397284615.us-central1.run.app)
+
 Processes high-frequency sensor streams through grammar-constrained local SLMs to provide real-time crowd safety recommendations with automated human-in-the-loop validation.
 
 ---
@@ -150,3 +152,11 @@ The project is prepped with a production-ready `Dockerfile` optimized for Google
    ```
 
 *Note: On Cloud Run, the application will automatically read the dynamic `$PORT` environment variable injected by Google Cloud Run. Additionally, if the MQTT broker is temporarily unreachable or deployed separately, the orchestrator will fall back gracefully and remain running, enabling successful Cloud Run container health checks.*
+
+---
+
+## Live Deployment
+
+The orchestrator and dashboard are deployed and running live on Google Cloud Run:
+- **Dashboard URL**: [https://safe-play-453397284615.us-central1.run.app](https://safe-play-453397284615.us-central1.run.app)
+

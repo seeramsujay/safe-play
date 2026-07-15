@@ -1,0 +1,17 @@
+.git
+.gitignore
+.vercelignore
+.pytest_cache
+.venv
+.sp
+build/
+logs/
+docs/
+tests/
+ui.zip
+Dockerfile
+vercel.json
+netlify.toml
+public/
+post.md
+README.md
