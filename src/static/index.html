@@ -1157,6 +1157,10 @@
                             <label class="block text-xs font-bold uppercase tracking-wider text-td-on-surface-variant dark:text-td-on-surface-variant light:text-el-on-surface-variant mb-xs select-none">Local llama-server Endpoint API</label>
                             <input class="w-full bg-td-surface-lowest dark:bg-td-surface-lowest light:bg-el-surface-low border border-td-outline dark:border-td-outline light:border-el-outline rounded p-sm focus:outline-none focus:border-primary text-sm font-mono" id="settingLlmUrl" type="text" value="http://localhost:8080/completion"/>
                         </div>
+                        <div>
+                            <label class="block text-xs font-bold uppercase tracking-wider text-td-on-surface-variant dark:text-td-on-surface-variant light:text-el-on-surface-variant mb-xs select-none">Dashboard Backend Server URL Override (Optional)</label>
+                            <input class="w-full bg-td-surface-lowest dark:bg-td-surface-lowest light:bg-el-surface-low border border-td-outline dark:border-td-outline light:border-el-outline rounded p-sm focus:outline-none focus:border-primary text-sm font-mono" id="settingBackendUrlOverride" type="text" placeholder="e.g., http://localhost:8000 (leaves relative default if blank)"/>
+                        </div>
 
                         <div class="flex justify-between items-center pt-md border-t border-td-outline dark:border-td-outline light:border-el-outline">
                             <button class="bg-td-surface-high dark:bg-td-surface-high light:bg-el-surface-high border border-td-outline dark:border-td-outline light:border-el-outline hover:bg-td-surface-highest dark:hover:bg-td-surface-highest light:hover:bg-el-surface-highest text-td-on-surface dark:text-td-on-surface light:text-el-on-surface font-bold px-lg py-2 rounded shadow transition-all duration-150 active:scale-95 flex items-center gap-xs" type="button" onclick="startOnboarding()" aria-label="Start the onboarding interactive walkthrough tour">
@@ -1345,6 +1349,33 @@
 
     <!-- JavaScript logic -->
     <script>
+        // Helper functions for dynamic backend routing (e.g., when deployed on Vercel)
+        function getBackendUrl() {
+            const override = localStorage.getItem('backendUrlOverride');
+            if (override) {
+                return override.replace(/\/$/, "");
+            }
+            return "";
+        }
+
+        function getWebSocketUri() {
+            const override = localStorage.getItem('backendUrlOverride');
+            if (override) {
+                const urlStr = override.replace(/\/$/, "");
+                if (urlStr.startsWith("https://")) {
+                    return urlStr.replace("https://", "wss://") + "/ws";
+                } else if (urlStr.startsWith("http://")) {
+                    return urlStr.replace("http://", "ws://") + "/ws";
+                } else {
+                    const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
+                    return `${protocol}//${urlStr}/ws`;
+                }
+            }
+            const loc = window.location;
+            const protocol = loc.protocol === "https:" ? "wss:" : "ws:";
+            return `${protocol}//${loc.host}/ws`;
+        }
+
         // Tab switching logic
         let currentTab = 'dashboard';
         function switchTab(tabId) {
@@ -1882,9 +1913,7 @@
         };
 
         function connectWebSocket() {
-            const loc = window.location;
-            let wsUri = loc.protocol === "https:" ? "wss:" : "ws:";
-            wsUri += "//" + loc.host + "/ws";
+            const wsUri = getWebSocketUri();
 
             console.log("Connecting to WebSocket at " + wsUri);
             socket = new WebSocket(wsUri);
@@ -2515,7 +2544,7 @@
         // Audit Logs fetch and display
         function fetchAuditLogs() {
             console.log("Fetching audit trail logs...");
-            fetch('/api/audit-logs')
+            fetch(getBackendUrl() + '/api/audit-logs')
                 .then(res => res.json())
                 .then(logs => {
                     const container = document.getElementById('auditTrailList');
@@ -2572,7 +2601,7 @@
             if (!activeVetoZoneId) return;
             console.log("Sending operator VETO for zone: " + activeVetoZoneId);
 
-            fetch('/api/veto', {
+            fetch(getBackendUrl() + '/api/veto', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ zone_id: activeVetoZoneId })
@@ -2594,7 +2623,7 @@
             if (!activeVetoZoneId) return;
             console.log("Sending operator manual APPROVAL for zone: " + activeVetoZoneId);
 
-            fetch('/api/approve', {
+            fetch(getBackendUrl() + '/api/approve', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ zone_id: activeVetoZoneId })
@@ -2621,7 +2650,7 @@
 
             console.log("Publishing mock telemetry stream to backend...");
 
-            fetch('/api/telemetry', {
+            fetch(getBackendUrl() + '/api/telemetry', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
@@ -2650,7 +2679,7 @@
         function triggerManualGateAction(zoneId, action) {
             console.log(`Manual override Gate Action: ${action} on ${zoneId}`);
             // Mock simulation alert or publish to MQTT
-            fetch('/api/telemetry', {
+            fetch(getBackendUrl() + '/api/telemetry', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
@@ -2679,7 +2708,7 @@
         function triggerPanicShutdown() {
             if (confirm("WARNING: Are you sure you want to trigger a complete Emergency Shutdown? All gate access limits will be open for manual egress routing.")) {
                 console.log("EMERGENCY PANIC SHUTDOWN ACTIVATING");
-                fetch('/api/panic', { method: 'POST' })
+                fetch(getBackendUrl() + '/api/panic', { method: 'POST' })
                 .then(res => res.json())
                 .then(data => {
                     console.log("Panic shutdown response:", data);
@@ -2692,7 +2721,7 @@
         function clearPanicShutdown() {
             if (confirm("Reset emergency shutdown and resume normal operations?")) {
                 console.log("RESETTING EMERGENCY PANIC SHUTDOWN");
-                fetch('/api/panic/clear', { method: 'POST' })
+                fetch(getBackendUrl() + '/api/panic/clear', { method: 'POST' })
                 .then(res => res.json())
                 .then(data => {
                     console.log("Panic clear response:", data);
@@ -2707,8 +2736,12 @@
             event.preventDefault();
             const sla = parseFloat(document.getElementById('settingSlaSec').value);
             const limit = parseFloat(document.getElementById('settingDensityLimit').value);
+            const oldUrl = getBackendUrl();
+            const newUrl = document.getElementById('settingBackendUrlOverride').value.trim();
             
-            fetch('/api/config', {
+            localStorage.setItem('backendUrlOverride', newUrl);
+            
+            fetch(getBackendUrl() + '/api/config', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
@@ -2720,18 +2753,39 @@
             .then(data => {
                 alert("Configuration parameters updated successfully.");
                 console.log("Updated config: ", data);
+                if (oldUrl !== newUrl) {
+                    if (socket) {
+                        socket.close();
+                    } else {
+                        connectWebSocket();
+                    }
+                }
             })
-            .catch(err => console.error("Failed to save config:", err));
+            .catch(err => {
+                console.error("Failed to save config:", err);
+                alert("Settings saved locally. Reconnecting websocket to new server URL...");
+                if (oldUrl !== newUrl) {
+                    if (socket) {
+                        socket.close();
+                    } else {
+                        connectWebSocket();
+                    }
+                }
+            });
         }
 
         // Start WebSocket loop on load
         window.addEventListener('DOMContentLoaded', () => {
             initializeOfflineDemo();
+            
+            // Restore backend URL override value in Settings panel input
+            document.getElementById('settingBackendUrlOverride').value = getBackendUrl();
+            
             connectWebSocket();
             // Default select Gate A
             selectNode('Gate_A');
             // Update settings inputs with active state values
-            fetch('/api/config')
+            fetch(getBackendUrl() + '/api/config')
                 .then(res => res.json())
                 .then(cfg => {
                     document.getElementById('settingSlaSec').value = cfg.actuation_sla_sec;

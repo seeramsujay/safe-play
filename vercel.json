@@ -1,0 +1,24 @@
+{
+  "version": 2,
+  "name": "edgepulse-dashboard",
+  "builds": [
+    {
+      "src": "src/static/index.html",
+      "use": "@vercel/static"
+    }
+  ],
+  "routes": [
+    {
+      "src": "/ws",
+      "dest": "http://localhost:8000/ws"
+    },
+    {
+      "src": "/api/(.*)",
+      "dest": "http://localhost:8000/api/$1"
+    },
+    {
+      "src": "/(.*)",
+      "dest": "src/static/index.html"
+    }
+  ]
+}
