@@ -1,0 +1,20 @@
+# Ignore python configuration to prevent Vercel from running a Python/FastAPI build
+requirements.txt
+pyproject.toml
+setup.py
+uv.lock
+.python-version
+
+# Ignore python source files and environments
+src/orchestrator.py
+src/models.py
+src/routing.pyx
+tests/
+.sp/
+.venv/
+build/
+logs/
+docs/
+post.md
+Dockerfile
+ui.zip
