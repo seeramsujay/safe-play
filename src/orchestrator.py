@@ -376,6 +376,12 @@ class SafePlayOrchestrator:
         await self.broadcast_state()
 
     async def run_intervention_lifecycle(self, script: InterventionScript, mode: str):
+        """
+        Manages the lifecycle of an intervention recommendation.
+        If an action is required, it initiates a human-in-the-loop countdown window (SLA timeout).
+        If the countdown expires without operator veto, it proceeds to execute the intervention.
+        If the operator vetoes or approves early, the task handles the CancelledError and adjusts state.
+        """
         zone_id = script.zone_id
         
         if not script.action_required:
@@ -497,12 +503,9 @@ class SafePlayOrchestrator:
             # 4. Trigger triage evaluations if density is elevated
             if payload.crowd_density >= 1.5:
                 # If there is already an active intervention script in the operator veto window, let it run
-                if payload.zone_id in self.active_scripts:
+                # If there is already an active/pending intervention task or script, let it run
+                if payload.zone_id in self.active_interventions or payload.zone_id in self.active_scripts:
                     return
-
-                # Cancel any dangling background task for this zone
-                if payload.zone_id in self.active_interventions:
-                    self.active_interventions[payload.zone_id].cancel()
                 
                 # Fetch recommendation (SLM or fallback)
                 script = await self.get_slm_recommendation(payload)

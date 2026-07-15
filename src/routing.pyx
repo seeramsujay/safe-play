@@ -6,6 +6,8 @@ def get_alternative_route_cy(dict nodes_dict, dict adjacency_dict, str overloade
     """
     Cython-optimized alternative route lookup.
     """
+    if nodes_dict is None or adjacency_dict is None or overloaded_zone is None:
+        return None
     if overloaded_zone not in adjacency_dict:
         return None
 

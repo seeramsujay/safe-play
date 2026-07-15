@@ -29,37 +29,36 @@
             theme: {
                 extend: {
                     colors: {
-                        // Tactical Dark System
-                        "td-bg": "#10131a",
-                        "td-surface": "#1d2027",
-                        "td-surface-low": "#191b23",
-                        "td-surface-lowest": "#0b0e15",
-                        "td-surface-high": "#272a31",
-                        "td-surface-highest": "#32353c",
-                        "td-on-surface": "#e1e2ec",
-                        "td-on-surface-variant": "#c2c6d6",
-                        "td-outline": "#424754",
+                        // Dynamic Theme System
+                        "td-bg": "var(--bg)",
+                        "td-surface": "var(--surface)",
+                        "td-surface-low": "var(--surface-low)",
+                        "td-surface-lowest": "var(--surface-lowest)",
+                        "td-surface-high": "var(--surface-high)",
+                        "td-surface-highest": "var(--surface-highest)",
+                        "td-on-surface": "var(--on-surface)",
+                        "td-on-surface-variant": "var(--on-surface-variant)",
+                        "td-outline": "var(--outline)",
                         
-                        // EdgePulse Light System
-                        "el-bg": "#faf8ff",
-                        "el-surface": "#ffffff",
-                        "el-surface-low": "#f2f3ff",
-                        "el-surface-lowest": "#ffffff",
-                        "el-surface-high": "#e2e7ff",
-                        "el-surface-highest": "#dae2fd",
-                        "el-on-surface": "#131b2e",
-                        "el-on-surface-variant": "#434655",
-                        "el-outline": "#c3c6d7",
+                        "el-bg": "var(--bg)",
+                        "el-surface": "var(--surface)",
+                        "el-surface-low": "var(--surface-low)",
+                        "el-surface-lowest": "var(--surface-lowest)",
+                        "el-surface-high": "var(--surface-high)",
+                        "el-surface-highest": "var(--surface-highest)",
+                        "el-on-surface": "var(--on-surface)",
+                        "el-on-surface-variant": "var(--on-surface-variant)",
+                        "el-outline": "var(--outline)",
 
                         // Semantic accents
-                        "primary": "#2563eb", // Optimistic Blue
-                        "primary-glow": "rgba(37, 99, 235, 0.4)",
-                        "success": "#10b981", // Emerald
-                        "success-bg": "rgba(16, 185, 129, 0.1)",
-                        "warning": "#df7412", // Deep Amber
-                        "warning-bg": "rgba(223, 116, 18, 0.1)",
-                        "critical": "#ef4444", // Red
-                        "critical-bg": "rgba(239, 68, 68, 0.1)"
+                        "primary": "var(--primary)",
+                        "primary-glow": "var(--primary-glow)",
+                        "success": "var(--success)",
+                        "success-bg": "var(--success-bg)",
+                        "warning": "var(--warning)",
+                        "warning-bg": "var(--warning-bg)",
+                        "critical": "var(--critical)",
+                        "critical-bg": "var(--critical-bg)"
                     },
                     borderRadius: {
                         "DEFAULT": "0.25rem",
@@ -84,11 +83,109 @@
             plugins: [
                 function({ addVariant }) {
                     addVariant('light', '.light &');
+                    addVariant('high-contrast', '.high-contrast &');
                 }
             ]
         }
     </script>
     <style>
+        :root {
+            --bg: #10131a;
+            --surface: #1d2027;
+            --surface-low: #191b23;
+            --surface-lowest: #0b0e15;
+            --surface-high: #272a31;
+            --surface-highest: #32353c;
+            --on-surface: #e1e2ec;
+            --on-surface-variant: #c2c6d6;
+            --outline: #424754;
+            --primary: #2563eb;
+            --primary-glow: rgba(37, 99, 235, 0.4);
+            --success: #10b981;
+            --success-bg: rgba(16, 185, 129, 0.1);
+            --warning: #df7412;
+            --warning-bg: rgba(223, 116, 18, 0.1);
+            --critical: #ef4444;
+            --critical-bg: rgba(239, 68, 68, 0.1);
+        }
+        .light {
+            --bg: #faf8ff;
+            --surface: #ffffff;
+            --surface-low: #f2f3ff;
+            --surface-lowest: #ffffff;
+            --surface-high: #e2e7ff;
+            --surface-highest: #dae2fd;
+            --on-surface: #131b2e;
+            --on-surface-variant: #434655;
+            --outline: #c3c6d7;
+            --primary: #1d4ed8;
+            --primary-glow: rgba(29, 78, 216, 0.3);
+            --success: #059669;
+            --success-bg: rgba(5, 150, 105, 0.1);
+            --warning: #c2410c;
+            --warning-bg: rgba(194, 65, 12, 0.1);
+            --critical: #dc2626;
+            --critical-bg: rgba(220, 38, 38, 0.1);
+        }
+        .high-contrast {
+            --bg: #000000;
+            --surface: #000000;
+            --surface-low: #000000;
+            --surface-lowest: #000000;
+            --surface-high: #1c1c1c;
+            --surface-highest: #2d2d2d;
+            --on-surface: #ffffff;
+            --on-surface-variant: #ffffff;
+            --outline: #ffffff;
+            --primary: #00ffff;
+            --primary-glow: rgba(0, 255, 255, 0.4);
+            --success: #00ff00;
+            --success-bg: rgba(0, 255, 0, 0.2);
+            --warning: #ffff00;
+            --warning-bg: rgba(255, 255, 0, 0.2);
+            --critical: #ff0000;
+            --critical-bg: rgba(255, 0, 0, 0.2);
+        }
+
+        /* Focus rings for keyboard navigation */
+        *:focus-visible {
+            outline: 3px solid var(--primary) !important;
+            outline-offset: 2px !important;
+        }
+
+        /* Onboarding Styles */
+        .onboarding-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.8);
+            z-index: 900;
+            pointer-events: auto;
+            transition: opacity 0.25s ease;
+        }
+        .onboarding-card {
+            position: fixed;
+            z-index: 950;
+            width: 350px;
+            background: var(--surface);
+            border: 2px solid var(--primary);
+            border-radius: 8px;
+            padding: 20px;
+            box-shadow: 0 10px 30px -5px rgba(0, 0, 0, 0.6);
+            transition: all 0.25s ease;
+            color: var(--on-surface);
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+        .onboarding-highlight {
+            position: relative;
+            z-index: 920 !important;
+            box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.75) !important;
+            outline: 4px solid var(--primary) !important;
+            outline-offset: 4px !important;
+            pointer-events: none !important;
+        }
+
         /* Custom Sparkline Animations */
         @keyframes drawLine {
             to { stroke-dashoffset: 0; }
@@ -302,8 +399,16 @@
                     Telemetry Sim
                 </button>
                 <!-- Theme Switcher -->
-                <button class="text-td-on-surface-variant dark:text-td-on-surface-variant light:text-el-on-surface-variant hover:text-primary p-sm rounded-full active:scale-95 duration-100 transition-colors" onclick="toggleTheme()" title="Toggle Visual Style (Dark/Light)">
+                <button class="text-td-on-surface-variant dark:text-td-on-surface-variant light:text-el-on-surface-variant hover:text-primary p-sm rounded-full active:scale-95 duration-100 transition-colors" onclick="toggleTheme()" title="Toggle Visual Style (Dark/Light)" aria-label="Toggle Dark/Light Mode">
                     <span class="material-symbols-outlined" id="themeIcon">light_mode</span>
+                </button>
+                <!-- High Contrast Switcher -->
+                <button class="text-td-on-surface-variant dark:text-td-on-surface-variant light:text-el-on-surface-variant hover:text-primary p-sm rounded-full active:scale-95 duration-100 transition-colors" onclick="toggleHighContrast()" title="Toggle High Contrast Mode" aria-label="Toggle High Contrast Mode">
+                    <span class="material-symbols-outlined" id="contrastIcon">contrast</span>
+                </button>
+                <!-- Keyboard Shortcuts Help -->
+                <button class="text-td-on-surface-variant dark:text-td-on-surface-variant light:text-el-on-surface-variant hover:text-primary p-sm rounded-full active:scale-95 duration-100 transition-colors" onclick="toggleShortcutsModal()" title="View Keyboard Shortcuts (or press '?')" aria-label="Keyboard Shortcuts Legend">
+                    <span class="material-symbols-outlined">keyboard</span>
                 </button>
                 <div class="w-px h-8 bg-td-outline dark:bg-td-outline light:bg-el-outline"></div>
                 <div class="flex flex-col text-right font-mono text-xs text-td-on-surface-variant dark:text-td-on-surface-variant light:text-el-on-surface-variant">
@@ -317,7 +422,7 @@
         <div class="flex-1 overflow-hidden relative">
 
             <!-- TAB 1: DASHBOARD -->
-            <div class="h-full overflow-y-auto p-md lg:p-lg space-y-lg active-tab-content" id="tab-dashboard">
+            <div class="h-full overflow-y-auto p-md lg:p-lg space-y-lg active-tab-content" id="tab-dashboard" role="tabpanel" aria-labelledby="nav-dashboard">
                 <!-- Bento Grid Layout -->
                 <div class="grid grid-cols-1 md:grid-cols-12 gap-gutter">
                     
@@ -440,38 +545,37 @@
                                 <!-- Edges: Corridor_2 -> Main_Concourse -->
                                 <line class="edge-line stroke-td-on-surface-variant/35 dark:stroke-td-on-surface-variant/35 light:stroke-el-on-surface-variant/30" x1="420" y1="100" x2="650" y2="170" stroke-width="2" marker-end="url(#dash-arrow)" id="dash-edge-Corridor_2-Main_Concourse"></line>
                                 <text class="font-mono text-[9px] fill-td-on-surface-variant dark:fill-td-on-surface-variant light:fill-el-on-surface-variant" x="530" y="125" text-anchor="middle" id="dash-edge-flow-Corridor_2-Main_Concourse">Flow: 0.0/200</text>
-
-                                <!-- Spatial Nodes (circles) -->
+                                 <!-- Spatial Nodes (circles) -->
                                 <!-- Gate_A -->
-                                <g class="cursor-pointer" transform="translate(150, 280)" onclick="selectNode('Gate_A')">
+                                <g class="cursor-pointer focus:outline-none" transform="translate(150, 280)" onclick="selectNode('Gate_A')" tabindex="0" role="button" aria-label="Gate A, click or press enter to view details" onkeydown="if(event.key==='Enter'||event.key===' '){selectNode('Gate_A');event.preventDefault();}">
                                     <circle class="node-circle fill-success/40 stroke-success" r="16" stroke-width="2" id="dash-node-Gate_A"></circle>
                                     <text class="font-mono font-bold text-[10px] fill-current" text-anchor="middle" y="4" id="dash-node-lbl-Gate_A">A</text>
                                     <text class="font-sans text-[11px] font-semibold fill-current" text-anchor="middle" y="-24">Gate A</text>
                                 </g>
                                 <!-- Gate_B -->
-                                <g class="cursor-pointer" transform="translate(150, 100)" onclick="selectNode('Gate_B')">
+                                <g class="cursor-pointer focus:outline-none" transform="translate(150, 100)" onclick="selectNode('Gate_B')" tabindex="0" role="button" aria-label="Gate B, click or press enter to view details" onkeydown="if(event.key==='Enter'||event.key===' '){selectNode('Gate_B');event.preventDefault();}">
                                     <circle class="node-circle fill-success/40 stroke-success" r="16" stroke-width="2" id="dash-node-Gate_B"></circle>
                                     <text class="font-mono font-bold text-[10px] fill-current" text-anchor="middle" y="4" id="dash-node-lbl-Gate_B">B</text>
                                     <text class="font-sans text-[11px] font-semibold fill-current" text-anchor="middle" y="-24">Gate B</text>
                                 </g>
                                 <!-- Corridor_1 -->
-                                <g class="cursor-pointer" transform="translate(400, 280)" onclick="selectNode('Corridor_1')">
+                                <g class="cursor-pointer focus:outline-none" transform="translate(400, 280)" onclick="selectNode('Corridor_1')" tabindex="0" role="button" aria-label="Corridor 1, click or press enter to view details" onkeydown="if(event.key==='Enter'||event.key===' '){selectNode('Corridor_1');event.preventDefault();}">
                                     <circle class="node-circle fill-success/40 stroke-success" r="18" stroke-width="2" id="dash-node-Corridor_1"></circle>
                                     <text class="font-mono font-bold text-[10px] fill-current" text-anchor="middle" y="4" id="dash-node-lbl-Corridor_1">C1</text>
                                     <text class="font-sans text-[11px] font-semibold fill-current" text-anchor="middle" y="-26">Corridor 1</text>
                                 </g>
                                 <!-- Corridor_2 -->
-                                <g class="cursor-pointer" transform="translate(400, 100)" onclick="selectNode('Corridor_2')">
+                                <g class="cursor-pointer focus:outline-none" transform="translate(400, 100)" onclick="selectNode('Corridor_2')" tabindex="0" role="button" aria-label="Corridor 2, click or press enter to view details" onkeydown="if(event.key==='Enter'||event.key===' '){selectNode('Corridor_2');event.preventDefault();}">
                                     <circle class="node-circle fill-success/40 stroke-success" r="18" stroke-width="2" id="dash-node-Corridor_2"></circle>
                                     <text class="font-mono font-bold text-[10px] fill-current" text-anchor="middle" y="4" id="dash-node-lbl-Corridor_2">C2</text>
                                     <text class="font-sans text-[11px] font-semibold fill-current" text-anchor="middle" y="-26">Corridor 2</text>
                                 </g>
                                 <!-- Main_Concourse -->
-                                <g class="cursor-pointer" transform="translate(670, 185)" onclick="selectNode('Main_Concourse')">
+                                <g class="cursor-pointer focus:outline-none" transform="translate(670, 185)" onclick="selectNode('Main_Concourse')" tabindex="0" role="button" aria-label="Main Concourse, click or press enter to view details" onkeydown="if(event.key==='Enter'||event.key===' '){selectNode('Main_Concourse');event.preventDefault();}">
                                     <circle class="node-circle fill-success/40 stroke-success" r="22" stroke-width="2" id="dash-node-Main_Concourse"></circle>
                                     <text class="font-mono font-bold text-[10px] fill-current" text-anchor="middle" y="4" id="dash-node-lbl-Main_Concourse">MC</text>
                                     <text class="font-sans text-[11px] font-semibold fill-current" text-anchor="middle" y="-30">Main Concourse</text>
-                                </g>
+                                </g>>
                             </svg>
                         </div>
                     </div>
@@ -498,7 +602,7 @@
 
 
             <!-- TAB 2: VENUE MAP -->
-            <div class="h-full overflow-hidden flex flex-col md:flex-row" id="tab-map" style="display:none;">
+            <div class="h-full overflow-hidden flex flex-col md:flex-row" id="tab-map" style="display:none;" role="tabpanel" aria-labelledby="nav-map">
                 <!-- Map Left Side (Graph) -->
                 <div class="flex-1 relative bg-td-surface-lowest dark:bg-td-surface-lowest light:bg-el-surface-low overflow-hidden">
                     <!-- Graph Toggle Map/Heatmap Overlay -->
@@ -547,31 +651,31 @@
 
                         <!-- Nodes -->
                         <!-- Gate_A -->
-                        <g class="cursor-pointer" transform="translate(180, 350)" onclick="selectNode('Gate_A')">
+                        <g class="cursor-pointer focus:outline-none" transform="translate(180, 350)" onclick="selectNode('Gate_A')" tabindex="0" role="button" aria-label="Gate A, click or press enter to view details" onkeydown="if(event.key==='Enter'||event.key===' '){selectNode('Gate_A');event.preventDefault();}">
                             <circle class="node-circle fill-success/35 stroke-success" r="22" stroke-width="2.5" id="map-node-Gate_A"></circle>
                             <text class="font-mono font-bold text-xs fill-current" text-anchor="middle" y="4" id="map-node-lbl-Gate_A">A</text>
                             <text class="font-sans text-xs font-semibold fill-current" text-anchor="middle" y="-32">Gate A</text>
                         </g>
                         <!-- Gate_B -->
-                        <g class="cursor-pointer" transform="translate(180, 150)" onclick="selectNode('Gate_B')">
+                        <g class="cursor-pointer focus:outline-none" transform="translate(180, 150)" onclick="selectNode('Gate_B')" tabindex="0" role="button" aria-label="Gate B, click or press enter to view details" onkeydown="if(event.key==='Enter'||event.key===' '){selectNode('Gate_B');event.preventDefault();}">
                             <circle class="node-circle fill-success/35 stroke-success" r="22" stroke-width="2.5" id="map-node-Gate_B"></circle>
                             <text class="font-mono font-bold text-xs fill-current" text-anchor="middle" y="4" id="map-node-lbl-Gate_B">B</text>
                             <text class="font-sans text-xs font-semibold fill-current" text-anchor="middle" y="-32">Gate B</text>
                         </g>
                         <!-- Corridor_1 -->
-                        <g class="cursor-pointer" transform="translate(480, 350)" onclick="selectNode('Corridor_1')">
+                        <g class="cursor-pointer focus:outline-none" transform="translate(480, 350)" onclick="selectNode('Corridor_1')" tabindex="0" role="button" aria-label="Corridor 1, click or press enter to view details" onkeydown="if(event.key==='Enter'||event.key===' '){selectNode('Corridor_1');event.preventDefault();}">
                             <circle class="node-circle fill-success/35 stroke-success" r="26" stroke-width="2.5" id="map-node-Corridor_1"></circle>
                             <text class="font-mono font-bold text-xs fill-current" text-anchor="middle" y="4" id="map-node-lbl-Corridor_1">C1</text>
                             <text class="font-sans text-xs font-semibold fill-current" text-anchor="middle" y="-36">Corridor 1</text>
                         </g>
                         <!-- Corridor_2 -->
-                        <g class="cursor-pointer" transform="translate(480, 150)" onclick="selectNode('Corridor_2')">
+                        <g class="cursor-pointer focus:outline-none" transform="translate(480, 150)" onclick="selectNode('Corridor_2')" tabindex="0" role="button" aria-label="Corridor 2, click or press enter to view details" onkeydown="if(event.key==='Enter'||event.key===' '){selectNode('Corridor_2');event.preventDefault();}">
                             <circle class="node-circle fill-success/35 stroke-success" r="26" stroke-width="2.5" id="map-node-Corridor_2"></circle>
                             <text class="font-mono font-bold text-xs fill-current" text-anchor="middle" y="4" id="map-node-lbl-Corridor_2">C2</text>
                             <text class="font-sans text-xs font-semibold fill-current" text-anchor="middle" y="-36">Corridor 2</text>
                         </g>
                         <!-- Main_Concourse -->
-                        <g class="cursor-pointer" transform="translate(750, 250)" onclick="selectNode('Main_Concourse')">
+                        <g class="cursor-pointer focus:outline-none" transform="translate(750, 250)" onclick="selectNode('Main_Concourse')" tabindex="0" role="button" aria-label="Main Concourse, click or press enter to view details" onkeydown="if(event.key==='Enter'||event.key===' '){selectNode('Main_Concourse');event.preventDefault();}">
                             <circle class="node-circle fill-success/35 stroke-success" r="32" stroke-width="2.5" id="map-node-Main_Concourse"></circle>
                             <text class="font-mono font-bold text-xs fill-current" text-anchor="middle" y="4" id="map-node-lbl-Main_Concourse">MC</text>
                             <text class="font-sans text-xs font-semibold fill-current" text-anchor="middle" y="-42">Main Concourse</text>
@@ -644,7 +748,7 @@
 
 
             <!-- TAB 3: APPROVAL QUEUE -->
-            <div class="h-full overflow-y-auto p-md lg:p-lg" id="tab-approval" style="display:none;">
+            <div class="h-full overflow-y-auto p-md lg:p-lg" id="tab-approval" style="display:none;" role="tabpanel" aria-labelledby="nav-approval">
                 <div class="max-w-4xl mx-auto w-full flex flex-col h-full justify-center py-md">
                     
                     <!-- Header -->
@@ -757,7 +861,7 @@
 
 
             <!-- TAB 4: INCIDENT FEED -->
-            <div class="h-full overflow-hidden flex flex-col p-md lg:p-lg" id="tab-incidents" style="display:none;">
+            <div class="h-full overflow-hidden flex flex-col p-md lg:p-lg" id="tab-incidents" style="display:none;" role="tabpanel" aria-labelledby="nav-incidents">
                 <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-md gap-sm select-none">
                     <div>
                         <h2 class="text-headline-md font-bold">Incident Feed</h2>
@@ -809,7 +913,7 @@
 
 
             <!-- TAB 5: ACTUATOR CONTROL -->
-            <div class="h-full overflow-y-auto p-md lg:p-lg" id="tab-actuators" style="display:none;">
+            <div class="h-full overflow-y-auto p-md lg:p-lg" id="tab-actuators" style="display:none;" role="tabpanel" aria-labelledby="nav-actuators">
                 <div class="max-w-5xl mx-auto space-y-lg">
                     <!-- Title -->
                     <div class="select-none">
@@ -845,7 +949,7 @@
 
 
             <!-- TAB 6: SENSOR HEALTH -->
-            <div class="h-full overflow-y-auto p-md lg:p-lg" id="tab-health" style="display:none;">
+            <div class="h-full overflow-y-auto p-md lg:p-lg" id="tab-health" style="display:none;" role="tabpanel" aria-labelledby="nav-health">
                 <div class="max-w-5xl mx-auto space-y-lg">
                     <div class="select-none">
                         <h2 class="text-headline-md font-bold">Sensor Network Health</h2>
@@ -912,7 +1016,7 @@
 
 
             <!-- TAB 7: MODEL OPS -->
-            <div class="h-full overflow-y-auto p-md lg:p-lg" id="tab-modelops" style="display:none;">
+            <div class="h-full overflow-y-auto p-md lg:p-lg" id="tab-modelops" style="display:none;" role="tabpanel" aria-labelledby="nav-modelops">
                 <div class="max-w-5xl mx-auto space-y-lg">
                     <div class="select-none">
                         <h2 class="text-headline-md font-bold">Model Operations</h2>
@@ -1000,7 +1104,7 @@
 
 
             <!-- TAB 8: AUDIT TRAIL -->
-            <div class="h-full overflow-hidden flex flex-col p-md lg:p-lg" id="tab-audit" style="display:none;">
+            <div class="h-full overflow-hidden flex flex-col p-md lg:p-lg" id="tab-audit" style="display:none;" role="tabpanel" aria-labelledby="nav-audit">
                 <div class="flex justify-between items-center mb-md select-none">
                     <div>
                         <h2 class="text-headline-md font-bold">Append-Only Audit Trail Ledger</h2>
@@ -1019,7 +1123,7 @@
 
 
             <!-- TAB 9: SETTINGS -->
-            <div class="h-full overflow-y-auto p-md lg:p-lg" id="tab-settings" style="display:none;">
+            <div class="h-full overflow-y-auto p-md lg:p-lg" id="tab-settings" style="display:none;" role="tabpanel" aria-labelledby="nav-settings">
                 <div class="max-w-2xl mx-auto bg-td-surface border border-td-outline dark:bg-td-surface dark:border-td-outline light:bg-el-surface light:border-el-outline rounded-lg p-md md:p-lg flex flex-col gap-lg shadow">
                     <div class="border-b border-td-outline dark:border-td-outline light:border-el-outline pb-sm select-none">
                         <h2 class="text-headline-md font-bold">System Configuration Settings</h2>
@@ -1161,6 +1265,79 @@
         </div>
     </div>
 
+    <!-- Keyboard Shortcuts Modal -->
+    <div class="fixed inset-0 bg-black/75 z-[80] hidden flex items-center justify-center p-md" id="shortcutsModal" role="dialog" aria-labelledby="shortcutsModalTitle" aria-modal="true">
+        <div class="bg-td-surface dark:bg-td-surface light:bg-el-surface border border-td-outline dark:border-td-outline light:border-el-outline rounded-lg max-w-lg w-full p-lg shadow-2xl relative">
+            <button class="absolute top-4 right-4 text-td-on-surface-variant dark:text-td-on-surface-variant light:text-el-on-surface-variant hover:text-primary transition-colors" onclick="toggleShortcutsModal()" aria-label="Close shortcuts dialog">
+                <span class="material-symbols-outlined">close</span>
+            </button>
+            <h3 class="text-headline-sm font-bold text-primary mb-md flex items-center gap-sm" id="shortcutsModalTitle">
+                <span class="material-symbols-outlined text-[24px]">keyboard</span>
+                Accessibility & Hotkey Legend
+            </h3>
+            <p class="text-xs text-td-on-surface-variant dark:text-td-on-surface-variant light:text-el-on-surface-variant mb-md leading-relaxed">
+                Control the EdgePulse dashboard instantly using these keyboard shortcuts. Press <kbd class="px-1.5 py-0.5 bg-td-surface-lowest dark:bg-td-surface-lowest light:bg-el-surface-low border border-td-outline dark:border-td-outline light:border-el-outline rounded font-mono text-[10px] font-bold">?</kbd> at any time to toggle this guide.
+            </p>
+            <div class="grid grid-cols-2 gap-md text-xs">
+                <div class="space-y-sm">
+                    <h4 class="font-bold text-primary border-b border-td-outline pb-xs">Tab Navigation</h4>
+                    <div class="flex justify-between items-center"><span class="text-td-on-surface-variant">Dashboard</span> <kbd class="px-1 py-0.5 bg-td-surface-lowest border border-td-outline rounded font-mono font-bold text-[10px]">1</kbd></div>
+                    <div class="flex justify-between items-center"><span class="text-td-on-surface-variant">Venue Map</span> <kbd class="px-1 py-0.5 bg-td-surface-lowest border border-td-outline rounded font-mono font-bold text-[10px]">2</kbd></div>
+                    <div class="flex justify-between items-center"><span class="text-td-on-surface-variant">Approval Queue</span> <kbd class="px-1 py-0.5 bg-td-surface-lowest border border-td-outline rounded font-mono font-bold text-[10px]">3</kbd></div>
+                    <div class="flex justify-between items-center"><span class="text-td-on-surface-variant">Incident Feed</span> <kbd class="px-1 py-0.5 bg-td-surface-lowest border border-td-outline rounded font-mono font-bold text-[10px]">4</kbd></div>
+                    <div class="flex justify-between items-center"><span class="text-td-on-surface-variant">Actuator Controls</span> <kbd class="px-1 py-0.5 bg-td-surface-lowest border border-td-outline rounded font-mono font-bold text-[10px]">5</kbd></div>
+                    <div class="flex justify-between items-center"><span class="text-td-on-surface-variant">Sensor Health</span> <kbd class="px-1 py-0.5 bg-td-surface-lowest border border-td-outline rounded font-mono font-bold text-[10px]">6</kbd></div>
+                </div>
+                <div class="space-y-sm">
+                    <h4 class="font-bold text-primary border-b border-td-outline pb-xs">Incident Approvals</h4>
+                    <div class="flex justify-between items-center"><span class="text-td-on-surface-variant text-success">Approve SLA Early</span> <kbd class="px-1 py-0.5 bg-td-surface-lowest border border-td-outline rounded font-mono font-bold text-[10px]">Enter</kbd></div>
+                    <div class="flex justify-between items-center"><span class="text-td-on-surface-variant text-critical">Veto SLA Override</span> <kbd class="px-1 py-0.5 bg-td-surface-lowest border border-td-outline rounded font-mono font-bold text-[10px]">Esc</kbd></div>
+                    
+                    <h4 class="font-bold text-primary border-b border-td-outline pb-xs pt-xs">Aesthetic Settings</h4>
+                    <div class="flex justify-between items-center"><span class="text-td-on-surface-variant">Contrast Toggle</span> <kbd class="px-1 py-0.5 bg-td-surface-lowest border border-td-outline rounded font-mono font-bold text-[10px]">C</kbd></div>
+                    <div class="flex justify-between items-center"><span class="text-td-on-surface-variant">Dark/Light Mode</span> <kbd class="px-1 py-0.5 bg-td-surface-lowest border border-td-outline rounded font-mono font-bold text-[10px]">L</kbd></div>
+                    <div class="flex justify-between items-center"><span class="text-td-on-surface-variant">Restart Onboarding</span> <kbd class="px-1 py-0.5 bg-td-surface-lowest border border-td-outline rounded font-mono font-bold text-[10px]">O</kbd></div>
+                    
+                    <h4 class="font-bold text-primary border-b border-td-outline pb-xs pt-xs">Emergency Controls</h4>
+                    <div class="flex justify-between items-center"><span class="text-td-on-surface-variant text-critical font-bold">Panic Shutdown</span> <kbd class="px-1 py-0.5 bg-td-surface-lowest border border-td-outline rounded font-mono font-bold text-[10px]">P</kbd></div>
+                </div>
+            </div>
+            <div class="mt-lg pt-md border-t border-td-outline flex justify-end">
+                <button class="bg-primary text-white text-xs px-4 py-2 rounded font-bold uppercase tracking-wider hover:bg-blue-600 transition-colors" onclick="toggleShortcutsModal()">
+                    Dismiss
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Onboarding Tour Elements -->
+    <div class="onboarding-overlay hidden" id="onboardingOverlay" onclick="skipOnboarding()"></div>
+    <div class="onboarding-card hidden" id="onboardingCard" role="dialog" aria-labelledby="onboardingTitle" aria-live="polite">
+        <div class="flex justify-between items-start">
+            <h4 class="font-bold text-sm text-primary flex items-center gap-xs" id="onboardingTitle">
+                <span class="material-symbols-outlined text-[18px]">explore</span>
+                Welcome to EdgePulse
+            </h4>
+            <span class="text-[10px] text-td-on-surface-variant dark:text-td-on-surface-variant light:text-el-on-surface-variant font-mono" id="onboardingStepIndicator">Step 1 of 7</span>
+        </div>
+        <p class="text-xs leading-relaxed text-td-on-surface/90 dark:text-td-on-surface/90 light:text-el-on-surface/90" id="onboardingDescription">
+            This is the Tactical Command Center for FIFA World Cup 2026 venue crowd safety. Let's take a quick 1-minute tour to get you familiar with the operations dashboard.
+        </p>
+        <div class="flex justify-between items-center mt-sm pt-xs border-t border-td-outline/30">
+            <button class="text-td-on-surface-variant dark:text-td-on-surface-variant light:text-el-on-surface-variant hover:text-critical font-bold text-[10px] uppercase tracking-wider cursor-pointer" onclick="skipOnboarding()">
+                Skip
+            </button>
+            <div class="flex gap-xs">
+                <button class="bg-td-surface-high border border-td-outline text-td-on-surface px-2.5 py-1 rounded text-[10px] font-bold uppercase tracking-wider hover:bg-td-surface-highest transition-all" id="onboardingBackBtn" onclick="prevOnboarding()">
+                    Back
+                </button>
+                <button class="bg-primary text-white px-3 py-1 rounded text-[10px] font-bold uppercase tracking-wider hover:bg-blue-600 transition-all shadow" id="onboardingNextBtn" onclick="nextOnboarding()">
+                    Next
+                </button>
+            </div>
+        </div>
+    </div>
+
     <!-- JavaScript logic -->
     <script>
         // Tab switching logic
@@ -1221,11 +1398,11 @@
         const mobileLinksUl = document.getElementById('mobileNavLinks');
         mobileLinksUl.innerHTML = navLinksHtml.replaceAll('id="nav-', 'id="mobile-nav-');
 
-        // Theme switching logic (Dark mode / Light mode)
+        // Theme switching logic (Dark mode / Light mode / High Contrast)
         let theme = 'dark';
         function toggleTheme() {
             const html = document.documentElement;
-            if (theme === 'dark') {
+            if (theme === 'dark' || theme === 'high-contrast') {
                 html.className = 'light';
                 theme = 'light';
                 document.getElementById('themeIcon').textContent = 'dark_mode';
@@ -1237,16 +1414,331 @@
             updateGraphThemeStyles();
         }
 
+        function toggleHighContrast() {
+            const html = document.documentElement;
+            if (theme !== 'high-contrast') {
+                html.className = 'high-contrast';
+                theme = 'high-contrast';
+                document.getElementById('themeIcon').textContent = 'light_mode';
+            } else {
+                html.className = 'dark';
+                theme = 'dark';
+                document.getElementById('themeIcon').textContent = 'light_mode';
+            }
+            updateGraphThemeStyles();
+        }
+
         function updateGraphThemeStyles() {
             const texts = document.querySelectorAll('svg text');
             texts.forEach(text => {
-                if (theme === 'dark') {
+                if (theme === 'dark' || theme === 'high-contrast') {
                     text.classList.remove('fill-el-on-surface', 'fill-el-on-surface-variant');
                 } else {
                     text.classList.add('fill-el-on-surface');
                 }
             });
+            // Update edge colors
+            if (localState && localState.edges) {
+                localState.edges.forEach(edge => {
+                    updateEdgeSvgLine(`dash-edge-${edge.source}-${edge.target}`, edge.current_flow_rate);
+                    updateEdgeSvgLine(`map-edge-${edge.source}-${edge.target}`, edge.current_flow_rate);
+                });
+            }
         }
+
+        // Accessible Tablist navigation helper
+        function initTabNavigation() {
+            const tabs = Array.from(document.querySelectorAll('#navLinks [role="tab"]'));
+            tabs.forEach((tab, index) => {
+                tab.addEventListener('keydown', (e) => {
+                    let newIndex = -1;
+                    if (e.key === 'ArrowDown') {
+                        newIndex = (index + 1) % tabs.length;
+                    } else if (e.key === 'ArrowUp') {
+                        newIndex = (index - 1 + tabs.length) % tabs.length;
+                    } else if (e.key === 'Home') {
+                        newIndex = 0;
+                    } else if (e.key === 'End') {
+                        newIndex = tabs.length - 1;
+                    }
+                    if (newIndex > -1) {
+                        tabs[newIndex].focus();
+                        switchTab(tabs[newIndex].id.replace('nav-', ''));
+                        e.preventDefault();
+                    }
+                });
+            });
+        }
+
+        // Keyboard Shortcuts Modal Toggle
+        let shortcutsOpen = false;
+        function toggleShortcutsModal() {
+            const modal = document.getElementById('shortcutsModal');
+            if (shortcutsOpen) {
+                modal.classList.add('hidden');
+                shortcutsOpen = false;
+            } else {
+                modal.classList.remove('hidden');
+                shortcutsOpen = true;
+            }
+        }
+
+        // Interactive Onboarding Walkthrough logic
+        let onboardingIndex = 0;
+        const onboardingSteps = [
+            {
+                title: "Welcome to EdgePulse 2026",
+                description: "This is the Tactical Command Center for FIFA World Cup 2026 venue crowd safety. Let's take a quick 1-minute tour to get you familiar with the operations dashboard.",
+                target: null,
+                placement: "center"
+            },
+            {
+                title: "Directed Spatial Graph Matrix G = (V, E)",
+                description: "This live topology view displays Gates, Corridors, and Concourses as nodes. Flow rates and directions are represented by edges. High density levels will highlight red in real-time.",
+                target: "dashboardGraphSvg",
+                placement: "bottom"
+            },
+            {
+                title: "Live Incidents Anomalies List",
+                description: "Active crowd surges are aggregated here automatically. You can filter them by severity or zone ID to focus on critical hotspots.",
+                target: "dashIncidentsList",
+                placement: "left"
+            },
+            {
+                title: "Human-in-the-Loop Approval Queue",
+                description: "This is the core operator SLA gate. Any critical intervention (e.g. closing gates or updating signage) triggers a 2-second countdown. You must approve early or veto to override. If the timer expires, the automated recommendation runs.",
+                target: "nav-approval",
+                placement: "right"
+            },
+            {
+                title: "Emergency Shutdown Override",
+                description: "In case of a major venue crisis, click this button to trigger an immediate panic release, opening all turnstiles and updating displays to evacuation mode.",
+                target: "panicButton",
+                placement: "right"
+            },
+            {
+                title: "System Config & Thresholds",
+                description: "Adjust operator veto timeout SLA seconds, fallback density limits, and connection settings to fine-tune the ingestion pipeline.",
+                target: "nav-settings",
+                placement: "right"
+            },
+            {
+                title: "Accessibility & Hotkeys",
+                description: "We are committed to accessibility! Press '?' at any time to toggle the Keyboard Shortcuts Help Menu. You can navigate entirely via hotkeys (e.g. 1-9 to switch tabs, Enter/Esc to approve/veto).",
+                target: null,
+                placement: "center"
+            }
+        ];
+
+        function startOnboarding() {
+            onboardingIndex = 0;
+            switchTab('dashboard');
+            document.getElementById('onboardingOverlay').classList.remove('hidden');
+            document.getElementById('onboardingCard').classList.remove('hidden');
+            showOnboardingStep(0);
+        }
+
+        function showOnboardingStep(index) {
+            if (index < 0 || index >= onboardingSteps.length) return;
+            
+            // Clear previous highlight
+            const prevHighlight = document.querySelector('.onboarding-highlight');
+            if (prevHighlight) {
+                prevHighlight.classList.remove('onboarding-highlight');
+            }
+            
+            const step = onboardingSteps[index];
+            document.getElementById('onboardingTitle').innerHTML = `
+                <span class="material-symbols-outlined text-[18px]">explore</span>
+                \${step.title}
+            `;
+            document.getElementById('onboardingDescription').textContent = step.description;
+            document.getElementById('onboardingStepIndicator').textContent = `Step \${index + 1} of \${onboardingSteps.length}`;
+            
+            // Adjust buttons
+            document.getElementById('onboardingBackBtn').style.visibility = (index === 0) ? 'hidden' : 'visible';
+            document.getElementById('onboardingNextBtn').textContent = (index === onboardingSteps.length - 1) ? 'Finish' : 'Next';
+            
+            const card = document.getElementById('onboardingCard');
+            
+            if (step.target) {
+                const el = document.getElementById(step.target);
+                if (el) {
+                    el.classList.add('onboarding-highlight');
+                    
+                    // Position the card relative to the target
+                    const rect = el.getBoundingClientRect();
+                    const cardWidth = 350;
+                    const cardHeight = 160; // approximate
+                    
+                    let top = 0;
+                    let left = 0;
+                    
+                    if (step.placement === 'bottom') {
+                        top = rect.bottom + 12;
+                        left = rect.left + (rect.width / 2) - (cardWidth / 2);
+                    } else if (step.placement === 'right') {
+                        top = rect.top + (rect.height / 2) - 80;
+                        left = rect.right + 12;
+                    } else if (step.placement === 'left') {
+                        top = rect.top + (rect.height / 2) - 80;
+                        left = rect.left - cardWidth - 12;
+                    } else { // top or center fallback
+                        top = rect.top - cardHeight - 12;
+                        left = rect.left + (rect.width / 2) - (cardWidth / 2);
+                    }
+                    
+                    // Keep card within viewport bounds
+                    const margin = 16;
+                    left = Math.max(margin, Math.min(left, window.innerWidth - cardWidth - margin));
+                    top = Math.max(margin, Math.min(top, window.innerHeight - cardHeight - margin));
+                    
+                    card.style.top = `\${top}px`;
+                    card.style.left = `\${left}px`;
+                    card.style.transform = 'none';
+                } else {
+                    centerCard();
+                }
+            } else {
+                centerCard();
+            }
+            
+            function centerCard() {
+                card.style.top = '50%';
+                card.style.left = '50%';
+                card.style.transform = 'translate(-50%, -50%)';
+            }
+        }
+
+        function nextOnboarding() {
+            onboardingIndex++;
+            if (onboardingIndex >= onboardingSteps.length) {
+                finishOnboarding();
+            } else {
+                showOnboardingStep(onboardingIndex);
+            }
+        }
+
+        function prevOnboarding() {
+            if (onboardingIndex > 0) {
+                onboardingIndex--;
+                showOnboardingStep(onboardingIndex);
+            }
+        }
+
+        function skipOnboarding() {
+            finishOnboarding();
+        }
+
+        function finishOnboarding() {
+            document.getElementById('onboardingOverlay').classList.add('hidden');
+            document.getElementById('onboardingCard').classList.add('hidden');
+            const prevHighlight = document.querySelector('.onboarding-highlight');
+            if (prevHighlight) {
+                prevHighlight.classList.remove('onboarding-highlight');
+            }
+            localStorage.setItem('onboardingCompleted', 'true');
+        }
+
+        // Global Keyboard Shortcut Handlers
+        window.addEventListener('keydown', (e) => {
+            // Prevent shortcuts when typing in inputs/textareas
+            if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.tagName === 'SELECT') {
+                return;
+            }
+            
+            const key = e.key.toUpperCase();
+            
+            // Support numbers 1-9 to switch tabs
+            if (e.key >= '1' && e.key <= '9') {
+                const tabs = ['dashboard', 'map', 'approval', 'incidents', 'actuators', 'health', 'modelops', 'audit', 'settings'];
+                const targetTab = tabs[parseInt(e.key) - 1];
+                if (targetTab) {
+                    switchTab(targetTab);
+                    e.preventDefault();
+                }
+            }
+            
+            // Direct letter keys
+            switch (key) {
+                case 'D':
+                    switchTab('dashboard');
+                    e.preventDefault();
+                    break;
+                case 'V':
+                    switchTab('map');
+                    e.preventDefault();
+                    break;
+                case 'A':
+                    switchTab('approval');
+                    e.preventDefault();
+                    break;
+                case 'I':
+                    switchTab('incidents');
+                    e.preventDefault();
+                    break;
+                case 'U':
+                    switchTab('actuators');
+                    e.preventDefault();
+                    break;
+                case 'H':
+                    switchTab('health');
+                    e.preventDefault();
+                    break;
+                case 'M':
+                    switchTab('modelops');
+                    e.preventDefault();
+                    break;
+                case 'T':
+                    switchTab('audit');
+                    e.preventDefault();
+                    break;
+                case 'S':
+                    switchTab('settings');
+                    e.preventDefault();
+                    break;
+                case 'C':
+                    toggleHighContrast();
+                    e.preventDefault();
+                    break;
+                case 'L':
+                    toggleTheme();
+                    e.preventDefault();
+                    break;
+                case 'O':
+                    startOnboarding();
+                    e.preventDefault();
+                    break;
+                case 'P':
+                    handlePanicButtonClick();
+                    e.preventDefault();
+                    break;
+                case '?':
+                case '/':
+                    toggleShortcutsModal();
+                    e.preventDefault();
+                    break;
+                case 'ESCAPE':
+                case 'BACKSPACE':
+                    // Veto active override or close modals
+                    if (activeVetoZoneId) {
+                        sendVeto();
+                        e.preventDefault();
+                    } else if (shortcutsOpen) {
+                        toggleShortcutsModal();
+                        e.preventDefault();
+                    }
+                    break;
+                case 'ENTER':
+                case ' ':
+                    // Approve active override
+                    if (activeVetoZoneId) {
+                        sendApprove();
+                        e.preventDefault();
+                    }
+                    break;
+            }
+        });
 
         // Mobile drawer toggling
         function toggleMobileNav() {
@@ -2241,6 +2733,14 @@
                     document.getElementById('settingDensityLimit').value = cfg.fallback_density_limit;
                 })
                 .catch(() => {});
+            
+            // Initialize accessible tablist navigation
+            initTabNavigation();
+            
+            // Check and trigger onboarding tour
+            if (!localStorage.getItem('onboardingCompleted')) {
+                setTimeout(startOnboarding, 1000);
+            }
         });
     </script>
 </body>

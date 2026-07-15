@@ -33,6 +33,26 @@ Designed for high-stakes, low-latency stadium operations (specifically tailored 
 
 ---
 
+## Performance & Accessibility
+
+### Cython-Optimized Spatial Routing
+To achieve extreme sub-millisecond route calculations, the critical spatial graph traversal logic has been compiled into a C extension module using Cython (`src/routing.pyx`). This ensures the alternative route calculation algorithm completes instantly under high loads, keeping operations well within the 2-second SLA window.
+
+To compile the Cython module locally:
+```bash
+.sp/bin/python setup.py build_ext --inplace
+```
+The application will automatically detect and use the `.so` compiled module, falling back to a pure-Python implementation only if the module is uncompiled.
+
+### Tier-S Accessibility Compliance
+The **EdgePulse 2026** command-and-control dashboard has been overhauled to provide industry-leading accessibility (A11y) support:
+- **Interactive Onboarding Tour**: First-time operators are guided through the UI with a contextual tour highlighting telemetry graphs, the approval queue, and config parameters.
+- **Global Keyboard Navigation**: Fully keyboard-navigable interface. Tab switching, incident approval (`Enter`), veto override (`Escape`/`Backspace`), and the emergency panic button (`P`) are supported via direct hotkeys. Press `?` at any time to open the modal legend.
+- **High-Contrast Theme (APCA Compliant)**: Includes a global high-contrast mode toggled via UI buttons or the `C` key, utilizing stark border highlights and high-contrast color values for maximum readability.
+- **Semantic ARIA Structuring**: Interactive elements and tabs include explicit `role="tab"`, `aria-labelledby`, `aria-selected`, and `tabindex` properties to ensure compatibility with screen readers.
+
+---
+
 ## Usage
 
 Start the local telemetry broker:
