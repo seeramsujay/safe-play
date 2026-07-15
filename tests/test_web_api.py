@@ -222,43 +222,51 @@ def test_api_veto_invalid_zone():
     app = create_app(orchestrator)
     client = TestClient(app)
     
+    # Empty body → Pydantic rejects with 422 Unprocessable Entity
     response = client.post("/api/veto", json={})
-    assert response.status_code == 400
-    assert "zone_id required" in response.json()["message"]
+    assert response.status_code == 422
+    # Pydantic error detail should mention 'zone_id'
+    assert any("zone_id" in str(e) for e in response.json()["detail"])
 
 def test_api_approve_invalid_zone():
     orchestrator = SafePlayOrchestrator("config/schema.json", "127.0.0.1", 1883)
     app = create_app(orchestrator)
     client = TestClient(app)
     
+    # Empty body → Pydantic rejects with 422 Unprocessable Entity
     response = client.post("/api/approve", json={})
-    assert response.status_code == 400
-    assert "zone_id required" in response.json()["message"]
+    assert response.status_code == 422
+    assert any("zone_id" in str(e) for e in response.json()["detail"])
 
 def test_api_telemetry_malformed():
     orchestrator = SafePlayOrchestrator("config/schema.json", "127.0.0.1", 1883)
     app = create_app(orchestrator)
     client = TestClient(app)
     
-    # Missing required timestamp: the endpoint accepts dict, queues it, and returns 200
+    # Missing required timestamp: Pydantic now rejects this with 422
     payload = {
         "zone_id": "Gate_A",
         "crowd_density": 1.2,
         "flow_rate_in": 20.0,
         "flow_rate_out": 15.0
+        # timestamp intentionally omitted
     }
     response = client.post("/api/telemetry", json=payload)
-    assert response.status_code == 200
-    assert response.json()["status"] == "success"
+    assert response.status_code == 422
+    assert any("timestamp" in str(e) for e in response.json()["detail"])
 
 def test_api_config_invalid_data():
     orchestrator = SafePlayOrchestrator("config/schema.json", "127.0.0.1", 1883)
     app = create_app(orchestrator)
     client = TestClient(app)
     
-    # Non-numeric input raises ValueError which is propagated through TestClient
-    with pytest.raises(ValueError):
-        client.post("/api/config", json={"actuation_sla_sec": "not-a-number"})
+    # Non-numeric actuation_sla_sec → Pydantic rejects with 422
+    response = client.post("/api/config", json={"actuation_sla_sec": "not-a-number"})
+    assert response.status_code == 422
+    
+    # Out-of-range value (below ge=2.0 minimum) → also rejected
+    response = client.post("/api/config", json={"actuation_sla_sec": 0.5})
+    assert response.status_code == 422
 
 
 

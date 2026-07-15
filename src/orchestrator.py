@@ -7,6 +7,7 @@ import sys
 import random
 import os
 from typing import Dict, Optional, Set, List
+from pydantic import BaseModel, Field
 import httpx
 import paho.mqtt.client as mqtt
 
@@ -94,9 +95,12 @@ class SafePlayOrchestrator:
         self.vetoed_zones: Set[str] = set()
         self.last_manual_telemetry_time = 0.0
         self.panic_mode = False
+        self.actuation_sla_sec: float = ACTUATION_SLA_SEC
+        self.fallback_density_limit: float = FALLBACK_DENSITY_LIMIT
         
         # Ensure audit log directory exists
-        os.makedirs(os.path.dirname(AUDIT_LOG_FILE), exist_ok=True)
+        log_dir = os.path.dirname(AUDIT_LOG_FILE) or "."
+        os.makedirs(log_dir, exist_ok=True)
         
         # QoS level tracker per zone (default is QoS 0)
         self.zone_qos: Dict[str, int] = {}
@@ -110,8 +114,12 @@ class SafePlayOrchestrator:
 
     @property
     def http_client(self) -> httpx.AsyncClient:
+        """Lazily initialise a shared async HTTP client; recreate if closed."""
         if not hasattr(self, "_http_client") or self._http_client.is_closed:
-            self._http_client = httpx.AsyncClient()
+            self._http_client = httpx.AsyncClient(
+                timeout=httpx.Timeout(INFERENCE_TIMEOUT_SEC, connect=1.0),
+                limits=httpx.Limits(max_keepalive_connections=5, max_connections=10),
+            )
         return self._http_client
 
     async def close(self):
@@ -215,13 +223,16 @@ class SafePlayOrchestrator:
                 logger.error(f"Failed to parse veto payload: {e}")
 
     def register_operator_veto(self, zone_id: str):
-        loop = asyncio.get_event_loop()
-        if loop and loop.is_running():
+        """Thread-safe veto registration from MQTT callback thread."""
+        try:
+            loop = asyncio.get_running_loop()
             asyncio.run_coroutine_threadsafe(self.reject_intervention_veto(zone_id), loop)
-        else:
+        except RuntimeError:
+            # No running loop — mark veto directly (edge case: called before loop starts)
             self.vetoed_zones.add(zone_id)
-            if zone_id in self.active_interventions:
-                self.active_interventions[zone_id].cancel()
+            task = self.active_interventions.get(zone_id)
+            if task and not task.done():
+                task.cancel()
 
     async def reject_intervention_veto(self, zone_id: str):
         logger.warning(f"Operator VETO received for zone: {zone_id}")
@@ -291,16 +302,13 @@ class SafePlayOrchestrator:
             "temperature": 0.0,
             "stream": False,
             "n_predict": 128,
-            "json_schema": self.json_schema
+            "json_schema": self.json_schema,
+            "stop": ["\n\n"],
         }
         
         start_time = time.time()
         try:
-            response = await self.http_client.post(
-                url, 
-                json=req_payload, 
-                timeout=INFERENCE_TIMEOUT_SEC
-            )
+            response = await self.http_client.post(url, json=req_payload)
                 
             latency_ms = (time.time() - start_time) * 1000.0
             
@@ -501,7 +509,7 @@ class SafePlayOrchestrator:
                 await self.broadcast_state()
             
             # 4. Trigger triage evaluations if density is elevated
-            if payload.crowd_density >= 1.5:
+            if payload.crowd_density >= self.fallback_density_limit * 0.5:
                 # If there is already an active intervention script in the operator veto window, let it run
                 # If there is already an active/pending intervention task or script, let it run
                 if payload.zone_id in self.active_interventions or payload.zone_id in self.active_scripts:
@@ -625,8 +633,29 @@ class SafePlayOrchestrator:
             except Exception as e:
                 logger.error(f"Error in simulation loop: {e}")
 
+# ---------------------------------------------------------------------------
+# Pydantic request models — validate API inputs instead of accepting raw dict
+# ---------------------------------------------------------------------------
+class ZoneActionRequest(BaseModel):
+    zone_id: str = Field(..., min_length=1, max_length=64)
+
+class TelemetryRequest(BaseModel):
+    zone_id: str = Field(..., min_length=1, max_length=64)
+    crowd_density: float = Field(..., ge=0.0, le=20.0)
+    flow_rate_in: float = Field(..., ge=0.0)
+    flow_rate_out: float = Field(..., ge=0.0)
+    timestamp: float = Field(..., gt=0.0)
+
+class ConfigUpdateRequest(BaseModel):
+    actuation_sla_sec: Optional[float] = Field(None, ge=2.0, le=300.0)
+    fallback_density_limit: Optional[float] = Field(None, ge=0.5, le=10.0)
+
 def create_app(orchestrator: SafePlayOrchestrator) -> FastAPI:
-    app = FastAPI(title="EdgePulse 2026 Stadium Intelligence API")
+    app = FastAPI(
+        title="EdgePulse 2026 Stadium Intelligence API",
+        description="Real-time crowd safety orchestration for FIFA World Cup 2026 venues.",
+        version="0.1.0",
+    )
 
     # Serve static files
     current_dir = os.path.dirname(os.path.abspath(__file__))
@@ -657,20 +686,14 @@ def create_app(orchestrator: SafePlayOrchestrator) -> FastAPI:
             orchestrator.manager.disconnect(websocket)
 
     @app.post("/api/veto")
-    async def post_veto(payload: dict):
-        zone_id = payload.get("zone_id")
-        if not zone_id:
-            return JSONResponse({"status": "error", "message": "zone_id required"}, status_code=400)
-        await orchestrator.reject_intervention_veto(zone_id)
-        return {"status": "success", "zone_id": zone_id}
+    async def post_veto(payload: ZoneActionRequest):
+        await orchestrator.reject_intervention_veto(payload.zone_id)
+        return {"status": "success", "zone_id": payload.zone_id}
 
     @app.post("/api/approve")
-    async def post_approve(payload: dict):
-        zone_id = payload.get("zone_id")
-        if not zone_id:
-            return JSONResponse({"status": "error", "message": "zone_id required"}, status_code=400)
-        await orchestrator.approve_intervention_early(zone_id)
-        return {"status": "success", "zone_id": zone_id}
+    async def post_approve(payload: ZoneActionRequest):
+        await orchestrator.approve_intervention_early(payload.zone_id)
+        return {"status": "success", "zone_id": payload.zone_id}
 
     @app.post("/api/panic")
     async def post_panic():
@@ -683,47 +706,51 @@ def create_app(orchestrator: SafePlayOrchestrator) -> FastAPI:
         return {"status": "success", "panic_mode": False}
 
     @app.post("/api/telemetry")
-    async def post_telemetry(payload: dict):
+    async def post_telemetry(payload: TelemetryRequest):
         orchestrator.last_manual_telemetry_time = time.time()
-        payload_str = json.dumps(payload)
-        orchestrator.telemetry_queue.put_nowait(payload_str)
+        orchestrator.telemetry_queue.put_nowait(payload.model_dump_json())
         return {"status": "success", "message": "Telemetry queued"}
 
     @app.get("/api/audit-logs")
-    async def get_audit_logs():
-        logs = []
+    async def get_audit_logs(limit: int = 100):
+        """Return the last `limit` audit log entries (max 500)."""
+        limit = min(max(limit, 1), 500)
+        logs: list[dict] = []
         if os.path.exists(AUDIT_LOG_FILE):
             with open(AUDIT_LOG_FILE, "r") as f:
                 for line in f:
-                    if line.strip():
+                    stripped = line.strip()
+                    if stripped:
                         try:
-                            logs.append(json.loads(line))
-                        except Exception:
-                            pass
-        return logs[-100:]
+                            logs.append(json.loads(stripped))
+                        except json.JSONDecodeError:
+                            pass  # Skip malformed lines silently
+                        if len(logs) > 500:
+                            # Trim early to cap memory: keep a rolling window
+                            logs = logs[-500:]
+        return logs[-limit:]
 
     @app.get("/api/config")
     async def get_config():
         return {
-            "actuation_sla_sec": ACTUATION_SLA_SEC,
-            "fallback_density_limit": FALLBACK_DENSITY_LIMIT,
+            "actuation_sla_sec": orchestrator.actuation_sla_sec,
+            "fallback_density_limit": orchestrator.fallback_density_limit,
             "broker": orchestrator.broker,
-            "port": orchestrator.port
+            "port": orchestrator.port,
         }
 
     @app.post("/api/config")
-    async def post_config(payload: dict):
-        global ACTUATION_SLA_SEC, FALLBACK_DENSITY_LIMIT
-        if "actuation_sla_sec" in payload:
-            ACTUATION_SLA_SEC = float(payload["actuation_sla_sec"])
-        if "fallback_density_limit" in payload:
-            FALLBACK_DENSITY_LIMIT = float(payload["fallback_density_limit"])
-        # Broadcast updated config via state update!
+    async def post_config(payload: ConfigUpdateRequest):
+        """Update runtime config on the orchestrator instance (no global mutation)."""
+        if payload.actuation_sla_sec is not None:
+            orchestrator.actuation_sla_sec = payload.actuation_sla_sec
+        if payload.fallback_density_limit is not None:
+            orchestrator.fallback_density_limit = payload.fallback_density_limit
         await orchestrator.broadcast_state()
         return {
             "status": "success",
-            "actuation_sla_sec": ACTUATION_SLA_SEC,
-            "fallback_density_limit": FALLBACK_DENSITY_LIMIT
+            "actuation_sla_sec": orchestrator.actuation_sla_sec,
+            "fallback_density_limit": orchestrator.fallback_density_limit,
         }
 
     return app

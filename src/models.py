@@ -1,5 +1,8 @@
+import logging
 from typing import Dict, List, Optional
-from pydantic import BaseModel, Field, ConfigDict
+from pydantic import BaseModel, Field, ConfigDict, field_validator
+
+logger = logging.getLogger(__name__)
 
 try:
     from src.routing import get_alternative_route_cy
@@ -11,23 +14,40 @@ except ImportError:
 class TelemetryPayload(BaseModel):
     model_config = ConfigDict(extra="forbid")
     
-    zone_id: str = Field(..., description="Unique identifier of the physical stadium quadrant/vomitory")
-    crowd_density: float = Field(..., description="Estimated crowd density in people/m^2")
-    flow_rate_in: float = Field(..., description="Rate of people entering the zone per minute")
-    flow_rate_out: float = Field(..., description="Rate of people exiting the zone per minute")
-    timestamp: float = Field(..., description="Epoch timestamp of telemetry collection")
+    zone_id: str = Field(..., min_length=1, max_length=64, description="Unique identifier of the physical stadium quadrant/vomitory")
+    crowd_density: float = Field(..., ge=0.0, le=20.0, description="Estimated crowd density in people/m^2")
+    flow_rate_in: float = Field(..., ge=0.0, description="Rate of people entering the zone per minute")
+    flow_rate_out: float = Field(..., ge=0.0, description="Rate of people exiting the zone per minute")
+    timestamp: float = Field(..., gt=0.0, description="Epoch timestamp of telemetry collection")
 
 # InterventionScript is the grammar-constrained schema required from the SLM
+_VALID_HAZARD_LEVELS = {"low", "medium", "high", "critical"}
+_VALID_GATE_ACTIONS = {"KEEP_OPEN", "SLOW_ENTRY", "CLOSE_IMMEDIATELY", "REVERSE_FLOW"}
+
 class InterventionScript(BaseModel):
     model_config = ConfigDict(extra="forbid")
     
-    zone_id: str = Field(..., description="The physical stadium quadrant/vomitory identifier")
+    zone_id: str = Field(..., min_length=1, max_length=64, description="The physical stadium quadrant/vomitory identifier")
     hazard_level: str = Field(..., description="Assessed hazard level: 'low', 'medium', 'high', 'critical'")
     action_required: bool = Field(..., description="True if operator must approve signage or gate changes")
     reroute_target: Optional[str] = Field(None, description="Alternative zone_id to redirect crowd flow if action_required is True")
-    signage_instruction: str = Field(..., description="Short text to display on dynamic digital signage")
+    signage_instruction: str = Field(..., max_length=120, description="Short text to display on dynamic digital signage")
     gate_action: str = Field(..., description="Turnstile/gate control action: 'KEEP_OPEN', 'SLOW_ENTRY', 'CLOSE_IMMEDIATELY', 'REVERSE_FLOW'")
-    rationale: str = Field(..., description="Zero-fluff explanation of the assessment (maximum 10 words)")
+    rationale: str = Field(..., max_length=100, description="Zero-fluff explanation of the assessment (maximum 10 words)")
+
+    @field_validator("hazard_level")
+    @classmethod
+    def validate_hazard_level(cls, v: str) -> str:
+        if v not in _VALID_HAZARD_LEVELS:
+            raise ValueError(f"hazard_level must be one of {_VALID_HAZARD_LEVELS}")
+        return v
+
+    @field_validator("gate_action")
+    @classmethod
+    def validate_gate_action(cls, v: str) -> str:
+        if v not in _VALID_GATE_ACTIONS:
+            raise ValueError(f"gate_action must be one of {_VALID_GATE_ACTIONS}")
+        return v
 
 # SpatialGraph representing G = (V, E) of stadium quadrants and entry vomitories
 class SpatialNode(BaseModel):
@@ -63,12 +83,13 @@ class SpatialGraph:
     def get_alternative_route(self, overloaded_zone: str) -> Optional[str]:
         """
         Finds adjacent zones with density below capacity limits to reroute flow.
+        Prefers the Cython-optimised path; falls back to pure Python on error.
         """
         if HAS_CYTHON:
             try:
                 return get_alternative_route_cy(self.nodes, self.adjacency, overloaded_zone)
-            except Exception:
-                pass
+            except Exception as exc:
+                logger.warning("Cython route lookup failed, falling back to pure Python: %s", exc)
 
         if overloaded_zone not in self.adjacency:
             return None
