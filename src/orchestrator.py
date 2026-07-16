@@ -17,6 +17,21 @@ import uvicorn
 
 from src.models import TelemetryPayload, InterventionScript, HAS_CYTHON, SpatialGraph, SpatialNode, SpatialEdge
 
+# Load local .env file if present
+def load_env():
+    if os.path.exists(".env"):
+        with open(".env", "r") as f:
+            for line in f:
+                line = line.strip()
+                if line and not line.startswith("#") and "=" in line:
+                    key, val = line.split("=", 1)
+                    key = key.strip()
+                    val = val.strip().strip('"').strip("'")
+                    if key and key not in os.environ:
+                        os.environ[key] = val
+
+load_env()
+
 # Setup structured logging
 logging.basicConfig(
     level=logging.INFO,
@@ -281,41 +296,113 @@ class SafePlayOrchestrator:
 
     async def get_slm_recommendation(self, payload: TelemetryPayload) -> Optional[InterventionScript]:
         """
-        Queries local llama-server under schema constraints. 
-        Times out in 100ms to maintain sub-second prefill target.
+        Queries either Google Gemini API or local llama-server under schema constraints. 
         """
         alt_route = self.graph.get_alternative_route(payload.zone_id)
+        gemini_api_key = os.environ.get("GEMINI_API_KEY")
         
-        prompt = (
-            f"STAD_ZONE: {payload.zone_id}\n"
-            f"DENSITY: {payload.crowd_density:.2f}\n"
-            f"FLOW_IN: {payload.flow_rate_in:.2f}\n"
-            f"FLOW_OUT: {payload.flow_rate_out:.2f}\n"
-            f"ALT_ROUTE: {alt_route or 'NONE'}\n"
-            f"Assess crowd hazard and recommend signage/gate intervention."
-        )
-        
-        # Call llama-server via completions endpoint
-        url = os.environ.get("LLAMA_SERVER_URL", "http://localhost:8080/completion")
-        req_payload = {
-            "prompt": prompt,
-            "temperature": 0.0,
-            "stream": False,
-            "n_predict": 128,
-            "json_schema": self.json_schema,
-            "stop": ["\n\n"],
-        }
-        
+        if gemini_api_key:
+            # Google Gemini API REST endpoint using structured JSON schema
+            url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={gemini_api_key}"
+            
+            prompt = (
+                f"STAD_ZONE: {payload.zone_id}\n"
+                f"DENSITY: {payload.crowd_density:.2f}\n"
+                f"FLOW_IN: {payload.flow_rate_in:.2f}\n"
+                f"FLOW_OUT: {payload.flow_rate_out:.2f}\n"
+                f"ALT_ROUTE: {alt_route or 'NONE'}\n\n"
+                f"Assess crowd hazard and recommend signage/gate intervention. "
+                f"Generate a valid JSON object matching the InterventionScript schema."
+            )
+            
+            req_payload = {
+                "contents": [{
+                    "parts": [{"text": prompt}]
+                }],
+                "generationConfig": {
+                    "responseMimeType": "application/json",
+                    "responseSchema": {
+                        "type": "OBJECT",
+                        "properties": {
+                            "zone_id": {
+                                "type": "STRING",
+                                "description": "Must match STAD_ZONE exactly"
+                            },
+                            "hazard_level": {
+                                "type": "STRING",
+                                "enum": ["low", "medium", "high", "critical"]
+                            },
+                            "action_required": {
+                                "type": "BOOLEAN"
+                            },
+                            "reroute_target": {
+                                "type": "STRING",
+                                "description": "Alternative zone_id to redirect crowd flow or null"
+                            },
+                            "signage_instruction": {
+                                "type": "STRING",
+                                "description": "Short text to display on dynamic digital signage (max 120 chars)"
+                            },
+                            "gate_action": {
+                                "type": "STRING",
+                                "enum": ["KEEP_OPEN", "SLOW_ENTRY", "CLOSE_IMMEDIATELY", "REVERSE_FLOW"]
+                            },
+                            "rationale": {
+                                "type": "STRING",
+                                "description": "Zero-fluff explanation of the assessment (maximum 10 words)"
+                            }
+                        },
+                        "required": ["zone_id", "hazard_level", "action_required", "signage_instruction", "gate_action", "rationale"]
+                    }
+                }
+            }
+            # Allow up to 2.0s timeout for remote Gemini REST call
+            timeout = httpx.Timeout(2.0, connect=1.0)
+        else:
+            # Call local llama-server via completions endpoint
+            url = os.environ.get("LLAMA_SERVER_URL", "http://localhost:8080/completion")
+            prompt = (
+                f"STAD_ZONE: {payload.zone_id}\n"
+                f"DENSITY: {payload.crowd_density:.2f}\n"
+                f"FLOW_IN: {payload.flow_rate_in:.2f}\n"
+                f"FLOW_OUT: {payload.flow_rate_out:.2f}\n"
+                f"ALT_ROUTE: {alt_route or 'NONE'}\n"
+                f"Assess crowd hazard and recommend signage/gate intervention."
+            )
+            req_payload = {
+                "prompt": prompt,
+                "temperature": 0.0,
+                "stream": False,
+                "n_predict": 128,
+                "json_schema": self.json_schema,
+                "stop": ["\n\n"],
+            }
+            # Default to sub-100ms timeout for local inference
+            timeout = httpx.Timeout(INFERENCE_TIMEOUT_SEC, connect=1.0)
+            
         start_time = time.time()
         try:
-            response = await self.http_client.post(url, json=req_payload)
-                
+            response = await self.http_client.post(url, json=req_payload, timeout=timeout)
             latency_ms = (time.time() - start_time) * 1000.0
             
             if response.status_code == 200:
                 resp_json = response.json()
-                content = resp_json.get("content", "").strip()
-                parsed_content = json.loads(content)
+                
+                if gemini_api_key:
+                    candidates = resp_json.get("candidates", [])
+                    if candidates:
+                        text_content = candidates[0].get("content", {}).get("parts", [{}])[0].get("text", "").strip()
+                        parsed_content = json.loads(text_content)
+                    else:
+                        raise ValueError("No candidates returned from Gemini API response.")
+                else:
+                    content = resp_json.get("content", "").strip()
+                    parsed_content = json.loads(content)
+                
+                # Normalize empty string reroute target to None
+                if parsed_content.get("reroute_target") == "":
+                    parsed_content["reroute_target"] = None
+                
                 script = InterventionScript.model_validate(parsed_content)
                 
                 self.last_llm_latency_ms = latency_ms
@@ -323,11 +410,12 @@ class SafePlayOrchestrator:
                 self.write_audit_log("inference_success", {
                     "zone_id": payload.zone_id,
                     "latency_ms": latency_ms,
+                    "engine": "gemini" if gemini_api_key else "llama",
                     "response": parsed_content
                 })
                 return script
             else:
-                logger.error(f"llama-server error: {response.status_code} {response.text}")
+                logger.error(f"Inference server error: {response.status_code} {response.text}")
                 self.last_llm_latency_ms = latency_ms
                 self.last_llm_status = False
                 

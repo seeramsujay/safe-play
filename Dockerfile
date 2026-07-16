@@ -34,6 +34,9 @@ ENV LLAMA_SERVER_URL=http://localhost:8080/completion
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
+# Copy environment configurations if present
+COPY .env* ./
+
 # Copy application source code and schema configuration
 COPY src/ ./src/
 COPY config/ ./config/

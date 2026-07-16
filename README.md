@@ -22,6 +22,8 @@
 
 ![EdgePulse 2026 Tactical Control Console](docs/dashboard_mockup.png)
 
+The command-and-control dashboard features a high-fidelity, flat 2D top-down tactical layout of the venue. Seating rings (Upper, Middle, Lower) are rendered as concentric capsule graphics, and the football pitch is drawn with precise, symmetrical 2D markings. Interactive LiDAR nodes (`Gate A`, `Gate B`, `Corridor 1`, `Corridor 2`, `Main Concourse`) and flow-direction arrows are layered on top with real-time hazard status colors.
+
 ---
 
 ## 🗺️ Navigation
@@ -35,8 +37,9 @@
 Tailored specifically for FIFA World Cup 2026 venues, **safe-play** coordinates high-stakes, low-latency crowd operations. The system monitors gates, corridors, and main concourses in real-time, instantly triaging density surges and automatically calculating egress routing to prevent bottlenecks or dangerous crowd crushes.
 
 ### 2. Core Intelligent Framework
-*   **Grammar-Constrained SLM Inference**: Constrains Qwen-2.5-7B local model logits using custom GBNF grammar files. This guarantees 100% deterministic JSON schemas matching structural API requirements under a strict **100ms Time-to-First-Token (TTFT)** constraint.
-*   **Directed Spatial Graph Matrix**: Formulates stadium routing layouts as a directed spatial graph $G = (V, E)$. Changes in edge flow rates and node densities dynamically solve for real-time alternative egress targets (e.g., redirecting Gate A flow to Corridor 2).
+*   **Hybrid Cloud/Edge Inference**: Supports dynamic selection between Google Gemini 1.5 Flash (for robust cloud-based constraint-enforced JSON validation when `GEMINI_API_KEY` is present) and local `llama-server` running Qwen-2.5-7B constrained by GBNF grammar.
+*   **Grammar-Constrained SLM Inference**: Constrains local model logits using custom GBNF grammar files. This guarantees 100% deterministic JSON schemas matching structural API requirements under a strict **100ms Time-to-First-Token (TTFT)** constraint.
+*   **Directed Spatial Graph Matrix**: Formulates stadium routing layouts as a directed spatial graph $G = (V, E)$ in a flat 2D projection. Changes in edge flow rates and node densities dynamically solve for real-time alternative egress targets (e.g., redirecting Gate A flow to Corridor 2).
 *   **Human-in-the-Loop Operator SLA Gate**: Leverages an asynchronous 2-second veto window. If an incident requires gate locking or emergency signage changes, the operator is presented with a countdown. They can override (Veto), immediately execute (Approve Early), or let the timer expire to run the automated safety intervention fallback script.
 *   **Dynamic QoS Ingestion Backpressure**: Constantly monitors zone sensor capacities. If density surges past $2.0 \text{ pax/m}^2$, the orchestrator flags the zone, transitioning telemetry collection to QoS 1 to guarantee delivery and eliminate packet loss.
 
@@ -162,16 +165,25 @@ Start the local telemetry broker:
 mosquitto -c config/mosquitto.conf
 ```
 
-### 2. Launch Local LLM Server
-Launch the local llama-server instance (optimized for prompt reuse):
-```bash
-./llama-server -m models/qwen-2.5-7b-instruct-q4_K_M.gguf --cache-reuse 256 -c 4096 --parallel 4
-```
+### 2. Launch Inference Engine (Local or Cloud)
+Choose one of the following engines to run the recommendation module:
+
+*   **Option A: Local Llama Server**
+    Launch the local llama-server instance (optimized for prompt reuse):
+    ```bash
+    ./llama-server -m models/qwen-2.5-7b-instruct-q4_K_M.gguf --cache-reuse 256 -c 4096 --parallel 4
+    ```
+
+*   **Option B: Google Gemini API (Recommended for Cloud / Zero Setup)**
+    Set your Google Gemini API key as an environment variable:
+    ```bash
+    export GEMINI_API_KEY="your-gemini-api-key-here"
+    ```
 
 ### 3. Run Orchestrator
 Execute the core asynchronous middleware engine:
 ```bash
-PYTHONPATH=. python -m src.orchestrator
+uv run python -m src.orchestrator
 ```
 Once the orchestrator starts, it launches the FastAPI server and serves the **EdgePulse 2026** command center dashboard at `http://localhost:8000/`.
 
@@ -179,10 +191,13 @@ Once the orchestrator starts, it launches the FastAPI server and serves the **Ed
 
 ## ⚙️ Configuration
 
+The orchestrator reads environment variables dynamically. You can configure them via a `.env` file in the root directory:
+
 | Variable | Default | Purpose |
 | :--- | :--- | :--- |
 | `MQTT_BROKER_URL` | `127.0.0.1` | Local network endpoint for the telemetry loop. |
-| `INFERENCE_TIMEOUT_MS` | `100` | Prefill latency ceiling target. |
+| `GEMINI_API_KEY` | *None* | Google Gemini API Key. Enabling this transitions the recommendation engine to Google Gemini 1.5 Flash. |
+| `INFERENCE_TIMEOUT_MS` | `100` | Prefill latency ceiling target (applies to local Llama-server; Cloud Gemini runs with a 2.0s timeout). |
 | `ACTUATION_SLA_SEC` | `2.0` | Countdown window before automated safety changes execute. |
 | `FALLBACK_DENSITY_LIMIT` | `3.0` | People/$m^2$ trigger point for rule-based overrides. |
 
