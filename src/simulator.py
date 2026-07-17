@@ -25,7 +25,7 @@ async def simulation_loop(orchestrator) -> None:
         orchestrator: The active orchestrator instance where telemetry data is queued.
     """
     logger.info("Starting live telemetry simulation task...")
-    zones = ["Gate_A", "Gate_B", "Corridor_1", "Corridor_2", "Main_Concourse"]
+    zones = ["Gate_A", "Gate_B", "Gate_C", "Corridor_1", "Corridor_2", "Main_Concourse", "Transit_Hub", "Transit_Shuttle"]
     tick = 0
     
     while True:
@@ -61,6 +61,10 @@ async def simulation_loop(orchestrator) -> None:
                         density = 2.3 + random.uniform(-0.1, 0.1)
                         flow_in = 48.0 + random.uniform(-4, 4)
                         flow_out = 32.0 + random.uniform(-3, 3)
+                    elif zone == "Gate_C":
+                        density = 2.4 + random.uniform(-0.1, 0.1)
+                        flow_in = 40.0 + random.uniform(-3, 3)
+                        flow_out = 28.0 + random.uniform(-3, 3)
                     else:
                         density = 2.5 + random.uniform(-0.2, 0.2)
                         flow_in = 60.0 + random.uniform(-5, 5)
@@ -92,6 +96,11 @@ async def simulation_loop(orchestrator) -> None:
                         density = 0.8 + random.uniform(-0.15, 0.15)
                         flow_in = 18.0 + random.uniform(-3, 3)
                         flow_out = 16.0 + random.uniform(-3, 3)
+                    elif zone.startswith("Transit"):
+                        # Transit hub / shuttle station
+                        density = 1.5 + random.uniform(-0.3, 0.3)
+                        flow_in = 45.0 + random.uniform(-5, 5)
+                        flow_out = 43.0 + random.uniform(-5, 5)
                     else:
                         # Large main stadium concourse
                         density = 1.2 + random.uniform(-0.2, 0.2)

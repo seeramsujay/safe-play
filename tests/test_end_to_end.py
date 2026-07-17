@@ -39,8 +39,17 @@ async def test_end_to_end_orchestrator_lifecycle(temp_audit_log):
             "hazard_level": "critical",
             "action_required": True,
             "reroute_target": "Corridor_2",
-            "signage_instruction": "USE ALTERNATIVE CORRIDOR 2",
+            "signage_instruction_en": "USE ALTERNATIVE CORRIDOR 2",
+            "signage_instruction_es": "USE CORREDOR ALTERNATIVO 2",
+            "signage_instruction_fr": "UTILISER LE COULOIR ALTERNATIF 2",
+            "audio_announcement_en": "Please use alternative corridor two",
+            "audio_announcement_es": "Por favor use el corredor alternativo dos",
+            "audio_announcement_fr": "S'il vous plaît utiliser le couloir alternatif deux",
             "gate_action": "CLOSE_IMMEDIATELY",
+            "accessibility_route_target": "Corridor_2_ADA",
+            "accessibility_instruction": "Use ADA-compliant ramp next to Corridor 2",
+            "transit_dispatch_action": "INCREASE_SHUTTLE_FREQUENCY",
+            "transit_instruction": "Dispatch 2 additional shuttles to Gate B",
             "rationale": "High density surge detected in Gate A"
         }
         
@@ -50,7 +59,7 @@ async def test_end_to_end_orchestrator_lifecycle(temp_audit_log):
             initial_msg = websocket.receive_json()
             assert initial_msg["type"] == "state_update"
             assert initial_msg["panic_mode"] is False
-            assert len(initial_msg["nodes"]) == 5
+            assert len(initial_msg["nodes"]) == 8
             
             # 3. Simulate high density telemetry ingestion (triggers QoS escalation and SLM recommendation)
             telemetry_payload = {

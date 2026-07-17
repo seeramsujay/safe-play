@@ -15,6 +15,8 @@ from fastapi import FastAPI, WebSocket, WebSocketDisconnect
 from fastapi.responses import HTMLResponse
 from pydantic import BaseModel, Field
 from src.config import AUDIT_LOG_FILE, logger
+from src.copilot import query_copilot
+from src.models import CopilotRequest, CopilotResponse
 
 # ---------------------------------------------------------------------------
 # Pydantic request models — validate API inputs instead of accepting raw dicts
@@ -158,6 +160,13 @@ def create_app(orchestrator) -> FastAPI:
         orchestrator.last_manual_telemetry_time = time.time()
         orchestrator.telemetry_queue.put_nowait(payload.model_dump_json())
         return {"status": "success", "message": "Telemetry queued"}
+
+    @app.post("/api/copilot", response_model=CopilotResponse)
+    async def post_copilot(payload: CopilotRequest):
+        """
+        Interactive Copilot endpoint. Queries the GenAI agent for stadium ops decisions.
+        """
+        return await query_copilot(orchestrator, payload)
 
     @app.get("/api/audit-logs")
     async def get_audit_logs(limit: int = 100):

@@ -71,20 +71,26 @@ class SafePlayOrchestrator:
         with open(self.config_path, "r") as f:
             self.json_schema = json.load(f)
             
-        # Initialize default spatial graph representing stadium corridors
+        # Initialize default spatial graph representing stadium corridors for FIFA 2026
         self.graph = SpatialGraph(
             nodes=[
                 SpatialNode(zone_id="Gate_A", capacity=2.5),
                 SpatialNode(zone_id="Gate_B", capacity=2.5),
+                SpatialNode(zone_id="Gate_C", capacity=2.0),
                 SpatialNode(zone_id="Corridor_1", capacity=4.0),
                 SpatialNode(zone_id="Corridor_2", capacity=4.0),
-                SpatialNode(zone_id="Main_Concourse", capacity=5.0)
+                SpatialNode(zone_id="Main_Concourse", capacity=5.0),
+                SpatialNode(zone_id="Transit_Hub", capacity=6.0),
+                SpatialNode(zone_id="Transit_Shuttle", capacity=5.0)
             ],
             edges=[
                 SpatialEdge(source="Gate_A", target="Corridor_1", max_flow_rate=120.0),
                 SpatialEdge(source="Gate_B", target="Corridor_2", max_flow_rate=120.0),
+                SpatialEdge(source="Gate_C", target="Main_Concourse", max_flow_rate=80.0),
                 SpatialEdge(source="Corridor_1", target="Main_Concourse", max_flow_rate=200.0),
-                SpatialEdge(source="Corridor_2", target="Main_Concourse", max_flow_rate=200.0)
+                SpatialEdge(source="Corridor_2", target="Main_Concourse", max_flow_rate=200.0),
+                SpatialEdge(source="Main_Concourse", target="Transit_Hub", max_flow_rate=300.0),
+                SpatialEdge(source="Main_Concourse", target="Transit_Shuttle", max_flow_rate=250.0)
             ]
         )
         
@@ -307,13 +313,26 @@ class SafePlayOrchestrator:
             script: The InterventionScript to apply.
             mode: Triggering source mode (e.g. 'slm', 'fallback_rule', 'manual_approved').
         """
-        logger.info(f"ACTUATING [{mode}]: Zone {script.zone_id} -> Gate {script.gate_action}, Signage: '{script.signage_instruction}'")
+        logger.info(
+            f"ACTUATING [{mode}]: Zone {script.zone_id} -> Gate {script.gate_action}, "
+            f"Signage(EN): '{script.signage_instruction_en}', Accessibility Target: {script.accessibility_route_target}, "
+            f"Transit Action: {script.transit_dispatch_action}"
+        )
         self.write_audit_log("actuation_complete", {
             "zone_id": script.zone_id,
             "mode": mode,
             "gate_action": script.gate_action,
-            "signage_instruction": script.signage_instruction,
-            "reroute_target": script.reroute_target
+            "signage_instruction_en": script.signage_instruction_en,
+            "signage_instruction_es": script.signage_instruction_es,
+            "signage_instruction_fr": script.signage_instruction_fr,
+            "audio_announcement_en": script.audio_announcement_en,
+            "audio_announcement_es": script.audio_announcement_es,
+            "audio_announcement_fr": script.audio_announcement_fr,
+            "reroute_target": script.reroute_target,
+            "accessibility_route_target": script.accessibility_route_target,
+            "accessibility_instruction": script.accessibility_instruction,
+            "transit_dispatch_action": script.transit_dispatch_action,
+            "transit_instruction": script.transit_instruction
         })
         await self.broadcast_state()
 
@@ -429,10 +448,15 @@ class SafePlayOrchestrator:
                 self.graph.update_edge_flow("Gate_A", "Corridor_1", payload.flow_rate_out)
             elif payload.zone_id == "Gate_B":
                 self.graph.update_edge_flow("Gate_B", "Corridor_2", payload.flow_rate_out)
+            elif payload.zone_id == "Gate_C":
+                self.graph.update_edge_flow("Gate_C", "Main_Concourse", payload.flow_rate_out)
             elif payload.zone_id == "Corridor_1":
                 self.graph.update_edge_flow("Corridor_1", "Main_Concourse", payload.flow_rate_out)
             elif payload.zone_id == "Corridor_2":
                 self.graph.update_edge_flow("Corridor_2", "Main_Concourse", payload.flow_rate_out)
+            elif payload.zone_id == "Main_Concourse":
+                self.graph.update_edge_flow("Main_Concourse", "Transit_Hub", payload.flow_rate_out * 0.5)
+                self.graph.update_edge_flow("Main_Concourse", "Transit_Shuttle", payload.flow_rate_out * 0.5)
             
             await self.broadcast_state()
             

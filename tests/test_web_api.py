@@ -267,6 +267,24 @@ def test_api_config_invalid_data():
     response = client.post("/api/config", json={"actuation_sla_sec": 0.5})
     assert response.status_code == 422
 
+def test_api_copilot():
+    orchestrator = SafePlayOrchestrator("config/schema.json", "127.0.0.1", 1883)
+    app = create_app(orchestrator)
+    client = TestClient(app)
+    
+    # 1. Ask a question about status
+    response = client.post("/api/copilot", json={"prompt": "Is the system healthy?"})
+    assert response.status_code == 200
+    data = response.json()
+    assert "answer" in data
+    assert len(data["answer"]) > 0
+    assert "hazard_summary" in data
+    assert "active_incident_count" in data
+
+    # 2. Empty prompt
+    response = client.post("/api/copilot", json={"prompt": ""})
+    assert response.status_code == 422
+
 
 
 

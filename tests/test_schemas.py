@@ -45,14 +45,24 @@ def test_intervention_script_valid():
         "hazard_level": "medium",
         "action_required": True,
         "reroute_target": "Corridor_2",
-        "signage_instruction": "USE ALTERNATIVE GATE B",
+        "signage_instruction_en": "USE ALTERNATIVE GATE B",
+        "signage_instruction_es": "USE PUERTA B ALTERNATIVA",
+        "signage_instruction_fr": "UTILISER LA PORTE B ALTERNATIVE",
+        "audio_announcement_en": "Please use alternative gate B",
+        "audio_announcement_es": "Por favor use la puerta alternativa B",
+        "audio_announcement_fr": "S'il vous plaît utiliser la porte alternative B",
         "gate_action": "SLOW_ENTRY",
+        "accessibility_route_target": "Gate_B_ADA",
+        "accessibility_instruction": "ADA ramp available at Gate B",
+        "transit_dispatch_action": "INCREASE_SHUTTLE_FREQUENCY",
+        "transit_instruction": "Deploy additional shuttles",
         "rationale": "High density detected"
     }
     script = InterventionScript.model_validate(script_data)
     assert script.zone_id == "Gate_A"
     assert script.action_required is True
     assert script.reroute_target == "Corridor_2"
+    assert script.signage_instruction_en == "USE ALTERNATIVE GATE B"
 
 def test_intervention_script_extra_fields():
     # Extra fields should raise validation error due to extra="forbid"
@@ -61,8 +71,17 @@ def test_intervention_script_extra_fields():
         "hazard_level": "medium",
         "action_required": True,
         "reroute_target": "Corridor_2",
-        "signage_instruction": "USE ALTERNATIVE GATE B",
+        "signage_instruction_en": "USE ALTERNATIVE GATE B",
+        "signage_instruction_es": "USE PUERTA B ALTERNATIVA",
+        "signage_instruction_fr": "UTILISER LA PORTE B ALTERNATIVE",
+        "audio_announcement_en": "Please use alternative gate B",
+        "audio_announcement_es": "Por favor use la puerta alternativa B",
+        "audio_announcement_fr": "S'il vous plaît utiliser la porte alternative B",
         "gate_action": "SLOW_ENTRY",
+        "accessibility_route_target": "Gate_B_ADA",
+        "accessibility_instruction": "ADA ramp available at Gate B",
+        "transit_dispatch_action": "INCREASE_SHUTTLE_FREQUENCY",
+        "transit_instruction": "Deploy additional shuttles",
         "rationale": "High density",
         "extra_info": "unauthorized"
     }
@@ -77,8 +96,17 @@ def test_compiled_schema_integrity():
     assert "zone_id" in schema["properties"]
     assert "hazard_level" in schema["properties"]
     assert "action_required" in schema["properties"]
-    assert "signage_instruction" in schema["properties"]
+    assert "signage_instruction_en" in schema["properties"]
+    assert "signage_instruction_es" in schema["properties"]
+    assert "signage_instruction_fr" in schema["properties"]
+    assert "audio_announcement_en" in schema["properties"]
+    assert "audio_announcement_es" in schema["properties"]
+    assert "audio_announcement_fr" in schema["properties"]
     assert "gate_action" in schema["properties"]
+    assert "accessibility_route_target" in schema["properties"]
+    assert "accessibility_instruction" in schema["properties"]
+    assert "transit_dispatch_action" in schema["properties"]
+    assert "transit_instruction" in schema["properties"]
     assert "rationale" in schema["properties"]
 
 def test_spatial_node_validation():

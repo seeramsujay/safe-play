@@ -414,6 +414,15 @@
                 </a>
             </li>
             <li role="presentation">
+                <a class="flex items-center gap-md rounded p-md text-td-on-surface-variant hover:bg-td-surface-high transition-all cursor-pointer relative"
+                    id="nav-copilot" onclick="switchTab('copilot')" href="javascript:void(0)" role="tab"
+                    aria-selected="false">
+                    <span class="material-symbols-outlined">psychology</span>
+                    <span class="text-sm font-semibold">GenAI Copilot</span>
+                    <span class="absolute right-3 top-3.5 w-2 h-2 rounded-full bg-primary animate-pulse"></span>
+                </a>
+            </li>
+            <li role="presentation">
                 <a class="flex items-center gap-md rounded p-md text-td-on-surface-variant hover:bg-td-surface-high transition-all cursor-pointer"
                     id="nav-incidents" onclick="switchTab('incidents')" href="javascript:void(0)" role="tab"
                     aria-selected="false">
@@ -956,19 +965,52 @@
                                         </div>
 
                                         <!-- Recommendation details -->
-                                        <div class="text-[11px] space-y-1">
+                                        <div class="text-[11px] space-y-2">
                                             <p class="font-semibold text-td-on-surface">
                                                 Gate Action: <span class="text-critical font-bold"
                                                     id="dashApproveGateAction">CLOSE_IMMEDIATELY</span>
                                             </p>
-                                            <p class="text-td-on-surface">
-                                                Signage: <span
-                                                    class="font-mono font-bold text-[10px] border border-td-outline/50 bg-td-surface/50 px-1 py-0.5 rounded"
-                                                    id="dashApproveSignageInstruction">CRITICAL OVERLOAD. REROUTE TO
-                                                    Gate_B</span>
-                                            </p>
+
+                                            <!-- Multilingual Signage -->
+                                            <div class="border-t border-td-outline/20 pt-1.5 space-y-0.5">
+                                                <div class="text-[9px] text-td-on-surface-variant font-bold uppercase tracking-wider">Dynamic Signage Display</div>
+                                                <div class="pl-2 border-l-2 border-primary/50 space-y-0.5 font-mono text-[10px]">
+                                                    <div>🇺🇸 EN: <span id="dashApproveSignageInstructionEN" class="font-bold text-td-on-surface"></span></div>
+                                                    <div>🇲🇽 ES: <span id="dashApproveSignageInstructionES" class="text-td-on-surface"></span></div>
+                                                    <div>🇫🇷 FR: <span id="dashApproveSignageInstructionFR" class="text-td-on-surface"></span></div>
+                                                </div>
+                                            </div>
+
+                                            <!-- Multilingual Audio PA Transcript -->
+                                            <div class="border-t border-td-outline/20 pt-1.5 space-y-0.5">
+                                                <div class="text-[9px] text-td-on-surface-variant font-bold uppercase tracking-wider">Multilingual Audio Broadcasts</div>
+                                                <div class="pl-2 border-l-2 border-secondary/50 space-y-0.5 font-mono text-[9px] italic text-td-on-surface-variant">
+                                                    <div>EN: "<span id="dashApproveAudioEN"></span>"</div>
+                                                    <div>ES: "<span id="dashApproveAudioES"></span>"</div>
+                                                    <div>FR: "<span id="dashApproveAudioFR"></span>"</div>
+                                                </div>
+                                            </div>
+
+                                            <!-- Accessibility ADA Redirects -->
+                                            <div class="border-t border-td-outline/20 pt-1.5 space-y-0.5">
+                                                <div class="text-[9px] text-td-on-surface-variant font-bold uppercase tracking-wider">Accessibility (ADA / Stroller) Routing</div>
+                                                <p class="pl-2 text-[10px] text-td-on-surface">
+                                                    ADA Target: <span class="font-bold text-success" id="dashApproveADAIndex">None</span>
+                                                </p>
+                                                <p class="pl-2 text-[9px] text-td-on-surface-variant italic" id="dashApproveADAInstruction"></p>
+                                            </div>
+
+                                            <!-- Public Transit Coordination -->
+                                            <div class="border-t border-td-outline/20 pt-1.5 space-y-0.5">
+                                                <div class="text-[9px] text-td-on-surface-variant font-bold uppercase tracking-wider">Transit Coordination</div>
+                                                <p class="pl-2 text-[10px] text-td-on-surface font-semibold">
+                                                    Dispatch Command: <span class="text-primary font-bold" id="dashApproveTransitAction">KEEP_NOMINAL</span>
+                                                </p>
+                                                <p class="pl-2 text-[9px] text-td-on-surface-variant" id="dashApproveTransitInstruction"></p>
+                                            </div>
+
                                             <p
-                                                class="text-[10px] text-td-on-surface-variant italic mt-1 leading-relaxed">
+                                                class="text-[10px] text-td-on-surface-variant italic mt-1 leading-relaxed border-t border-td-outline/20 pt-1.5">
                                                 Rationale: "<span id="dashApproveRationale">Fallback: density limit
                                                     exceeded</span>"
                                             </p>
@@ -1417,25 +1459,57 @@
                                             <span class="font-mono text-[10px] uppercase font-bold tracking-widest"
                                                 id="approveMode">Inference Script (SLM)</span>
                                         </div>
-                                        <div class="text-sm space-y-xs">
-                                            <p
-                                                class="font-semibold text-td-on-surface">
-                                                Gate Action: <span class="text-critical font-bold"
-                                                    id="approveGateAction">CLOSE_IMMEDIATELY</span>
-                                            </p>
-                                            <p
-                                                class="text-td-on-surface">
-                                                Signage: <span
-                                                    class="font-mono font-bold text-xs border border-td-outline/50 bg-td-surface/50 dark:bg-td-surface/50 light:bg-el-surface/50 px-1 py-0.5 rounded"
-                                                    id="approveSignageInstruction">CRITICAL OVERLOAD. REROUTE TO
-                                                    Gate_B</span>
-                                            </p>
-                                            <p
-                                                class="text-xs text-td-on-surface-variant italic mt-2">
-                                                Rationale: "<span id="approveRationale">Fallback: density limit
-                                                    exceeded</span>"
-                                            </p>
-                                        </div>
+                                        <div class="text-sm space-y-3">
+                                             <p
+                                                 class="font-semibold text-td-on-surface">
+                                                 Gate Action: <span class="text-critical font-bold"
+                                                     id="approveGateAction">CLOSE_IMMEDIATELY</span>
+                                             </p>
+
+                                             <!-- Multilingual Signage -->
+                                             <div class="border-t border-td-outline/20 pt-2 space-y-1">
+                                                 <div class="text-[10px] text-td-on-surface-variant font-bold uppercase tracking-wider">Dynamic Signage Display</div>
+                                                 <div class="pl-2 border-l-2 border-primary/50 space-y-1 font-mono text-xs">
+                                                     <div>🇺🇸 EN: <span id="approveSignageInstructionEN" class="font-bold text-td-on-surface"></span></div>
+                                                     <div>🇲🇽 ES: <span id="approveSignageInstructionES" class="text-td-on-surface"></span></div>
+                                                     <div>🇫🇷 FR: <span id="approveSignageInstructionFR" class="text-td-on-surface"></span></div>
+                                                 </div>
+                                             </div>
+
+                                             <!-- Multilingual Audio PA Transcript -->
+                                             <div class="border-t border-td-outline/20 pt-2 space-y-1">
+                                                 <div class="text-[10px] text-td-on-surface-variant font-bold uppercase tracking-wider">Multilingual Audio Broadcasts</div>
+                                                 <div class="pl-2 border-l-2 border-secondary/50 space-y-1 font-mono text-[11px] italic text-td-on-surface-variant">
+                                                     <div>EN: "<span id="approveAudioEN"></span>"</div>
+                                                     <div>ES: "<span id="approveAudioES"></span>"</div>
+                                                     <div>FR: "<span id="approveAudioFR"></span>"</div>
+                                                 </div>
+                                             </div>
+
+                                             <!-- Accessibility ADA Redirects -->
+                                             <div class="border-t border-td-outline/20 pt-2 space-y-1">
+                                                 <div class="text-[10px] text-td-on-surface-variant font-bold uppercase tracking-wider">Accessibility (ADA / Stroller) Routing</div>
+                                                 <p class="pl-2 text-xs text-td-on-surface">
+                                                     ADA Target: <span class="font-bold text-success" id="approveADAIndex">None</span>
+                                                 </p>
+                                                 <p class="pl-2 text-xs text-td-on-surface-variant italic" id="approveADAInstruction"></p>
+                                             </div>
+
+                                             <!-- Public Transit Coordination -->
+                                             <div class="border-t border-td-outline/20 pt-2 space-y-1">
+                                                 <div class="text-[10px] text-td-on-surface-variant font-bold uppercase tracking-wider">Transit Coordination</div>
+                                                 <p class="pl-2 text-xs text-td-on-surface font-semibold">
+                                                     Dispatch Command: <span class="text-primary font-bold" id="approveTransitAction">KEEP_NOMINAL</span>
+                                                 </p>
+                                                 <p class="pl-2 text-xs text-td-on-surface-variant" id="approveTransitInstruction"></p>
+                                             </div>
+
+                                             <p
+                                                 class="text-xs text-td-on-surface-variant italic mt-2 border-t border-td-outline/20 pt-2">
+                                                 Rationale: "<span id="approveRationale">Fallback: density limit
+                                                     exceeded</span>"
+                                             </p>
+                                         </div>
                                     </div>
                                 </div>
 
@@ -1880,6 +1954,133 @@
                 </div>
             </div>
 
+            <!-- TAB 10: GENAI COPILOT -->
+            <div class="h-full overflow-hidden p-md lg:p-lg" id="tab-copilot" style="display:none;" role="tabpanel"
+                aria-labelledby="nav-copilot">
+                <div class="grid grid-cols-1 xl:grid-cols-4 gap-md h-full">
+                    <!-- Main Chat Panel -->
+                    <div class="xl:col-span-3 bg-td-surface border border-td-outline rounded-lg flex flex-col overflow-hidden shadow-lg">
+                        <!-- Header -->
+                        <div class="px-md py-sm border-b border-td-outline flex items-center justify-between bg-td-surface-lowest">
+                            <div class="flex items-center gap-sm">
+                                <div class="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center border border-primary/40">
+                                    <span class="material-symbols-outlined text-primary">psychology</span>
+                                </div>
+                                <div>
+                                    <h3 class="font-bold text-sm text-td-on-surface">FIFA 2026 Venue Safety Copilot</h3>
+                                    <p class="text-[10px] text-td-on-surface-variant">Generative AI assistant trained on World Cup crowd management SOPs</p>
+                                </div>
+                            </div>
+                            <div class="flex items-center gap-xs">
+                                <span class="w-2 h-2 rounded-full bg-success"></span>
+                                <span class="font-mono text-[9px] text-success uppercase tracking-wider font-bold">Online</span>
+                            </div>
+                        </div>
+
+                        <!-- Chat Messages -->
+                        <div class="flex-1 overflow-y-auto p-md space-y-md font-sans" id="copilotChatMessages">
+                            <!-- System Greeting -->
+                            <div class="flex items-start gap-sm max-w-[85%]">
+                                <div class="w-6 h-6 rounded-full bg-primary/20 border border-primary/30 flex items-center justify-center shrink-0">
+                                    <span class="material-symbols-outlined text-primary text-[14px]">psychology</span>
+                                </div>
+                                <div class="bg-td-surface-lowest border border-td-outline rounded-lg p-sm text-xs leading-relaxed text-td-on-surface">
+                                    <p class="font-bold text-primary mb-1">FIFA Safety Copilot</p>
+                                    Welcome, Commander. I am your Generative AI decision support copilot for the FIFA World Cup 2026. 
+                                    I have access to venue safety SOPs, real-time spatial node densities, transit statuses, and multilingual signage display settings.
+                                    <br><br>
+                                    How can I assist you with crowd coordination or incident response today?
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Input Area -->
+                        <div class="p-md border-t border-td-outline bg-td-surface-lowest">
+                            <form id="copilotForm" onsubmit="submitCopilotQuery(event)" class="flex gap-sm">
+                                <input 
+                                    type="text" 
+                                    id="copilotInput" 
+                                    class="flex-1 bg-td-surface border border-td-outline rounded px-md py-sm focus:outline-none focus:border-primary text-xs font-sans text-td-on-surface"
+                                    placeholder="Ask the copilot: e.g., 'What is the evacuation plan for Zone Gate A?' or 'Suggest an alternate route for mobility-impaired fans'"
+                                    autocomplete="off"
+                                />
+                                <button 
+                                    type="submit" 
+                                    class="bg-primary hover:bg-blue-600 text-white font-bold px-lg py-sm rounded text-xs transition-all duration-150 active:scale-95 flex items-center gap-xs"
+                                >
+                                    <span>Send</span>
+                                    <span class="material-symbols-outlined text-[14px]">send</span>
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+
+                    <!-- Right Context Panel / SOPs -->
+                    <div class="xl:col-span-1 flex flex-col gap-md overflow-y-auto">
+                        <!-- Quick Actions / Prompts -->
+                        <div class="bg-td-surface border border-td-outline rounded-lg p-md shadow flex flex-col gap-sm">
+                            <h4 class="font-bold text-xs uppercase tracking-wider text-td-on-surface-variant">Suggested Queries</h4>
+                            <div class="flex flex-col gap-xs">
+                                <button 
+                                    class="text-left text-[11px] text-td-on-surface hover:text-primary bg-td-surface-lowest hover:bg-primary/10 border border-td-outline hover:border-primary/30 p-sm rounded transition-all"
+                                    type="button"
+                                    onclick="fillCopilotPrompt('Gate A is overloaded, suggest a detour routing using our SOPs')"
+                                >
+                                    Gate A is detour routing
+                                </button>
+                                <button 
+                                    class="text-left text-[11px] text-td-on-surface hover:text-primary bg-td-surface-lowest hover:bg-primary/10 border border-td-outline hover:border-primary/30 p-sm rounded transition-all"
+                                    type="button"
+                                    onclick="fillCopilotPrompt('What is the standard procedure for public transit coordination when Gate B is closed?')"
+                                >
+                                    Transit SOPs for Gate B
+                                </button>
+                                <button 
+                                    class="text-left text-[11px] text-td-on-surface hover:text-primary bg-td-surface-lowest hover:bg-primary/10 border border-td-outline hover:border-primary/30 p-sm rounded transition-all"
+                                    type="button"
+                                    onclick="fillCopilotPrompt('Explain how accessibility rerouting guidelines apply to wheelchairs near Corridor C')"
+                                >
+                                    ADA routing guidelines
+                                </button>
+                                <button 
+                                    class="text-left text-[11px] text-td-on-surface hover:text-primary bg-td-surface-lowest hover:bg-primary/10 border border-td-outline hover:border-primary/30 p-sm rounded transition-all"
+                                    type="button"
+                                    onclick="fillCopilotPrompt('Summarize current venue density risk metrics across all zones')"
+                                >
+                                    Summarize density risks
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Safety SOPs Sheet Reference -->
+                        <div class="bg-td-surface border border-td-outline rounded-lg p-md shadow flex flex-col gap-sm flex-1">
+                            <div class="flex items-center gap-xs text-secondary border-b border-td-outline pb-xs mb-xs">
+                                <span class="material-symbols-outlined text-[16px]">menu_book</span>
+                                <h4 class="font-bold text-xs uppercase tracking-wider">FIFA 2026 SOP Checklist</h4>
+                            </div>
+                            <div class="text-[10px] space-y-md text-td-on-surface-variant overflow-y-auto max-h-[300px] xl:max-h-none">
+                                <div>
+                                    <h5 class="font-bold text-td-on-surface mb-0.5">SOP-01: Crowd Surge</h5>
+                                    <p class="leading-relaxed">If any zone density exceeds 3.0 pax/m², trigger digital signage warning, direct turnstiles to throttle inflow, and dispatch safety volunteers.</p>
+                                </div>
+                                <div>
+                                    <h5 class="font-bold text-td-on-surface mb-0.5">SOP-02: Multilingual Broadcasts</h5>
+                                    <p class="leading-relaxed">All critical alerts must be broadcast in English, Spanish, and French simultaneously to ensure compliance and international safety visibility.</p>
+                                </div>
+                                <div>
+                                    <h5 class="font-bold text-td-on-surface mb-0.5">SOP-03: ADA Routing</h5>
+                                    <p class="leading-relaxed">Wheelchair users and families with strollers must always be rerouted through step-free elevators and dedicated ADA pathways.</p>
+                                </div>
+                                <div>
+                                    <h5 class="font-bold text-td-on-surface mb-0.5">SOP-04: Transit Dispatch</h5>
+                                    <p class="leading-relaxed">During surges, request Metro operators to increase train frequency or dynamically dispatch additional shuttle buses to ease egress pressure.</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
         </div>
 
         <!-- Bottom System Health Strips -->
@@ -2206,7 +2407,7 @@
             });
 
             // Hide/Show tab contents
-            const tabs = ['dashboard', 'map', 'approval', 'incidents', 'actuators', 'health', 'modelops', 'audit', 'settings'];
+            const tabs = ['dashboard', 'map', 'approval', 'incidents', 'actuators', 'health', 'modelops', 'audit', 'settings', 'copilot'];
             tabs.forEach(id => {
                 const el = document.getElementById(`tab-${id}`);
                 if (el) el.style.display = (id === tabId) ? 'block' : 'none';
@@ -2484,7 +2685,7 @@
 
             // Support numbers 1-9 to switch tabs
             if (e.key >= '1' && e.key <= '9') {
-                const tabs = ['dashboard', 'map', 'approval', 'incidents', 'actuators', 'health', 'modelops', 'audit', 'settings'];
+                const tabs = ['dashboard', 'map', 'approval', 'incidents', 'actuators', 'health', 'modelops', 'audit', 'settings', 'copilot'];
                 const targetTab = tabs[parseInt(e.key) - 1];
                 if (targetTab) {
                     switchTab(targetTab);
@@ -3020,7 +3221,16 @@
                 document.getElementById('approveCondition').textContent = `Surge detected: Density ${maxDensity.toFixed(1)} pax/m²`;
                 document.getElementById('approveMode').textContent = active.mode === 'slm' ? 'Grammar constrained SLM' : 'Static Fallback Rule';
                 document.getElementById('approveGateAction').textContent = active.script.gate_action;
-                document.getElementById('approveSignageInstruction').textContent = active.script.signage_instruction;
+                document.getElementById('approveSignageInstructionEN').textContent = active.script.signage_en || active.script.signage_instruction;
+                document.getElementById('approveSignageInstructionES').textContent = active.script.signage_es || '';
+                document.getElementById('approveSignageInstructionFR').textContent = active.script.signage_fr || '';
+                document.getElementById('approveAudioEN').textContent = active.script.audio_en || '';
+                document.getElementById('approveAudioES').textContent = active.script.audio_es || '';
+                document.getElementById('approveAudioFR').textContent = active.script.audio_fr || '';
+                document.getElementById('approveADAIndex').textContent = active.script.ada_target_zone || 'None';
+                document.getElementById('approveADAInstruction').textContent = active.script.ada_routing_instruction || '';
+                document.getElementById('approveTransitAction').textContent = active.script.transit_dispatch_action || 'KEEP_NOMINAL';
+                document.getElementById('approveTransitInstruction').textContent = active.script.transit_dispatch_instruction || '';
                 document.getElementById('approveRationale').textContent = active.script.rationale;
 
                 // Toggle visibility in Dashboard active rec card
@@ -3033,7 +3243,16 @@
                 document.getElementById('dashApproveCondition').textContent = `Surge: Density ${maxDensity.toFixed(1)} pax/m²`;
                 document.getElementById('dashApproveMode').textContent = active.mode === 'slm' ? 'Grammar Constrained SLM' : 'Static Fallback Rule';
                 document.getElementById('dashApproveGateAction').textContent = active.script.gate_action;
-                document.getElementById('dashApproveSignageInstruction').textContent = active.script.signage_instruction;
+                document.getElementById('dashApproveSignageInstructionEN').textContent = active.script.signage_en || active.script.signage_instruction;
+                document.getElementById('dashApproveSignageInstructionES').textContent = active.script.signage_es || '';
+                document.getElementById('dashApproveSignageInstructionFR').textContent = active.script.signage_fr || '';
+                document.getElementById('dashApproveAudioEN').textContent = active.script.audio_en || '';
+                document.getElementById('dashApproveAudioES').textContent = active.script.audio_es || '';
+                document.getElementById('dashApproveAudioFR').textContent = active.script.audio_fr || '';
+                document.getElementById('dashApproveADAIndex').textContent = active.script.ada_target_zone || 'None';
+                document.getElementById('dashApproveADAInstruction').textContent = active.script.ada_routing_instruction || '';
+                document.getElementById('dashApproveTransitAction').textContent = active.script.transit_dispatch_action || 'KEEP_NOMINAL';
+                document.getElementById('dashApproveTransitInstruction').textContent = active.script.transit_dispatch_instruction || '';
                 document.getElementById('dashApproveRationale').textContent = active.script.rationale;
 
                 // Handle timer
@@ -3686,6 +3905,131 @@
                     dismissAlert();
                 })
                 .catch(err => console.error("Approval failed:", err));
+        }
+
+        // Copilot Interaction Scripts
+        function fillCopilotPrompt(prompt) {
+            const input = document.getElementById('copilotInput');
+            if (input) {
+                input.value = prompt;
+                input.focus();
+            }
+        }
+
+        async function submitCopilotQuery(event) {
+            if (event) event.preventDefault();
+            const input = document.getElementById('copilotInput');
+            if (!input) return;
+            const query = input.value.trim();
+            if (!query) return;
+
+            // Clear input
+            input.value = '';
+
+            // Append User message
+            appendCopilotMessage('user', 'VOC Operator', query);
+
+            // Append Typing indicator
+            const typingId = appendCopilotTypingIndicator();
+
+            try {
+                const response = await fetch(getBackendUrl() + '/api/copilot', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ query: query })
+                });
+
+                // Remove typing indicator
+                removeCopilotTypingIndicator(typingId);
+
+                if (!response.ok) {
+                    throw new Error(`Copilot response status: ${response.status}`);
+                }
+
+                const data = await response.json();
+                appendCopilotMessage('copilot', 'FIFA Safety Copilot', data.response, data.source);
+            } catch (err) {
+                console.error("Copilot request failed:", err);
+                removeCopilotTypingIndicator(typingId);
+                appendCopilotMessage('copilot', 'FIFA Safety Copilot', "⚠️ Error communicating with safety copilot. Please try again.");
+            }
+        }
+
+        function appendCopilotMessage(sender, name, text, source) {
+            const chatContainer = document.getElementById('copilotChatMessages');
+            if (!chatContainer) return;
+
+            const div = document.createElement('div');
+            div.className = "flex items-start gap-sm max-w-[85%] " + (sender === 'user' ? "ml-auto flex-row-reverse" : "");
+
+            const avatarBg = sender === 'user' ? "bg-secondary/20 border-secondary/30" : "bg-primary/20 border-primary/30";
+            const avatarIcon = sender === 'user' ? "account_circle" : "psychology";
+            const avatarColor = sender === 'user' ? "text-secondary" : "text-primary";
+            const msgBg = sender === 'user' ? "bg-primary/10 border-primary/20" : "bg-td-surface-lowest border-td-outline";
+
+            let sourceHtml = "";
+            if (source) {
+                const sourceBadge = source === 'gemini' ? "bg-blue-500/10 text-blue-400 border-blue-500/20" : "bg-yellow-500/10 text-yellow-400 border-yellow-500/20";
+                sourceHtml = `<span class="inline-block font-mono text-[8px] uppercase tracking-wider font-bold border px-1 rounded ${sourceBadge} mb-1">${source}</span>`;
+            }
+
+            // Convert newlines to breaks and simple bold formatting in text
+            const formattedText = text
+                .replace(/\n/g, '<br>')
+                .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+                .replace(/\*(.*?)\*/g, '<em>$1</em>');
+
+            div.innerHTML = `
+                <div class="w-6 h-6 rounded-full ${avatarBg} border flex items-center justify-center shrink-0">
+                    <span class="material-symbols-outlined ${avatarColor} text-[14px]">${avatarIcon}</span>
+                </div>
+                <div class="${msgBg} border rounded-lg p-sm text-xs leading-relaxed text-td-on-surface">
+                    <div class="flex items-center justify-between gap-md mb-1 flex-row-reverse">
+                        ${sourceHtml}
+                        <span class="font-bold ${sender === 'user' ? 'text-secondary' : 'text-primary'}">${name}</span>
+                    </div>
+                    <div>${formattedText}</div>
+                </div>
+            `;
+
+            chatContainer.appendChild(div);
+            chatContainer.scrollTop = chatContainer.scrollHeight;
+        }
+
+        let typingCounter = 0;
+        function appendCopilotTypingIndicator() {
+            const chatContainer = document.getElementById('copilotChatMessages');
+            if (!chatContainer) return null;
+
+            typingCounter++;
+            const id = 'typing-' + typingCounter;
+
+            const div = document.createElement('div');
+            div.id = id;
+            div.className = "flex items-start gap-sm max-w-[85%]";
+            div.innerHTML = `
+                <div class="w-6 h-6 rounded-full bg-primary/20 border border-primary/30 flex items-center justify-center shrink-0">
+                    <span class="material-symbols-outlined text-primary text-[14px]">psychology</span>
+                </div>
+                <div class="bg-td-surface-lowest border border-td-outline rounded-lg p-sm text-xs text-td-on-surface flex items-center gap-xs">
+                    <span class="font-bold text-primary mr-1">FIFA Safety Copilot</span>
+                    <div class="flex items-center gap-0.5">
+                        <div class="w-1.5 h-1.5 rounded-full bg-primary/60 animate-bounce" style="animation-delay: 0ms"></div>
+                        <div class="w-1.5 h-1.5 rounded-full bg-primary/60 animate-bounce" style="animation-delay: 150ms"></div>
+                        <div class="w-1.5 h-1.5 rounded-full bg-primary/60 animate-bounce" style="animation-delay: 300ms"></div>
+                    </div>
+                </div>
+            `;
+
+            chatContainer.appendChild(div);
+            chatContainer.scrollTop = chatContainer.scrollHeight;
+            return id;
+        }
+
+        function removeCopilotTypingIndicator(id) {
+            if (!id) return;
+            const el = document.getElementById(id);
+            if (el) el.remove();
         }
 
         // Publish Telemetry Simulation
