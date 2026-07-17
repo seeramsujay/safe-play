@@ -144,12 +144,14 @@ For production-grade deployment at stadium venues, the system has been cryptogra
 > *   **Edge Telemetry Verification**: Incoming telemetry requests are validated cryptographically using HMAC-SHA256. Payloads can optionally be signed with `TELEMETRY_SECRET_KEY` and verified on-the-fly.
 > *   **Strict Mode Enforcement**: If the `STRICT_SIGNATURE_VERIFICATION` environment variable is set to `true`, the system immediately rejects unsigned or incorrectly signed telemetry, guarding against venue telemetry spoofing.
 > *   **API Verification Shield**: To block injection attacks and ensure structural integrity, entry-point endpoints are validated using strict **Pydantic V2 schemas** (`TelemetryRequest`, `ConfigUpdateRequest`, `ZoneActionRequest`). Input `zone_id` parameters are validated against the active spatial graph nodes, raising `404 Not Found` errors for unrecognized zone IDs.
+> *   **In-bounds Queue Validation**: The telemetry background consumer loop enforces the same spatial graph node validation. Any telemetry message targeting an invalid or out-of-bounds zone ID is immediately rejected with a handled `TelemetryValidationError` and logged, preventing poisoning of the state machine.
 
 > [!IMPORTANT]
 > **Cryptographic Append-Only Ledger & Tamper Detection**
 > *   **SHA-256 Hash Chaining**: Every log entry in the audit trail is cryptographically linked to the previous entry using a SHA-256 hash (acting as a tamper-evident ledger).
 > *   **Integrity Verification Engine**: A validation script calculates hashes sequentially to verify that the chain is unbroken and untampered. A new endpoint `/api/audit-logs/verify` allows operators or automated systems to trigger log verification on-demand.
 > *   **O(1) Memory Audit Writing**: Reading the last log entry's hash utilizes an optimized backward file seek method rather than reading the entire file, keeping log writes at constant $O(1)$ time and memory complexity even for very large files.
+> *   **XSS & Content Sanitization**: The EdgePulse dashboard console enforces strict context-aware HTML entity escaping on all user-supplied names, model answers, and ledger fields, completely neutralizing cross-site scripting (XSS) vectors.
 
 > [!WARNING]
 > **Resource Isolation & Memory Limits**

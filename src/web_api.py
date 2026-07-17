@@ -12,11 +12,12 @@ import time
 from typing import Optional
 from collections import deque
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect, HTTPException
-from fastapi.responses import HTMLResponse
+from fastapi.responses import HTMLResponse, JSONResponse
 from pydantic import BaseModel, Field
 from src.config import AUDIT_LOG_FILE, logger
 from src.copilot import query_copilot
 from src.models import CopilotRequest, CopilotResponse
+from src.exceptions import SafePlayError, OperatorActionError, TelemetryValidationError, GraphRoutingError
 
 # ---------------------------------------------------------------------------
 # Pydantic request models — validate API inputs instead of accepting raw dicts
@@ -96,6 +97,22 @@ def create_app(orchestrator) -> FastAPI:
         description="Real-time crowd safety orchestration and incident egress routing for FIFA World Cup 2026 stadium events.",
         version="0.1.0",
     )
+
+    @app.exception_handler(OperatorActionError)
+    async def operator_action_exception_handler(request, exc: OperatorActionError):
+        return JSONResponse(status_code=400, content={"detail": str(exc)})
+
+    @app.exception_handler(TelemetryValidationError)
+    async def telemetry_validation_exception_handler(request, exc: TelemetryValidationError):
+        return JSONResponse(status_code=400, content={"detail": str(exc)})
+
+    @app.exception_handler(GraphRoutingError)
+    async def graph_routing_exception_handler(request, exc: GraphRoutingError):
+        return JSONResponse(status_code=400, content={"detail": str(exc)})
+
+    @app.exception_handler(SafePlayError)
+    async def safeplay_exception_handler(request, exc: SafePlayError):
+        return JSONResponse(status_code=500, content={"detail": str(exc)})
 
     # Establish filepath to local static directory containing frontend assets
     current_dir = os.path.dirname(os.path.abspath(__file__))

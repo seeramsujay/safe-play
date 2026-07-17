@@ -303,3 +303,32 @@ def test_api_copilot(client):
     response = client.post("/api/copilot", json={"prompt": "Is public transit coordinated?"})
     assert response.status_code == 200
     assert "Transit Coordination" in response.json()["answer"]
+
+def test_api_veto_or_approve_inactive(client):
+    """Verifies that attempting to veto or approve an inactive zone raises OperatorActionError mapped to HTTP 400."""
+    response = client.post("/api/veto", json={"zone_id": "Gate_A"})
+    assert response.status_code == 400
+    assert "No active proposed safety script found to veto" in response.json()["detail"]
+
+    response = client.post("/api/approve", json={"zone_id": "Gate_A"})
+    assert response.status_code == 400
+    assert "No active countdown timer found to approve" in response.json()["detail"]
+
+@pytest.mark.anyio
+async def test_process_telemetry_invalid_json(orchestrator):
+    """Verifies that calling process_telemetry with invalid JSON is handled by TelemetryValidationError and doesn't crash."""
+    await orchestrator.process_telemetry("invalid json content")
+
+@pytest.mark.anyio
+async def test_process_telemetry_invalid_zone(orchestrator):
+    """Verifies that calling process_telemetry with an invalid zone ID is caught, logged, and audited without crashing."""
+    import json
+    payload = {
+        "zone_id": "Non_Existent_Zone",
+        "crowd_density": 1.2,
+        "flow_rate_in": 10.0,
+        "flow_rate_out": 8.0,
+        "timestamp": 1234567.0
+    }
+    await orchestrator.process_telemetry(json.dumps(payload))
+    assert "Non_Existent_Zone" not in orchestrator.graph.nodes

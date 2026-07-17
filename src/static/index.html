@@ -3827,6 +3827,19 @@
                 });
         }
 
+        function escapeHtml(text) {
+            if (text === null || text === undefined) return "";
+            if (typeof text !== 'string') {
+                text = String(text);
+            }
+            return text
+                .replace(/&/g, "&amp;")
+                .replace(/</g, "&lt;")
+                .replace(/>/g, "&gt;")
+                .replace(/"/g, "&quot;")
+                .replace(/'/g, "&#039;");
+        }
+
         function addAuditLogEntry(log, prepend = false) {
             const container = document.getElementById('auditTrailList');
             if (!container) return;
@@ -3848,12 +3861,15 @@
             delete cleanData.timestamp;
             delete cleanData.event_type;
 
+            const escapedEventType = escapeHtml(log.event_type);
+            const escapedData = escapeHtml(JSON.stringify(cleanData, null, 2));
+
             div.innerHTML = `
                 <div class="flex justify-between items-center text-[10px]">
                     <span class="font-mono text-td-on-surface-variant">${timeStr}</span>
-                    <span class="${labelColor} font-mono px-2 py-0.5 bg-black/40 rounded uppercase tracking-wider text-[9px]">${log.event_type}</span>
+                    <span class="${labelColor} font-mono px-2 py-0.5 bg-black/40 rounded uppercase tracking-wider text-[9px]">${escapedEventType}</span>
                 </div>
-                <pre class="whitespace-pre-wrap font-mono text-[11px] text-td-on-surface/90 dark:text-td-on-surface/90 light:text-el-on-surface/90 pl-sm mt-xs">${JSON.stringify(cleanData, null, 2)}</pre>
+                <pre class="whitespace-pre-wrap font-mono text-[11px] text-td-on-surface/90 dark:text-td-on-surface/90 light:text-el-on-surface/90 pl-sm mt-xs">${escapedData}</pre>
             `;
 
             if (prepend && container.firstChild) {
@@ -3973,8 +3989,11 @@
                 sourceHtml = `<span class="inline-block font-mono text-[8px] uppercase tracking-wider font-bold border px-1 rounded ${sourceBadge} mb-1">${source}</span>`;
             }
 
+            const escapedText = escapeHtml(text);
+            const escapedName = escapeHtml(name);
+
             // Convert newlines to breaks and simple bold formatting in text
-            const formattedText = text
+            const formattedText = escapedText
                 .replace(/\n/g, '<br>')
                 .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
                 .replace(/\*(.*?)\*/g, '<em>$1</em>');
@@ -3986,7 +4005,7 @@
                 <div class="${msgBg} border rounded-lg p-sm text-xs leading-relaxed text-td-on-surface">
                     <div class="flex items-center justify-between gap-md mb-1 flex-row-reverse">
                         ${sourceHtml}
-                        <span class="font-bold ${sender === 'user' ? 'text-secondary' : 'text-primary'}">${name}</span>
+                        <span class="font-bold ${sender === 'user' ? 'text-secondary' : 'text-primary'}">${escapedName}</span>
                     </div>
                     <div>${formattedText}</div>
                 </div>

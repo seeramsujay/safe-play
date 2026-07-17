@@ -258,6 +258,33 @@ class SpatialGraph:
             if edge.source in self.adjacency and edge.target in self.adjacency:
                 self.adjacency[edge.source][edge.target] = edge
 
+    @staticmethod
+    def get_default_world_cup_graph() -> "SpatialGraph":
+        """
+        Factory method to generate the default spatial graph representing FIFA 2026 stadium corridors.
+        """
+        return SpatialGraph(
+            nodes=[
+                SpatialNode(zone_id="Gate_A", capacity=2.5),
+                SpatialNode(zone_id="Gate_B", capacity=2.5),
+                SpatialNode(zone_id="Gate_C", capacity=2.0),
+                SpatialNode(zone_id="Corridor_1", capacity=4.0),
+                SpatialNode(zone_id="Corridor_2", capacity=4.0),
+                SpatialNode(zone_id="Main_Concourse", capacity=5.0),
+                SpatialNode(zone_id="Transit_Hub", capacity=6.0),
+                SpatialNode(zone_id="Transit_Shuttle", capacity=5.0)
+            ],
+            edges=[
+                SpatialEdge(source="Gate_A", target="Corridor_1", max_flow_rate=120.0),
+                SpatialEdge(source="Gate_B", target="Corridor_2", max_flow_rate=120.0),
+                SpatialEdge(source="Gate_C", target="Main_Concourse", max_flow_rate=80.0),
+                SpatialEdge(source="Corridor_1", target="Main_Concourse", max_flow_rate=200.0),
+                SpatialEdge(source="Corridor_2", target="Main_Concourse", max_flow_rate=200.0),
+                SpatialEdge(source="Main_Concourse", target="Transit_Hub", max_flow_rate=300.0),
+                SpatialEdge(source="Main_Concourse", target="Transit_Shuttle", max_flow_rate=250.0)
+            ]
+        )
+
     def update_node_density(self, zone_id: str, density: float) -> None:
         """
         Updates the current crowd density of a specific node.

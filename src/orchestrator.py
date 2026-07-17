@@ -28,6 +28,15 @@ from src.models import (
     SpatialEdge
 )
 
+# Import domain exceptions
+from src.exceptions import (
+    SafePlayError,
+    TelemetryValidationError,
+    InferenceTimeoutError,
+    GraphRoutingError,
+    OperatorActionError
+)
+
 # Import modular configuration settings
 from src.config import (
     DEFAULT_BROKER,
@@ -74,27 +83,7 @@ class SafePlayOrchestrator:
             self.json_schema = json.load(f)
             
         # Initialize default spatial graph representing stadium corridors for FIFA 2026
-        self.graph = SpatialGraph(
-            nodes=[
-                SpatialNode(zone_id="Gate_A", capacity=2.5),
-                SpatialNode(zone_id="Gate_B", capacity=2.5),
-                SpatialNode(zone_id="Gate_C", capacity=2.0),
-                SpatialNode(zone_id="Corridor_1", capacity=4.0),
-                SpatialNode(zone_id="Corridor_2", capacity=4.0),
-                SpatialNode(zone_id="Main_Concourse", capacity=5.0),
-                SpatialNode(zone_id="Transit_Hub", capacity=6.0),
-                SpatialNode(zone_id="Transit_Shuttle", capacity=5.0)
-            ],
-            edges=[
-                SpatialEdge(source="Gate_A", target="Corridor_1", max_flow_rate=120.0),
-                SpatialEdge(source="Gate_B", target="Corridor_2", max_flow_rate=120.0),
-                SpatialEdge(source="Gate_C", target="Main_Concourse", max_flow_rate=80.0),
-                SpatialEdge(source="Corridor_1", target="Main_Concourse", max_flow_rate=200.0),
-                SpatialEdge(source="Corridor_2", target="Main_Concourse", max_flow_rate=200.0),
-                SpatialEdge(source="Main_Concourse", target="Transit_Hub", max_flow_rate=300.0),
-                SpatialEdge(source="Main_Concourse", target="Transit_Shuttle", max_flow_rate=250.0)
-            ]
-        )
+        self.graph = SpatialGraph.get_default_world_cup_graph()
         
         # Ingestion queue for transferring payloads thread-safely from MQTT client thread
         self.telemetry_queue: asyncio.Queue = asyncio.Queue()
@@ -238,8 +227,14 @@ class SafePlayOrchestrator:
         
         Args:
             zone_id: The zone ID targeted by the operator veto command.
+            
+        Raises:
+            OperatorActionError: If no active safety script exists for the zone.
         """
         logger.warning(f"Operator VETO received for zone: {zone_id}")
+        if zone_id not in self.active_scripts:
+            raise OperatorActionError(f"No active proposed safety script found to veto for zone: '{zone_id}'")
+            
         self.vetoed_zones.add(zone_id)
         if zone_id in self.active_interventions:
             self.active_interventions[zone_id].cancel()
@@ -253,23 +248,28 @@ class SafePlayOrchestrator:
         
         Args:
             zone_id: The zone ID targeted by the early approval command.
+            
+        Raises:
+            OperatorActionError: If no active countdown timer or safety script exists for the zone.
         """
         logger.info(f"Operator manual APPROVAL received for zone: {zone_id}")
-        if zone_id in self.active_interventions:
-            script = self.active_scripts.get(zone_id)
-            mode = self.active_intervention_metadata.get(zone_id, {}).get("mode", "manual")
-            if zone_id in self.active_intervention_metadata:
-                self.active_intervention_metadata[zone_id]["operator_approved"] = True
+        if zone_id not in self.active_interventions:
+            raise OperatorActionError(f"No active countdown timer found to approve for zone: '{zone_id}'")
             
-            # Cancel the sleep timer first to prevent race condition if SLA timer expires during execute_intervention
-            self.active_interventions[zone_id].cancel()
-            
-            if script:
-                await self.execute_intervention(script, f"{mode}_approved")
-                self.write_audit_log("veto_window_approved", {
-                    "zone_id": zone_id,
-                    "status": "approved"
-                })
+        script = self.active_scripts.get(zone_id)
+        mode = self.active_intervention_metadata.get(zone_id, {}).get("mode", "manual")
+        if zone_id in self.active_intervention_metadata:
+            self.active_intervention_metadata[zone_id]["operator_approved"] = True
+        
+        # Cancel the sleep timer first to prevent race condition if SLA timer expires during execute_intervention
+        self.active_interventions[zone_id].cancel()
+        
+        if script:
+            await self.execute_intervention(script, f"{mode}_approved")
+            self.write_audit_log("veto_window_approved", {
+                "zone_id": zone_id,
+                "status": "approved"
+            })
         await self.broadcast_state()
 
     async def trigger_panic_mode(self) -> None:
@@ -478,10 +478,21 @@ class SafePlayOrchestrator:
             if not self.verify_payload_signature(raw_payload):
                 logger.error("Security verification failed for incoming telemetry payload!")
                 self.write_audit_log("security_validation_failed", {"raw_payload": raw_payload})
-                return
+                raise TelemetryValidationError("Security verification failed for incoming telemetry payload!")
                 
-            data = json.loads(raw_payload)
-            payload = TelemetryPayload.model_validate(data)
+            try:
+                data = json.loads(raw_payload)
+            except json.JSONDecodeError as e:
+                raise TelemetryValidationError(f"Failed to parse raw telemetry as JSON: {e}") from e
+                
+            try:
+                payload = TelemetryPayload.model_validate(data)
+            except Exception as e:
+                raise TelemetryValidationError(f"Telemetry payload validation failed: {e}") from e
+
+            # Verify zone_id exists in the spatial graph to prevent processing invalid telemetry
+            if payload.zone_id not in self.graph.nodes:
+                raise TelemetryValidationError(f"Zone '{payload.zone_id}' not found in spatial graph")
             
             # Update density of the specific zone node in the spatial graph
             self.graph.update_node_density(payload.zone_id, payload.crowd_density)
@@ -558,8 +569,9 @@ class SafePlayOrchestrator:
                     logger.info(f"Crowd fully cleared in {payload.zone_id}. Discarding operator veto lock.")
                     self.vetoed_zones.discard(payload.zone_id)
                 
-        except json.JSONDecodeError:
-            logger.error("Failed to parse raw telemetry as JSON")
+        except TelemetryValidationError as e:
+            logger.error(f"Telemetry validation error: {e}")
+            self.write_audit_log("telemetry_validation_failed", {"error": str(e), "raw_payload": raw_payload})
         except Exception as e:
             logger.error(f"Error processing telemetry payload: {e}", exc_info=True)
 
