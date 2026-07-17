@@ -1,6 +1,6 @@
 # ⚡ safe-play
 
-> Decentralized edge-intelligence mesh for stadium crowd safety and automated incident triage. Designed for FIFA World Cup 2026 high-stakes venue management.
+> Decentralized edge-intelligence mesh for smart campus crowd safety and automated incident triage. Designed for Smart Cities micro-campus event egress and venue operations (Theme 8: AI for Smart Cities - Campus as Micro-City).
 
 <p align="center">
   <img src="https://img.shields.io/badge/FastAPI-009688?style=for-the-badge&logo=fastapi&logoColor=white" alt="FastAPI" />
@@ -22,7 +22,7 @@
 
 ![EdgePulse 2026 Tactical Control Console](docs/dashboard_mockup.png)
 
-The command-and-control dashboard features a high-fidelity, flat 2D top-down tactical layout of the venue. Seating rings (Upper, Middle, Lower) are rendered as concentric capsule graphics, and the football pitch is drawn with precise, symmetrical 2D markings. Interactive LiDAR nodes (`Gate A`, `Gate B`, `Corridor 1`, `Corridor 2`, `Main Concourse`) and flow-direction arrows are layered on top with real-time hazard status colors.
+The command-and-control dashboard features a high-fidelity, flat 2D top-down tactical layout of the venue. Campus zones (Auditorium, Arena, Concourse) are rendered as concentric capsule graphics, and the central court/pitch is drawn with precise, symmetrical 2D markings. Interactive LiDAR nodes (`Gate A`, `Gate B`, `Corridor 1`, `Corridor 2`, `Main Concourse`) and flow-direction arrows are layered on top with real-time hazard status colors.
 
 ---
 
@@ -33,13 +33,13 @@ The command-and-control dashboard features a high-fidelity, flat 2D top-down tac
 
 ## 🎯 Challenge Overview & Submission Criteria
 
-### 1. Chosen Vertical: Stadium Crowd Safety & Event Egress Management
-Tailored specifically for FIFA World Cup 2026 venues, **safe-play** coordinates high-stakes, low-latency crowd operations. The system monitors gates, corridors, and main concourses in real-time, instantly triaging density surges and automatically calculating egress routing to prevent bottlenecks or dangerous crowd crushes.
+### 1. Chosen Vertical: Theme 8: AI for Smart Cities (Campus as Micro-City)
+Tailored specifically for Smart Campus Event Egress & Crowd Safety Management, **safe-play** coordinates high-stakes, low-latency crowd operations. The system monitors campus gates, auditorium corridors, and main concourses in real-time, instantly triaging density surges and automatically calculating egress routing to prevent bottlenecks or dangerous crowd crushes.
 
 ### 2. Core Intelligent Framework
 *   **Hybrid Cloud/Edge Inference**: Supports dynamic selection between Google Gemini 1.5 Flash (for robust cloud-based constraint-enforced JSON validation when `GEMINI_API_KEY` is present) and local `llama-server` running Qwen-2.5-7B constrained by GBNF grammar.
 *   **Grammar-Constrained SLM Inference**: Constrains local model logits using custom GBNF grammar files. This guarantees 100% deterministic JSON schemas matching structural API requirements under a strict **100ms Time-to-First-Token (TTFT)** constraint.
-*   **Directed Spatial Graph Matrix**: Formulates stadium routing layouts as a directed spatial graph $G = (V, E)$ in a flat 2D projection. Changes in edge flow rates and node densities dynamically solve for real-time alternative egress targets (e.g., redirecting Gate A flow to Corridor 2).
+*   **Directed Spatial Graph Matrix**: Formulates campus routing layouts as a directed spatial graph $G = (V, E)$ in a flat 2D projection. Changes in edge flow rates and node densities dynamically solve for real-time alternative egress targets (e.g., redirecting Gate A flow to Corridor 2).
 *   **Human-in-the-Loop Operator SLA Gate**: Leverages an asynchronous 2-second veto window. If an incident requires gate locking or emergency signage changes, the operator is presented with a countdown. They can override (Veto), immediately execute (Approve Early), or let the timer expire to run the automated safety intervention fallback script.
 *   **Dynamic QoS Ingestion Backpressure**: Constantly monitors zone sensor capacities. If density surges past $2.0 \text{ pax/m}^2$, the orchestrator flags the zone, transitioning telemetry collection to QoS 1 to guarantee delivery and eliminate packet loss.
 
@@ -135,7 +135,7 @@ The **EdgePulse 2026** command-and-control dashboard has been overhauled to prov
 
 ## 🛡️ Safety, Security & Stability Hardening
 
-For production-grade deployment at World Cup venues, the system has been hardened against edge-case failures, thread contention, and memory exhaustion:
+For production-grade deployment at campus venues, the system has been hardened against edge-case failures, thread contention, and memory exhaustion:
 
 > [!NOTE]
 > **API Validation & Security Shield**

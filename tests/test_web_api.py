@@ -1,7 +1,6 @@
 import pytest
 from fastapi.testclient import TestClient
 from src.orchestrator import SafePlayOrchestrator, create_app
-from src.models import TelemetryPayload, InterventionScript
 import json
 import asyncio
 

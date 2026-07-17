@@ -1,7 +1,7 @@
 import pytest
 import json
 import asyncio
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock
 from src.orchestrator import SafePlayOrchestrator
 
 class MockMQTTMessage:
