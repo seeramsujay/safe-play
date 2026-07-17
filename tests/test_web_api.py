@@ -4,11 +4,23 @@ from src.orchestrator import SafePlayOrchestrator, create_app
 import json
 import asyncio
 
-def test_api_config():
-    orchestrator = SafePlayOrchestrator("config/schema.json", "127.0.0.1", 1883)
-    app = create_app(orchestrator)
-    client = TestClient(app)
-    
+@pytest.fixture
+def orchestrator():
+    """Fixture to provide a clean SafePlayOrchestrator instance for each test."""
+    return SafePlayOrchestrator("config/schema.json", "127.0.0.1", 1883)
+
+@pytest.fixture
+def app(orchestrator):
+    """Fixture to provide the FastAPI application instance."""
+    return create_app(orchestrator)
+
+@pytest.fixture
+def client(app):
+    """Fixture to provide a TestClient instance for calling endpoints."""
+    return TestClient(app)
+
+def test_api_config(client):
+    """Verifies retrieval and update of the orchestrator configuration parameters."""
     # Test GET /api/config
     response = client.get("/api/config")
     assert response.status_code == 200
@@ -23,20 +35,14 @@ def test_api_config():
     assert data["actuation_sla_sec"] == 3.0
     assert data["fallback_density_limit"] == 4.0
 
-def test_api_audit_logs():
-    orchestrator = SafePlayOrchestrator("config/schema.json", "127.0.0.1", 1883)
-    app = create_app(orchestrator)
-    client = TestClient(app)
-    
+def test_api_audit_logs(client):
+    """Verifies that audit trail log lists are accessible via the API."""
     response = client.get("/api/audit-logs")
     assert response.status_code == 200
     assert isinstance(response.json(), list)
 
-def test_api_telemetry():
-    orchestrator = SafePlayOrchestrator("config/schema.json", "127.0.0.1", 1883)
-    app = create_app(orchestrator)
-    client = TestClient(app)
-    
+def test_api_telemetry(client):
+    """Tests successful telemetry submission through the REST endpoint."""
     payload = {
         "zone_id": "Gate_A",
         "crowd_density": 1.2,
@@ -48,11 +54,8 @@ def test_api_telemetry():
     assert response.status_code == 200
     assert response.json()["status"] == "success"
 
-def test_websocket_connection():
-    orchestrator = SafePlayOrchestrator("config/schema.json", "127.0.0.1", 1883)
-    app = create_app(orchestrator)
-    client = TestClient(app)
-    
+def test_websocket_connection(client):
+    """Validates real-time state synchronization via WebSocket broadcast."""
     with client.websocket_connect("/ws") as websocket:
         data = websocket.receive_json()
         assert data["type"] == "state_update"
@@ -61,11 +64,8 @@ def test_websocket_connection():
         assert "system_health" in data
 
 @pytest.mark.anyio
-async def test_operator_veto_action():
-    orchestrator = SafePlayOrchestrator("config/schema.json", "127.0.0.1", 1883)
-    app = create_app(orchestrator)
-    client = TestClient(app)
-    
+async def test_operator_veto_action(orchestrator, client):
+    """Verifies that an operator veto cancels a proposed safety gate intervention."""
     # 1. Trigger elevated density telemetry to start an active intervention script
     payload = {
         "zone_id": "Gate_A",
@@ -91,11 +91,8 @@ async def test_operator_veto_action():
     assert "Gate_A" not in orchestrator.active_scripts
 
 @pytest.mark.anyio
-async def test_operator_approve_action():
-    orchestrator = SafePlayOrchestrator("config/schema.json", "127.0.0.1", 1883)
-    app = create_app(orchestrator)
-    client = TestClient(app)
-    
+async def test_operator_approve_action(orchestrator, client):
+    """Ensures that early approval bypasses the veto SLA window and completes intervention."""
     # 1. Trigger elevated telemetry
     payload = {
         "zone_id": "Gate_A",
@@ -117,9 +114,8 @@ async def test_operator_approve_action():
     assert "Gate_A" not in orchestrator.active_scripts
 
 @pytest.mark.anyio
-async def test_dynamic_qos_escalation_lifecycle():
-    orchestrator = SafePlayOrchestrator("config/schema.json", "127.0.0.1", 1883)
-    
+async def test_dynamic_qos_escalation_lifecycle(orchestrator):
+    """Validates MQTT QoS auto-escalation/de-escalation based on zone density thresholds."""
     # 1. Check initial QoS default (0)
     assert orchestrator.zone_qos.get("Gate_A", 0) == 0
     
@@ -137,18 +133,51 @@ async def test_dynamic_qos_escalation_lifecycle():
     await orchestrator.process_telemetry(raw_payload_low)
     assert orchestrator.zone_qos.get("Gate_A", 0) == 0
 
-def test_signature_verification_stub():
-    orchestrator = SafePlayOrchestrator("config/schema.json", "127.0.0.1", 1883)
+def test_signature_verification_stub(orchestrator):
+    """Tests the verification method for telemetry payload signatures."""
+    # Test invalid inputs
     assert orchestrator.verify_payload_signature(None) is False
     assert orchestrator.verify_payload_signature("") is False
-    assert orchestrator.verify_payload_signature("valid_looking_raw_string") is True
+    
+    # Test valid signed payload
+    payload = {
+        "zone_id": "Gate_A",
+        "crowd_density": 1.2,
+        "flow_rate_in": 20.0,
+        "flow_rate_out": 15.0,
+        "timestamp": 1720875600.0
+    }
+    import hmac
+    import hashlib
+    import json
+    import os
+    
+    serialized = json.dumps(payload, sort_keys=True)
+    secret = os.environ.get("TELEMETRY_SECRET_KEY", "safe-play-telemetry-secret-key-2026").encode("utf-8")
+    sig = hmac.new(secret, serialized.encode("utf-8"), hashlib.sha256).hexdigest()
+    
+    payload_signed = dict(payload)
+    payload_signed["signature"] = sig
+    
+    # Enable strict mode for the test
+    orchestrator.strict_signature_verification = True
+    try:
+        # Verify valid signature passes
+        assert orchestrator.verify_payload_signature(json.dumps(payload_signed)) is True
+        
+        # Verify unsigned payload fails in strict mode
+        assert orchestrator.verify_payload_signature(json.dumps(payload)) is False
+        
+        # Verify tampered signature fails
+        payload_signed_tampered = dict(payload_signed)
+        payload_signed_tampered["signature"] = "invalid_signature"
+        assert orchestrator.verify_payload_signature(json.dumps(payload_signed_tampered)) is False
+    finally:
+        orchestrator.strict_signature_verification = False
 
 @pytest.mark.anyio
-async def test_api_panic_mode():
-    orchestrator = SafePlayOrchestrator("config/schema.json", "127.0.0.1", 1883)
-    app = create_app(orchestrator)
-    client = TestClient(app)
-    
+async def test_api_panic_mode(orchestrator, client):
+    """Tests triggering and clearing of the system-wide emergency panic mode."""
     # 1. Trigger elevated density telemetry to start an active intervention
     payload = {
         "zone_id": "Gate_A",
@@ -183,9 +212,9 @@ async def test_api_panic_mode():
     assert orchestrator.panic_mode is False
 
 @pytest.mark.anyio
-async def test_dynamic_qos_subscription_calls():
+async def test_dynamic_qos_subscription_calls(orchestrator):
+    """Tests that MQTT subscriptions are updated automatically when QoS changes."""
     from unittest.mock import MagicMock
-    orchestrator = SafePlayOrchestrator("config/schema.json", "127.0.0.1", 1883)
     mock_mqtt_client = MagicMock()
     orchestrator.mqtt_client = mock_mqtt_client
     
@@ -216,62 +245,42 @@ async def test_dynamic_qos_subscription_calls():
     await orchestrator.process_telemetry(json.dumps(payload_low))
     mock_mqtt_client.unsubscribe.assert_called_once_with("stadium/Gate_A/telemetry")
 
-def test_api_veto_invalid_zone():
-    orchestrator = SafePlayOrchestrator("config/schema.json", "127.0.0.1", 1883)
-    app = create_app(orchestrator)
-    client = TestClient(app)
-    
-    # Empty body → Pydantic rejects with 422 Unprocessable Entity
+def test_api_veto_invalid_zone(client):
+    """Validates that empty/invalid veto payloads are rejected with 422 errors."""
     response = client.post("/api/veto", json={})
     assert response.status_code == 422
-    # Pydantic error detail should mention 'zone_id'
     assert any("zone_id" in str(e) for e in response.json()["detail"])
 
-def test_api_approve_invalid_zone():
-    orchestrator = SafePlayOrchestrator("config/schema.json", "127.0.0.1", 1883)
-    app = create_app(orchestrator)
-    client = TestClient(app)
-    
-    # Empty body → Pydantic rejects with 422 Unprocessable Entity
+def test_api_approve_invalid_zone(client):
+    """Validates that empty/invalid early approval payloads are rejected with 422 errors."""
     response = client.post("/api/approve", json={})
     assert response.status_code == 422
     assert any("zone_id" in str(e) for e in response.json()["detail"])
 
-def test_api_telemetry_malformed():
-    orchestrator = SafePlayOrchestrator("config/schema.json", "127.0.0.1", 1883)
-    app = create_app(orchestrator)
-    client = TestClient(app)
-    
-    # Missing required timestamp: Pydantic now rejects this with 422
+def test_api_telemetry_malformed(client):
+    """Tests that missing mandatory parameters in telemetry are rejected with 422 errors."""
     payload = {
         "zone_id": "Gate_A",
         "crowd_density": 1.2,
         "flow_rate_in": 20.0,
         "flow_rate_out": 15.0
-        # timestamp intentionally omitted
     }
     response = client.post("/api/telemetry", json=payload)
     assert response.status_code == 422
     assert any("timestamp" in str(e) for e in response.json()["detail"])
 
-def test_api_config_invalid_data():
-    orchestrator = SafePlayOrchestrator("config/schema.json", "127.0.0.1", 1883)
-    app = create_app(orchestrator)
-    client = TestClient(app)
-    
-    # Non-numeric actuation_sla_sec → Pydantic rejects with 422
+def test_api_config_invalid_data(client):
+    """Verifies validation boundaries for configuration updates."""
+    # Non-numeric actuation_sla_sec
     response = client.post("/api/config", json={"actuation_sla_sec": "not-a-number"})
     assert response.status_code == 422
     
-    # Out-of-range value (below ge=2.0 minimum) → also rejected
+    # Out-of-bounds actuation_sla_sec
     response = client.post("/api/config", json={"actuation_sla_sec": 0.5})
     assert response.status_code == 422
 
-def test_api_copilot():
-    orchestrator = SafePlayOrchestrator("config/schema.json", "127.0.0.1", 1883)
-    app = create_app(orchestrator)
-    client = TestClient(app)
-    
+def test_api_copilot(client):
+    """Tests interaction with the GenAI-powered Stadium operations copilot endpoint."""
     # 1. Ask a question about status
     response = client.post("/api/copilot", json={"prompt": "Is the system healthy?"})
     assert response.status_code == 200
@@ -285,6 +294,12 @@ def test_api_copilot():
     response = client.post("/api/copilot", json={"prompt": ""})
     assert response.status_code == 422
 
+    # 3. Accessibility query
+    response = client.post("/api/copilot", json={"prompt": "Where is the wheelchair ramp?"})
+    assert response.status_code == 200
+    assert "Accessibility Protocol" in response.json()["answer"]
 
-
-
+    # 4. Transit query
+    response = client.post("/api/copilot", json={"prompt": "Is public transit coordinated?"})
+    assert response.status_code == 200
+    assert "Transit Coordination" in response.json()["answer"]

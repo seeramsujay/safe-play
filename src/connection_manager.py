@@ -48,7 +48,8 @@ class ConnectionManager:
         """
         async def send(conn: WebSocket) -> None:
             try:
-                await conn.send_json(message)
+                # Prevent hung or slow client connections from delaying the rest of the operators
+                await asyncio.wait_for(conn.send_json(message), timeout=1.0)
             except Exception:
                 # Silently ignore write failures resulting from client-side network disconnects.
                 # These will be cleaned up in the websocket_endpoint disconnect block.

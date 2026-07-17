@@ -38,19 +38,19 @@ drive.mount('/content/drive')
 
 5. Compile the Cython-optimized C extension routing module locally to ensure sub-millisecond computations:
 ```bash
-.sp/bin/python setup.py build_ext --inplace
+uv run python setup.py build_ext --inplace
 ```
 
 6. Start the async Python orchestrator middleware script inside the virtual environment:
 ```bash
-.sp/bin/python src/orchestrator.py
+uv run python -m src.orchestrator
 ```
 
 7. Simulate an anomalous telemetry payload ($>3.0 \text{ people/m}^2$) via a lightweight local curl request or MQTT pub call to trigger the Human-In-The-Loop (HITL) 2-second SLA timer window.
 
 8. Verify the local validation suite runs and passes successfully:
 ```bash
-.sp/bin/pytest
+uv run pytest
 ```
 
 ## Output
@@ -59,4 +59,4 @@ A successful execution yields an append-only audit trail log entry containing th
 ## Failure modes
 * **VRAM Contention / Token Crawl**: Llama-server response times drop below the sub-second threshold. Fix: Reduce the `--parallel` slots down to `2` and ensure `--no-kv-unified` is passed to guarantee unpageable context per slot.
 * **JSON Schema Discrepancy**: The Pydantic validator throws a validation exception on client ingestion. Fix: Verify `additionalProperties: False` is explicitly declared in the JSON schema object compiled on Colab.
-* **Missing Cython Compiled Modules**: Cython routing fallback flags system status as using unoptimized modules. Fix: Compile the module with the `.sp` environment python before starting the dashboard.
+* **Missing Cython Compiled Modules**: Cython routing fallback flags system status as using unoptimized modules. Fix: Compile the module with `uv run python` before starting the dashboard.

@@ -1,6 +1,6 @@
 # ⚡ safe-play
 
-> Decentralized edge-intelligence mesh for smart campus crowd safety and automated incident triage. Designed for Smart Cities micro-campus event egress and venue operations (Theme 8: AI for Smart Cities - Campus as Micro-City).
+> Decentralized edge-intelligence mesh for stadium crowd safety and automated incident triage. Designed for FIFA World Cup 2026 event egress and venue operations.
 
 <p align="center">
   <img src="https://img.shields.io/badge/FastAPI-009688?style=for-the-badge&logo=fastapi&logoColor=white" alt="FastAPI" />
@@ -22,7 +22,7 @@
 
 ![EdgePulse 2026 Tactical Control Console](docs/dashboard_mockup.png)
 
-The command-and-control dashboard features a high-fidelity, flat 2D top-down tactical layout of the venue. Campus zones (Auditorium, Arena, Concourse) are rendered as concentric capsule graphics, and the central court/pitch is drawn with precise, symmetrical 2D markings. Interactive LiDAR nodes (`Gate A`, `Gate B`, `Corridor 1`, `Corridor 2`, `Main Concourse`) and flow-direction arrows are layered on top with real-time hazard status colors.
+The command-and-control dashboard features a high-fidelity, flat 2D top-down tactical layout of the venue. Stadium zones (Auditorium, Arena, Concourse) are rendered as concentric capsule graphics, and the central court/pitch is drawn with precise, symmetrical 2D markings. Interactive LiDAR nodes (`Gate A`, `Gate B`, `Corridor 1`, `Corridor 2`, `Main Concourse`) and flow-direction arrows are layered on top with real-time hazard status colors.
 
 ---
 
@@ -33,13 +33,13 @@ The command-and-control dashboard features a high-fidelity, flat 2D top-down tac
 
 ## 🎯 Challenge Overview & Submission Criteria
 
-### 1. Chosen Vertical: Theme 8: AI for Smart Cities (Campus as Micro-City)
-Tailored specifically for Smart Campus Event Egress & Crowd Safety Management, **safe-play** coordinates high-stakes, low-latency crowd operations. The system monitors campus gates, auditorium corridors, and main concourses in real-time, instantly triaging density surges and automatically calculating egress routing to prevent bottlenecks or dangerous crowd crushes.
+### 1. Chosen Vertical: FIFA World Cup 2026 Stadium Operations & Egress
+Tailored specifically for Stadium Event Egress & Crowd Safety Management, **safe-play** coordinates high-stakes, low-latency crowd operations. The system monitors stadium gates, corridors, and main concourses in real-time, instantly triaging density surges and automatically calculating egress routing to prevent bottlenecks or dangerous crowd crushes.
 
 ### 2. Core Intelligent Framework
 *   **Hybrid Cloud/Edge Inference**: Supports dynamic selection between Google Gemini 1.5 Flash (for robust cloud-based constraint-enforced JSON validation when `GEMINI_API_KEY` is present) and local `llama-server` running Qwen-2.5-7B constrained by GBNF grammar.
 *   **Grammar-Constrained SLM Inference**: Constrains local model logits using custom GBNF grammar files. This guarantees 100% deterministic JSON schemas matching structural API requirements under a strict **100ms Time-to-First-Token (TTFT)** constraint.
-*   **Directed Spatial Graph Matrix**: Formulates campus routing layouts as a directed spatial graph $G = (V, E)$ in a flat 2D projection. Changes in edge flow rates and node densities dynamically solve for real-time alternative egress targets (e.g., redirecting Gate A flow to Corridor 2).
+*   **Directed Spatial Graph Matrix**: Formulates stadium routing layouts as a directed spatial graph $G = (V, E)$ in a flat 2D projection. Changes in edge flow rates and node densities dynamically solve for real-time alternative egress targets (e.g., redirecting Gate A flow to Corridor 2).
 *   **Human-in-the-Loop Operator SLA Gate**: Leverages an asynchronous 2-second veto window. If an incident requires gate locking or emergency signage changes, the operator is presented with a countdown. They can override (Veto), immediately execute (Approve Early), or let the timer expire to run the automated safety intervention fallback script.
 *   **Dynamic QoS Ingestion Backpressure**: Constantly monitors zone sensor capacities. If density surges past $2.0 \text{ pax/m}^2$, the orchestrator flags the zone, transitioning telemetry collection to QoS 1 to guarantee delivery and eliminate packet loss.
 
@@ -116,11 +116,13 @@ graph TD
 ## 🚀 Performance & Accessibility
 
 ### ⚡ Cython-Optimized Spatial Routing
-To achieve extreme sub-millisecond route calculations, the critical spatial graph traversal logic has been compiled into a C extension module using Cython (`src/routing.pyx`). This ensures the alternative route calculation algorithm completes instantly under high loads, keeping operations well within the 2-second SLA window.
+To achieve extreme sub-millisecond route calculations, the critical spatial graph traversal logic has been compiled into a C extension module using Cython (`src/routing.pyx`). This includes:
+- **`get_alternative_route_cy`**: Instantly determines the adjacent neighbor zone exhibiting the highest spare capacity for immediate crowd rerouting.
+- **`find_optimal_path_cy`**: Computes multi-hop egress paths from any crowded vomitory/corridor to designated exit zones (e.g., public transit hubs, ADA gates) using a queue-based BFS search.
 
 To compile the Cython module locally:
 ```bash
-.sp/bin/python setup.py build_ext --inplace
+uv run python setup.py build_ext --inplace
 ```
 The application will automatically detect and use the `.so` compiled module, falling back to a pure-Python implementation only if the module is uncompiled.
 
@@ -135,25 +137,26 @@ The **EdgePulse 2026** command-and-control dashboard has been overhauled to prov
 
 ## 🛡️ Safety, Security & Stability Hardening
 
-For production-grade deployment at campus venues, the system has been hardened against edge-case failures, thread contention, and memory exhaustion:
+For production-grade deployment at stadium venues, the system has been cryptographically hardened and optimized against edge-case failures, thread contention, and memory exhaustion:
 
 > [!NOTE]
-> **API Validation & Security Shield**
-> To block execution-level injection and ensure absolute data integrity, all entry-point endpoints are validated using strict **Pydantic V2 schemas**:
-> *   `TelemetryRequest`: Enforces strict positive numeric bounds on densities (`0.0 <= density <= 20.0`), input/output flow rates, and epoch timestamp sanity.
-> *   `ConfigUpdateRequest`: Guards threshold modifications, clamping human-in-the-loop validation times (`2.0s <= SLA <= 300.0s`) and density limits (`0.5 <= density <= 10.0`) to prevent operational lockouts.
-> *   `ZoneActionRequest`: Restricts physical zones to length-validated alphanumeric strings. Invalid or missing properties automatically raise `422 Unprocessable Entity` responses.
+> **Cryptographic Telemetry Signature Validation (HMAC-SHA256)**
+> *   **Edge Telemetry Verification**: Incoming telemetry requests are validated cryptographically using HMAC-SHA256. Payloads can optionally be signed with `TELEMETRY_SECRET_KEY` and verified on-the-fly.
+> *   **Strict Mode Enforcement**: If the `STRICT_SIGNATURE_VERIFICATION` environment variable is set to `true`, the system immediately rejects unsigned or incorrectly signed telemetry, guarding against venue telemetry spoofing.
+> *   **API Verification Shield**: To block injection attacks and ensure structural integrity, entry-point endpoints are validated using strict **Pydantic V2 schemas** (`TelemetryRequest`, `ConfigUpdateRequest`, `ZoneActionRequest`). Input `zone_id` parameters are validated against the active spatial graph nodes, raising `404 Not Found` errors for unrecognized zone IDs.
 
 > [!IMPORTANT]
-> **Thread-Safe Event Handlers**
-> The orchestrator isolates the network-level MQTT ingestion callbacks from the asynchronous event loop thread. Veto signals are dispatched thread-safely back to the main event loop using `asyncio.get_running_loop()` paired with thread-safe coroutine submission, falling back gracefully if called before initialization.
+> **Cryptographic Append-Only Ledger & Tamper Detection**
+> *   **SHA-256 Hash Chaining**: Every log entry in the audit trail is cryptographically linked to the previous entry using a SHA-256 hash (acting as a tamper-evident ledger).
+> *   **Integrity Verification Engine**: A validation script calculates hashes sequentially to verify that the chain is unbroken and untampered. A new endpoint `/api/audit-logs/verify` allows operators or automated systems to trigger log verification on-demand.
+> *   **O(1) Memory Audit Writing**: Reading the last log entry's hash utilizes an optimized backward file seek method rather than reading the entire file, keeping log writes at constant $O(1)$ time and memory complexity even for very large files.
 
 > [!WARNING]
-> **Resource Leak & Memory Limits**
-> To survive indefinite runs under high-frequency telemetry streams:
-> *   **Rolling Audit Log Window**: Log reads dynamically enforce a sliding memory-bounded window capped at `500` entries. This prevents the server from experiencing Out-Of-Memory (OOM) failures when loading large historical trace streams.
-> *   **HTTP Client Connection Pool**: The async HTTP client is configured with strict socket reuse and connection pool limits (`max_connections=10`, `max_keepalive_connections=5`) to prevent socket descriptor exhaustion during dense inference cycles.
-> *   **Safe Directory Scaffolding**: Folder creation scripts resolve directory paths dynamically using local path expansion, preventing system startup failures on empty or non-absolute folder paths.
+> **Resource Isolation & Memory Limits**
+> *   **WebSocket Slow-Client Protection**: Real-time broadcasts to browser dashboard consoles are wrapped with a `1.0s` timeout limit (`asyncio.wait_for`). Slow or hung browser connections can no longer block telemetry delivery to other operator stations.
+> *   **HTTP Client Connection Pool**: The asynchronous HTTP client is configured with strict socket reuse and connection pool limits (`max_connections=10`, `max_keepalive_connections=5`) shared across the inference loop and GenAI Copilot query loops to prevent socket descriptor exhaustion.
+> *   **Rolling Audit Log Window**: Log reads dynamically enforce a sliding memory-bounded window capped at `500` entries, avoiding Out-Of-Memory (OOM) failures under dense logging loads.
+> *   **Thread-Safe Event Handlers**: Storing the main thread loop context directly on the orchestrator allows network callbacks (like MQTT client thread updates) to safely submit veto/approval events to the async loop without causing thread contention.
 
 ---
 

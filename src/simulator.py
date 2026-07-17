@@ -120,6 +120,15 @@ async def simulation_loop(orchestrator) -> None:
                     "timestamp": time.time()
                 }
                 
+                # Sign simulated telemetry
+                import hmac
+                import hashlib
+                import os
+                serialized = json.dumps(payload, sort_keys=True)
+                secret = os.environ.get("TELEMETRY_SECRET_KEY", "safe-play-telemetry-secret-key-2026").encode("utf-8")
+                signature = hmac.new(secret, serialized.encode("utf-8"), hashlib.sha256).hexdigest()
+                payload["signature"] = signature
+                
                 # Push the simulated payload into the queue to run through the entire logic pipe
                 orchestrator.telemetry_queue.put_nowait(json.dumps(payload))
                 

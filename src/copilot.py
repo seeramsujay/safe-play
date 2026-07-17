@@ -127,20 +127,19 @@ async def query_copilot(orchestrator, request: CopilotRequest) -> CopilotRespons
         }
         
         try:
-            async with httpx.AsyncClient() as client:
-                response = await client.post(url, json=req_payload, timeout=5.0)
-                if response.status_code == 200:
-                    resp_json = response.json()
-                    candidates = resp_json.get("candidates", [])
-                    if candidates:
-                        text_content = candidates[0].get("content", {}).get("parts", [{}])[0].get("text", "").strip()
-                        parsed = json.loads(text_content)
-                        return CopilotResponse(
-                            answer=parsed.get("answer", "No answer field found in response."),
-                            timestamp=time.time(),
-                            active_incident_count=active_incidents,
-                            hazard_summary=hazard_summary
-                        )
+            response = await orchestrator.http_client.post(url, json=req_payload, timeout=5.0)
+            if response.status_code == 200:
+                resp_json = response.json()
+                candidates = resp_json.get("candidates", [])
+                if candidates:
+                    text_content = candidates[0].get("content", {}).get("parts", [{}])[0].get("text", "").strip()
+                    parsed = json.loads(text_content)
+                    return CopilotResponse(
+                        answer=parsed.get("answer", "No answer field found in response."),
+                        timestamp=time.time(),
+                        active_incident_count=active_incidents,
+                        hazard_summary=hazard_summary
+                    )
         except Exception as e:
             logger.warning(f"Copilot Gemini API query failed, falling back to local heuristic: {e}")
 
@@ -151,14 +150,14 @@ async def query_copilot(orchestrator, request: CopilotRequest) -> CopilotRespons
     if any(k in query_lower for k in ["ada", "wheelchair", "stroller", "accessibility", "disabled", "ramp"]):
         answer = (
             "Accessibility Protocol: Under current World Cup stadium configurations, "
-            "Gate C (North Portal) and the Accessibility Ramp North are designated as ADA egress routes. "
-            "If Gate A (East) or Gate B (West) experience congestion, dynamic signage will route ADA guests to Gate C. "
-            f"Current state: Gate C density is {orchestrator.graph.nodes['Gate_C_North_ADA'].current_density:.1f} people/m^2 (nominal)."
+            "Gate C and the Accessibility Ramp are designated as ADA egress routes. "
+            "If Gate A or Gate B experience congestion, dynamic signage will route ADA guests to Gate C. "
+            f"Current state: Gate C density is {orchestrator.graph.nodes['Gate_C'].current_density:.1f} people/m^2 (nominal)."
         )
     # Transit / Shuttle / Metro queries
     elif any(k in query_lower for k in ["transit", "metro", "bus", "shuttle", "transport", "train"]):
         outbound_zones = []
-        for zone in ["Transit_Hub_Metro", "Transit_Hub_Shuttle_Bus"]:
+        for zone in ["Transit_Hub", "Transit_Shuttle"]:
             outbound_zones.append(f"{zone} (Density: {orchestrator.graph.nodes[zone].current_density:.1f}/m^2)")
         
         answer = (

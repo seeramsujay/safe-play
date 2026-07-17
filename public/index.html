@@ -378,7 +378,7 @@
                     <p class="font-semibold text-sm truncate">VOC Commander</p>
                     <p
                         class="font-mono text-xs text-td-on-surface-variant truncate">
-                        Campus Control</p>
+                        Stadium Control</p>
                 </div>
             </div>
         </div>
@@ -474,7 +474,7 @@
             </button>
             <div
                 class="flex justify-around text-xs text-td-on-surface-variant pt-xs">
-                <span>Smart Campus 2026</span>
+                <span>FIFA World Cup 2026</span>
                 <span class="font-semibold text-primary">v0.1.0</span>
             </div>
         </div>
@@ -561,7 +561,7 @@
                                 <div class="flex items-center gap-xs">
                                     <span class="material-symbols-outlined text-primary">stadium</span>
                                     <div>
-                                        <h2 class="text-headline-sm font-bold uppercase tracking-wider">Campus Central Arena:
+                                        <h2 class="text-headline-sm font-bold uppercase tracking-wider">Stadium Bowl & Portals:
                                             Real-Time Crowd Density</h2>
                                         <p
                                             class="text-[10px] text-td-on-surface-variant font-mono uppercase tracking-wider">
@@ -2120,7 +2120,7 @@
         </div>
         <p class="text-xs leading-relaxed text-td-on-surface/90 dark:text-td-on-surface/90 light:text-el-on-surface/90"
             id="onboardingDescription">
-            This is the Tactical Command Center for Smart Campus event crowd safety. Let's take a quick 1-minute
+            This is the Tactical Command Center for FIFA World Cup 2026 stadium crowd safety. Let's take a quick 1-minute
             tour to get you familiar with the operations dashboard.
         </p>
         <div class="flex justify-between items-center mt-sm pt-xs border-t border-td-outline/30">
@@ -2321,7 +2321,7 @@
         const onboardingSteps = [
             {
                 title: "Welcome to EdgePulse",
-                description: "This is the Tactical Command Center for Smart Campus event crowd safety (Theme 8: AI for Smart Cities). Let's take a quick 1-minute tour to get you familiar with the operations dashboard.",
+                description: "This is the Tactical Command Center for FIFA World Cup 2026 stadium crowd safety & venue egress. Let's take a quick 1-minute tour to get you familiar with the operations dashboard.",
                 target: null,
                 placement: "center"
             },
@@ -3492,13 +3492,13 @@
 
             localState.nodes.forEach(node => {
                 // Compute mockup instruction
-                let signText = "PLEASE KEEP MOVING - CAMPUS MAP AVAILABLE";
+                let signText = "PLEASE KEEP MOVING - STADIUM MAP AVAILABLE";
                 let actionColor = "text-success border-success/30 bg-success/5";
                 let gateAction = "OPEN (Egress Route)";
                 let gateBadge = "bg-success-bg text-success border border-success/30";
 
                 if (localState.panic_mode) {
-                    signText = "EMERGENCY SHUTDOWN ACTIVE: EVACUATE CAMPUS IMMEDIATELY";
+                    signText = "EMERGENCY SHUTDOWN ACTIVE: EVACUATE STADIUM IMMEDIATELY";
                     actionColor = "text-critical border-critical/30 bg-critical/5 pulse-critical";
                     gateAction = "OPEN (Panic Release)";
                     gateBadge = "bg-critical-bg text-critical border border-critical/30 animate-pulse";
@@ -3760,7 +3760,7 @@
                     .then(res => res.json())
                     .then(data => {
                         console.log("Panic shutdown response:", data);
-                        triggerGlobalAlert("EMERGENCY SHUTDOWN ACTIVATED: ALL CAMPUS PERIMETER GATES RELEASED FOR EGRESS");
+                        triggerGlobalAlert("EMERGENCY SHUTDOWN ACTIVATED: ALL STADIUM PERIMETER GATES RELEASED FOR EGRESS");
                     })
                     .catch(err => console.error("Panic activation failed:", err));
             }

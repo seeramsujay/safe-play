@@ -11,7 +11,7 @@ import json
 import time
 from typing import Optional
 from collections import deque
-from fastapi import FastAPI, WebSocket, WebSocketDisconnect
+from fastapi import FastAPI, WebSocket, WebSocketDisconnect, HTTPException
 from fastapi.responses import HTMLResponse
 from pydantic import BaseModel, Field
 from src.config import AUDIT_LOG_FILE, logger
@@ -60,6 +60,10 @@ class TelemetryRequest(BaseModel):
         gt=0.0, 
         description="Inflow timestamp"
     )
+    signature: Optional[str] = Field(
+        None, 
+        description="Optional HMAC SHA-256 signature of the telemetry payload"
+    )
 
 class ConfigUpdateRequest(BaseModel):
     """Schema for updating the dynamic orchestration limits and SLA parameters."""
@@ -88,8 +92,8 @@ def create_app(orchestrator) -> FastAPI:
         A configured FastAPI application.
     """
     app = FastAPI(
-        title="EdgePulse 2026 - Smart Campus Crowd Safety & Egress Orchestrator",
-        description="Real-time crowd safety orchestration and incident egress routing for smart campus events.",
+        title="EdgePulse 2026 - FIFA World Cup Crowd Safety & Egress Orchestrator",
+        description="Real-time crowd safety orchestration and incident egress routing for FIFA World Cup 2026 stadium events.",
         version="0.1.0",
     )
 
@@ -130,12 +134,16 @@ def create_app(orchestrator) -> FastAPI:
     @app.post("/api/veto")
     async def post_veto(payload: ZoneActionRequest):
         """Allows operators to veto/cancel a proposed safety gate intervention."""
+        if payload.zone_id not in orchestrator.graph.nodes:
+            raise HTTPException(status_code=404, detail=f"Zone '{payload.zone_id}' not found in spatial graph")
         await orchestrator.reject_intervention_veto(payload.zone_id)
         return {"status": "success", "zone_id": payload.zone_id}
 
     @app.post("/api/approve")
     async def post_approve(payload: ZoneActionRequest):
         """Allows operators to early-approve a proposed intervention, bypassing the SLA window."""
+        if payload.zone_id not in orchestrator.graph.nodes:
+            raise HTTPException(status_code=404, detail=f"Zone '{payload.zone_id}' not found in spatial graph")
         await orchestrator.approve_intervention_early(payload.zone_id)
         return {"status": "success", "zone_id": payload.zone_id}
 
@@ -157,6 +165,8 @@ def create_app(orchestrator) -> FastAPI:
         Accepts sensor telemetry payloads over HTTP. Ingests the data into the main
         processing queue and updates the manual input timestamp.
         """
+        if payload.zone_id not in orchestrator.graph.nodes:
+            raise HTTPException(status_code=404, detail=f"Zone '{payload.zone_id}' not found in spatial graph")
         orchestrator.last_manual_telemetry_time = time.time()
         orchestrator.telemetry_queue.put_nowait(payload.model_dump_json())
         return {"status": "success", "message": "Telemetry queued"}
@@ -191,6 +201,13 @@ def create_app(orchestrator) -> FastAPI:
         
         # Convert deque collection to standard list and slice last limit entries
         return list(logs)[-limit:]
+
+    @app.get("/api/audit-logs/verify")
+    async def get_verify_audit_logs():
+        """Verifies the cryptographic integrity of the append-only audit trail."""
+        from src.audit import verify_audit_trail
+        is_valid = verify_audit_trail()
+        return {"status": "success", "verified": is_valid}
 
     @app.get("/api/config")
     async def get_config():

@@ -16,7 +16,7 @@ logger = logging.getLogger(__name__)
 # Attempt to load Cython-accelerated routing function for high-frequency matrix operations.
 # Falls back gracefully to pure Python implementations if the compiled .so/.pyd file is missing.
 try:
-    from src.routing import get_alternative_route_cy
+    from src.routing import get_alternative_route_cy, find_optimal_path_cy
     HAS_CYTHON = True
 except ImportError:
     HAS_CYTHON = False
@@ -64,6 +64,10 @@ class TelemetryPayload(BaseModel):
         ..., 
         gt=0.0, 
         description="Epoch timestamp of telemetry collection"
+    )
+    signature: Optional[str] = Field(
+        None,
+        description="Optional HMAC SHA-256 signature of the telemetry payload"
     )
 
 
@@ -313,6 +317,48 @@ class SpatialGraph:
         if candidates:
             return max(candidates, key=lambda x: x[1])[0]
             
+        return None
+
+    def find_optimal_egress_path(self, source_zone: str, target_zones: List[str]) -> Optional[List[str]]:
+        """
+        Calculates a multi-hop egress route from a source zone to a set of target exit zones.
+        Prefers the compiled Cython-accelerated algorithm, falling back to a pure Python BFS.
+        
+        Args:
+            source_zone: The key identifier of the starting node.
+            target_zones: A list of candidate destination exit zone IDs.
+            
+        Returns:
+            A list of zone IDs representing the path, or None if no path with spare capacity exists.
+        """
+        if HAS_CYTHON:
+            try:
+                return find_optimal_path_cy(self.nodes, self.adjacency, source_zone, target_zones)
+            except Exception as exc:
+                logger.warning("Cython optimal path search failed: %s", exc)
+                
+        # Pure Python fallback
+        if source_zone is None or target_zones is None:
+            return None
+        if source_zone in target_zones:
+            return [source_zone]
+            
+        queue = [[source_zone]]
+        visited = {source_zone}
+        while queue:
+            path = queue.pop(0)
+            current_zone = path[len(path) - 1]
+            if current_zone in target_zones:
+                return path
+            if current_zone in self.adjacency:
+                for neighbor in self.adjacency[current_zone]:
+                    if neighbor not in visited:
+                        node_obj = self.nodes.get(neighbor)
+                        if node_obj and node_obj.current_density < node_obj.capacity:
+                            visited.add(neighbor)
+                            new_path = list(path)
+                            new_path.append(neighbor)
+                            queue.append(new_path)
         return None
 
 
