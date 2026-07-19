@@ -1,15 +1,24 @@
 """
 Extensive integration, race-condition, and edge-case test suite for SafePlay.
 
-This module validates:
-1. Concurrency telemetry bursts and queue handling safety.
-2. Race condition execution between concurrent Operator veto and early approval.
-3. Complex spatial graph routing topologies (cycles, saturation, isolated nodes).
-4. Dynamic configuration changes during active intervention windows.
-5. Rapid, idempotent panic mode toggles.
-6. WebSocket broadcast connection failure resilience.
-7. Telemetry schema boundary conditions (limits, zero-values).
+Role:
+    Validates:
+    1. Concurrency telemetry bursts and queue handling safety.
+    2. Race condition execution between concurrent Operator veto and early approval.
+    3. Complex spatial graph routing topologies (cycles, saturation, isolated nodes).
+    4. Dynamic configuration changes during active intervention windows.
+    5. Rapid, idempotent panic mode toggles.
+    6. WebSocket broadcast connection failure resilience.
+    7. Telemetry schema boundary conditions (limits, zero-values).
+
+Ecosystem Positioning:
+    - Below: pytest test framework and FastAPI testing libraries.
+    - Above: Exercises edge conditions and race states across core files:
+      - `src/orchestrator.py` (telemetry queue concurrency, panic loop state).
+      - `src/connection_manager.py` (broadcasting under disconnection exceptions).
+      - `src/models.py` and `src/web_api.py` (input validation schema constraints).
 """
+
 
 import json
 import asyncio

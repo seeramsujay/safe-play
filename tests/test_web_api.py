@@ -1,3 +1,17 @@
+"""
+Unit and integration tests for the SafePlay FastAPI Web API layer.
+
+Role:
+    Exercises all HTTP REST routes and WebSocket flows, including config retrieval,
+    telemetry POST ingestion, operator veto/approval endpoints, copilot interaction,
+    and cryptographic audit ledger checks.
+
+Ecosystem Positioning:
+    - Below: pytest test library and FastAPI TestClient.
+    - Above: Validates request validation, route handling, and exceptions mapped
+      inside `src/web_api.py`, translating actions down to `src/orchestrator.py`.
+"""
+
 import pytest
 from fastapi.testclient import TestClient
 from src.orchestrator import SafePlayOrchestrator, create_app
@@ -17,7 +31,8 @@ def app(orchestrator):
 @pytest.fixture
 def client(app):
     """Fixture to provide a TestClient instance for calling endpoints."""
-    return TestClient(app)
+    with TestClient(app) as client:
+        yield client
 
 def test_api_config(client):
     """Verifies retrieval and update of the orchestrator configuration parameters."""
@@ -281,14 +296,24 @@ def test_api_config_invalid_data(client):
 
 def test_api_copilot(client):
     """Tests interaction with the GenAI-powered Stadium operations copilot endpoint."""
-    # 1. Ask a question about status
+    # 1. Ask a question about status using standard 'prompt'
     response = client.post("/api/copilot", json={"prompt": "Is the system healthy?"})
     assert response.status_code == 200
     data = response.json()
     assert "answer" in data
+    assert "response" in data
+    assert data["answer"] == data["response"]
+    assert "source" in data
     assert len(data["answer"]) > 0
     assert "hazard_summary" in data
     assert "active_incident_count" in data
+
+    # Test compatibility with 'query' key in request payload
+    response_query = client.post("/api/copilot", json={"query": "Is the system healthy?"})
+    assert response_query.status_code == 200
+    data_query = response_query.json()
+    assert data_query["answer"] == data_query["response"]
+    assert data_query["source"] in ("gemini", "fallback")
 
     # 2. Empty prompt
     response = client.post("/api/copilot", json={"prompt": ""})
@@ -332,3 +357,36 @@ async def test_process_telemetry_invalid_zone(orchestrator):
     }
     await orchestrator.process_telemetry(json.dumps(payload))
     assert "Non_Existent_Zone" not in orchestrator.graph.nodes
+
+def test_api_verify_audit_logs(client, tmp_path):
+    """Verifies the cryptographic integrity endpoint /api/audit-logs/verify."""
+    from unittest.mock import patch
+    temp_log = tmp_path / "temp_audit.jsonl"
+    with patch("src.audit.AUDIT_LOG_FILE", str(temp_log)):
+        with patch("src.config.AUDIT_LOG_FILE", str(temp_log)):
+            # 1. Verification of non-existent/empty log
+            response = client.get("/api/audit-logs/verify")
+            assert response.status_code == 200
+            assert response.json()["verified"] is True
+            
+            # 2. Write one valid audit log entry
+            from src.audit import write_audit_log
+            write_audit_log("test_event", {"zone_id": "Gate_A", "detail": "Init test"})
+            
+            response = client.get("/api/audit-logs/verify")
+            assert response.status_code == 200
+            assert response.json()["verified"] is True
+            
+            # 3. Tamper with the log file
+            with open(temp_log, "r") as f:
+                content = f.read()
+            # Tamper by changing a character in the json
+            tampered_content = content.replace("test_event", "tampered_event")
+            with open(temp_log, "w") as f:
+                f.write(tampered_content)
+                
+            # Verification should now fail
+            response = client.get("/api/audit-logs/verify")
+            assert response.status_code == 200
+            assert response.json()["verified"] is False
+

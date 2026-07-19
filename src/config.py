@@ -1,10 +1,21 @@
 """
 Configuration and Initialization Settings for SafePlay.
 
-This module initializes structured logging for the application, parses local
-configurations from a `.env` file into process environment variables, and exposes
-essential system constants used across other orchestrator modules.
+Role:
+    Initializes system-wide logging, parses local environment variables from `.env`
+    into process environments (`os.environ`), and defines central configuration constants
+    governing system timeouts, fallback triggers, and file paths.
+
+Ecosystem Positioning:
+    - Root-level configuration provider.
+    - Exported constants (such as ACTUATION_SLA_SEC, FALLBACK_DENSITY_LIMIT, and AUDIT_LOG_FILE)
+      are imported by:
+        - `src/orchestrator.py`: to govern operator veto durations and safety density boundaries.
+        - `src/audit.py`: to locate the append-only JSONL cryptographic ledger path.
+        - `src/web_api.py`: to manage server endpoints, CORS permissions, and override configs.
+        - `src/inference.py`: to set timeout boundaries on LLM engine requests.
 """
+
 
 import os
 import logging

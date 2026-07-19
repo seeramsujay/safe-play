@@ -1,3 +1,17 @@
+"""
+Unit tests for SafePlay MQTT message callbacks and network connection events.
+
+Role:
+    Verifies that the paho-mqtt connection state updates and message callbacks dispatch
+    events (telemetry messages, operator veto JSON payloads, disconnected status)
+    thread-safely to the running asyncio event loop.
+
+Ecosystem Positioning:
+    - Below: pytest test environment and standard mock utilities.
+    - Above: Validates callback boundaries defined in `src/mqtt_handler.py`
+      running inside the `SafePlayOrchestrator` context.
+"""
+
 import pytest
 import json
 import asyncio

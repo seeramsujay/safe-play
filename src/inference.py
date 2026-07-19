@@ -1,19 +1,33 @@
 """
 Inference Module for SafePlay Crowd Safety Orchestrator.
 
-This module provides functions to query either remote Google Gemini APIs (with native
-JSON Schema output enforcement) or a local llama-server completions endpoint (with GBNF grammar
-enforcement). If the model inference fails, times out, or becomes unavailable, it falls back to
-a local, deterministic rule-based safety recommendation.
+Role:
+    Queries remote Google Gemini APIs (enforcing structural JSON schema constraints)
+    or a local llama-server completions endpoint (using GBNF grammar constraints)
+    to obtain real-time, grammar-constrained safety interventions. If inference
+    fails, times out, or is offline, it provides a deterministic rule-based safety fallback.
+
+Ecosystem Positioning:
+    - Below: `src/models.py` (for telemetry input parsing and output scripts validation)
+      and `src/config.py` (for inference timeout boundaries).
+    - Above: Used by `src/orchestrator.py` (specifically within `_evaluate_crowd_safety`
+      to decide what safety script actions to run when congestion is detected).
 """
 
-import os
 import json
+import os
 import time
-import httpx
 from typing import Optional
-from src.models import TelemetryPayload, InterventionScript
+
+import httpx
+
+from src.audit import write_audit_log
 from src.config import INFERENCE_TIMEOUT_SEC, logger
+from src.models import InterventionScript, TelemetryPayload
+
+_GEMINI_MODEL = "gemini-2.0-flash-lite"
+# Fields that Gemini may return as empty strings but should be None
+_NULLABLE_FIELDS = ("reroute_target", "accessibility_route_target", "accessibility_instruction")
 
 async def get_slm_recommendation(orchestrator, payload: TelemetryPayload) -> Optional[InterventionScript]:
     """
@@ -37,7 +51,10 @@ async def get_slm_recommendation(orchestrator, payload: TelemetryPayload) -> Opt
     
     if gemini_api_key:
         # Remote Gemini REST endpoint utilizing developer-supplied API key
-        url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={gemini_api_key}"
+        url = (
+            f"https://generativelanguage.googleapis.com/v1beta/models/"
+            f"{_GEMINI_MODEL}:generateContent?key={gemini_api_key}"
+        )
         
         # Zero-shot prompt providing structural context for inference
         prompt = (
@@ -181,12 +198,9 @@ async def get_slm_recommendation(orchestrator, payload: TelemetryPayload) -> Opt
                 parsed_content = json.loads(content)
             
             # Normalize empty strings back to None for standardized routing targets
-            if parsed_content.get("reroute_target") == "":
-                parsed_content["reroute_target"] = None
-            if parsed_content.get("accessibility_route_target") == "":
-                parsed_content["accessibility_route_target"] = None
-            if parsed_content.get("accessibility_instruction") == "":
-                parsed_content["accessibility_instruction"] = None
+            for field in _NULLABLE_FIELDS:
+                if parsed_content.get(field) == "":
+                    parsed_content[field] = None
             
             # Validate output structurally using our Pydantic model
             script = InterventionScript.model_validate(parsed_content)
@@ -196,7 +210,7 @@ async def get_slm_recommendation(orchestrator, payload: TelemetryPayload) -> Opt
             orchestrator.last_llm_status = True
             
             # Write a persistent entry to the security audit trail
-            orchestrator.write_audit_log("inference_success", {
+            write_audit_log("inference_success", {
                 "zone_id": payload.zone_id,
                 "latency_ms": latency_ms,
                 "engine": "gemini" if gemini_api_key else "llama",
@@ -208,7 +222,7 @@ async def get_slm_recommendation(orchestrator, payload: TelemetryPayload) -> Opt
             orchestrator.last_llm_latency_ms = latency_ms
             orchestrator.last_llm_status = False
             
-    except (httpx.TimeoutException, httpx.RequestError, json.JSONDecodeError, Exception) as e:
+    except (httpx.TimeoutException, httpx.RequestError, json.JSONDecodeError, ValueError, Exception) as e:
         latency_ms = (time.time() - start_time) * 1000.0
         logger.warning(f"Inference engine unavailable or timed out ({latency_ms:.1f}ms). Reason: {type(e).__name__}")
         
@@ -216,7 +230,7 @@ async def get_slm_recommendation(orchestrator, payload: TelemetryPayload) -> Opt
         orchestrator.last_llm_status = False
         
         # Log the inference fallback event to the audit trail for regulatory traceability
-        orchestrator.write_audit_log("inference_fallback", {
+        write_audit_log("inference_fallback", {
             "zone_id": payload.zone_id,
             "latency_ms": latency_ms,
             "error": str(e)

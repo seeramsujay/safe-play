@@ -1,23 +1,39 @@
 """
 Web API Layer for the SafePlay Crowd Safety Orchestrator.
 
-This module exposes the REST endpoints and WebSockets routing needed for real-time 
-dashboard telemetry ingestion, operator command override (veto/approve), 
-live audit trails, and configuration updates.
+Role:
+    Exposes a FastAPI web server featuring HTTP REST endpoints and WebSockets for:
+    - Real-time telemetry ingestion from edge sensors.
+    - Operator commands (vetoing or approving active safety scripts).
+    - Cryptographic verification of the append-only ledger audit trail.
+    - Fetching current orchestration state and configuration.
+    - Stadium Copilot interactive prompt querying.
+
+Ecosystem Positioning:
+    - Below: FastAPI framework and Pydantic validation models.
+    - Above: Acts as the primary interface between the user interface (`src/static/index.html`)
+      or API clients and the core business logic components:
+      - `src/orchestrator.py`: delegates commands and state updates.
+      - `src/copilot.py`: queries the operator copilot recommendation engine.
+      - `src/audit.py`: provides file verification for audit trail logs.
 """
 
-import os
+
 import json
+import os
 import time
-from typing import Optional
 from collections import deque
-from fastapi import FastAPI, WebSocket, WebSocketDisconnect, HTTPException
+from typing import Optional
+
+from fastapi import FastAPI, HTTPException, WebSocket, WebSocketDisconnect
 from fastapi.responses import HTMLResponse, JSONResponse
 from pydantic import BaseModel, Field
+
+from src.audit import verify_audit_trail, write_audit_log
 from src.config import AUDIT_LOG_FILE, logger
 from src.copilot import query_copilot
+from src.exceptions import GraphRoutingError, OperatorActionError, SafePlayError, TelemetryValidationError
 from src.models import CopilotRequest, CopilotResponse
-from src.exceptions import SafePlayError, OperatorActionError, TelemetryValidationError, GraphRoutingError
 
 # ---------------------------------------------------------------------------
 # Pydantic request models — validate API inputs instead of accepting raw dicts
@@ -222,7 +238,6 @@ def create_app(orchestrator) -> FastAPI:
     @app.get("/api/audit-logs/verify")
     async def get_verify_audit_logs():
         """Verifies the cryptographic integrity of the append-only audit trail."""
-        from src.audit import verify_audit_trail
         is_valid = verify_audit_trail()
         return {"status": "success", "verified": is_valid}
 

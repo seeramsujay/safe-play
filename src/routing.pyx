@@ -5,9 +5,17 @@
 """
 Cython-Accelerated Routing Module for SafePlay.
 
-Provides highly efficient, static-typed spatial graph traversal routines to calculate
-alternative egress routes under sub-millisecond real-time latency constraints.
+Role:
+    Provides highly efficient, static-typed spatial graph traversal routines to calculate
+    alternative egress routes under sub-millisecond real-time latency constraints.
+
+Ecosystem Positioning:
+    - Below: Python C-API / Cython compiler runtime.
+    - Above: Used by `src/models.py` (which checks for `HAS_CYTHON` and imports
+      `get_alternative_route_cy` and `find_optimal_path_cy` to accelerate pathfinding
+      for spatial graph node routing).
 """
+
 
 def get_alternative_route_cy(dict nodes_dict, dict adjacency_dict, str overloaded_zone) -> object:
     """

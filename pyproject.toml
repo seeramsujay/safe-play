@@ -13,6 +13,7 @@ dependencies = [
     "uvicorn>=0.30.0",
     "websockets>=16.1",
     "cython>=3.0.10",
+    "httpx2>=2.7.0",
 ]
 
 [tool.pytest.ini_options]

@@ -1,3 +1,17 @@
+"""
+Unit tests for SafePlay schemas, spatial nodes/edges, and audit trail verification.
+
+Role:
+    Validates Pydantic schema validation boundaries for incoming telemetry and generated safety scripts,
+    ensures structural JSON-schema integrity, checks graph pathfinding constraints under overload,
+    and tests cryptographic ledger tampering detection.
+
+Ecosystem Positioning:
+    - Below: pytest test runner.
+    - Above: Validates schema classes and validation logic defined in `src/models.py`
+      and ledger integrity verification in `src/audit.py`.
+"""
+
 import json
 import pytest
 from pydantic import ValidationError

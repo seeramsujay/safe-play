@@ -332,11 +332,34 @@
             vertical-align: middle;
             line-height: 1;
         }
+
+        /* Focus visible outline for extreme accessibility */
+        a:focus-visible, button:focus-visible, input:focus-visible, textarea:focus-visible, select:focus-visible {
+            outline: 3px solid #3b82f6 !important;
+            outline-offset: 2px !important;
+            box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.4) !important;
+        }
+
+        /* Screen reader helper utility class */
+        .sr-only {
+            position: absolute;
+            width: 1px;
+            height: 1px;
+            padding: 0;
+            margin: -1px;
+            overflow: hidden;
+            clip: rect(0, 0, 0, 0);
+            white-space: nowrap;
+            border: 0;
+        }
     </style>
 </head>
 
 <body
     class="bg-td-bg text-td-on-surface min-h-screen flex flex-col md:flex-row font-sans overflow-hidden transition-colors duration-300">
+
+    <!-- Screen Reader Live Announcements Region -->
+    <div id="srLiveAnnouncements" class="sr-only" aria-live="assertive" aria-atomic="true"></div>
 
     <!-- Global Emergency Alert Banner -->
     <div class="fixed top-0 left-0 w-full bg-critical text-white py-2 px-lg z-[100] flex items-center justify-between shadow-lg transform -translate-y-full transition-transform duration-300"
@@ -1853,11 +1876,20 @@
                             class="text-sm text-td-on-surface-variant">
                             Cryptographic logging of inference events, operator vetos, and signage adjustments.</p>
                     </div>
-                    <button
-                        class="bg-td-surface border border-td-outline rounded hover:bg-td-surface-high text-xs py-1 px-3 transition-colors font-mono font-bold flex items-center gap-xs"
-                        onclick="fetchAuditLogs()">
-                        <span class="material-symbols-outlined text-[16px]">refresh</span> Refresh Logs
-                    </button>
+                    <div class="flex items-center gap-sm">
+                        <div id="ledger-verification-badge" class="hidden text-xs py-1 px-3 rounded font-mono font-bold flex items-center gap-xs"></div>
+                        <button
+                            id="btn-verify-ledger"
+                            class="bg-td-surface border border-td-outline rounded hover:bg-td-surface-high text-xs py-1 px-3 transition-colors font-mono font-bold flex items-center gap-xs"
+                            onclick="verifyAuditLedger()">
+                            <span class="material-symbols-outlined text-[16px]">verified_user</span> Verify Ledger
+                        </button>
+                        <button
+                            class="bg-td-surface border border-td-outline rounded hover:bg-td-surface-high text-xs py-1 px-3 transition-colors font-mono font-bold flex items-center gap-xs"
+                            onclick="fetchAuditLogs()">
+                            <span class="material-symbols-outlined text-[16px]">refresh</span> Refresh Logs
+                        </button>
+                    </div>
                 </div>
 
                 <!-- Scrolling list -->
@@ -2376,6 +2408,7 @@
 
         // Tab switching logic
         let currentTab = 'dashboard';
+        let isVibrationAnimating = false;
         function switchTab(tabId) {
             currentTab = tabId;
             // Update active styles on nav sidebar
@@ -2413,12 +2446,20 @@
                 if (el) el.style.display = (id === tabId) ? 'block' : 'none';
             });
 
+            // Trigger UI update to refresh animations and styles for the active tab, and clear inactive ones
+            if (typeof updateUI === 'function') {
+                updateUI();
+            }
+
             // Extra actions on tab load
             if (tabId === 'audit') {
                 fetchAuditLogs();
             }
             if (tabId === 'approval') {
                 dismissAlert();
+            }
+            if (tabId === 'dashboard') {
+                animateVibration();
             }
             // Close mobile nav drawer if open
             const overlay = document.getElementById('mobileNavOverlay');
@@ -2432,6 +2473,17 @@
         const mobileLinksUl = document.getElementById('mobileNavLinks');
         mobileLinksUl.innerHTML = navLinksHtml.replaceAll('id="nav-', 'id="mobile-nav-');
 
+        // Screen reader announcement helper for dynamic updates
+        function announceToScreenReader(message) {
+            const announcer = document.getElementById('srLiveAnnouncements');
+            if (announcer) {
+                announcer.textContent = '';
+                setTimeout(() => {
+                    announcer.textContent = message;
+                }, 100);
+            }
+        }
+
         // Theme switching logic (Dark mode / Light mode / High Contrast)
         let theme = 'dark';
         function toggleTheme() {
@@ -2440,10 +2492,12 @@
                 html.className = 'light';
                 theme = 'light';
                 document.getElementById('themeIcon').textContent = 'dark_mode';
+                announceToScreenReader("Theme changed to light mode");
             } else {
                 html.className = 'dark';
                 theme = 'dark';
                 document.getElementById('themeIcon').textContent = 'light_mode';
+                announceToScreenReader("Theme changed to dark mode");
             }
             updateGraphThemeStyles();
         }
@@ -2454,10 +2508,12 @@
                 html.className = 'high-contrast';
                 theme = 'high-contrast';
                 document.getElementById('themeIcon').textContent = 'light_mode';
+                announceToScreenReader("Theme changed to high contrast mode");
             } else {
                 html.className = 'dark';
                 theme = 'dark';
                 document.getElementById('themeIcon').textContent = 'light_mode';
+                announceToScreenReader("Theme changed to dark mode");
             }
             updateGraphThemeStyles();
         }
@@ -2678,6 +2734,11 @@
         window.addEventListener('keydown', (e) => {
             // Prevent shortcuts when typing in inputs/textareas
             if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.tagName === 'SELECT') {
+                return;
+            }
+
+            // Ignore events with active modifier keys (e.g., Ctrl, Meta, Alt) to preserve default browser actions like copy/paste
+            if (e.ctrlKey || e.metaKey || e.altKey) {
                 return;
             }
 
@@ -2996,6 +3057,9 @@
         // Countdown Timer SLA task management
         let countdownInterval = null;
         let activeVetoZoneId = null;
+        let prevPanicMode = null;
+        let prevStatusText = null;
+        let prevActiveVetoZoneId = null;
 
         function runTimerCountdown(endTime, duration) {
             if (countdownInterval) clearInterval(countdownInterval);
@@ -3085,6 +3149,20 @@
                         statusText.className="font-sans text-xs font-bold text-success tracking-wider uppercase";
                     }
                 }
+                // Screen reader announcement of system status transitions
+                if (prevPanicMode !== null && prevPanicMode !== localState.panic_mode) {
+                    if (localState.panic_mode) {
+                        announceToScreenReader("Emergency Shutdown Enabled. All exit gates forced open.");
+                    } else {
+                        announceToScreenReader("Emergency Shutdown Cleared. Normal operations resumed.");
+                    }
+                }
+                prevPanicMode = localState.panic_mode;
+
+                if (prevPanicMode !== null && !localState.panic_mode && prevStatusText !== statusText.textContent) {
+                    announceToScreenReader("System status update: " + statusText.textContent);
+                }
+                prevStatusText = statusText.textContent;
             }
 
             // Update Panic Button styling based on current state
@@ -3131,13 +3209,17 @@
                 // Update heatmap glow overlay
                 const glow = document.getElementById(`glow-overlay-${node.zone_id}`);
                 if (glow) {
-                    const color = node.status === 'critical' ? '#ef4444' : (node.status === 'warning' ? '#df7412' : '#10b981');
-                    if (glow.tagName === 'rect') {
-                        glow.setAttribute('stroke', color);
-                        glow.setAttribute('opacity', node.status === 'critical' ? '0.25' : (node.status === 'warning' ? '0.18' : '0.08'));
+                    if (currentTab === 'dashboard') {
+                        const color = node.status === 'critical' ? '#ef4444' : (node.status === 'warning' ? '#df7412' : '#10b981');
+                        if (glow.tagName === 'rect') {
+                            glow.setAttribute('stroke', color);
+                            glow.setAttribute('opacity', node.status === 'critical' ? '0.25' : (node.status === 'warning' ? '0.18' : '0.08'));
+                        } else {
+                            glow.setAttribute('fill', color);
+                            glow.setAttribute('opacity', node.status === 'critical' ? '0.35' : (node.status === 'warning' ? '0.25' : '0.12'));
+                        }
                     } else {
-                        glow.setAttribute('fill', color);
-                        glow.setAttribute('opacity', node.status === 'critical' ? '0.35' : (node.status === 'warning' ? '0.25' : '0.12'));
+                        glow.setAttribute('opacity', '0');
                     }
                 }
 
@@ -3294,6 +3376,17 @@
             // 7. Sensor nodes health list
             updateSensorHealthUI();
 
+            // Screen reader announcements of pending override requests
+            if (activeVetoZoneId !== prevActiveVetoZoneId) {
+                if (activeVetoZoneId) {
+                    const active = localState.active_interventions[0];
+                    announceToScreenReader(`Critical intervention required! Zone ${active.zone_id.replace('_', ' ')} overloaded. Proposed action: ${active.script.gate_action}. Two seconds to veto.`);
+                } else if (prevActiveVetoZoneId) {
+                    announceToScreenReader(`Intervention pending queue cleared.`);
+                }
+                prevActiveVetoZoneId = activeVetoZoneId;
+            }
+
             // 8. Custom Dashboard Visuals
             updateDashboardCharts();
         }
@@ -3301,6 +3394,38 @@
         function updateNodeSvgCircle(svgId, status) {
             const circle = document.getElementById(svgId);
             if (!circle) return;
+
+            const isDashboard = svgId.startsWith('dash-');
+            const isActive = isDashboard ? (currentTab === 'dashboard') : (currentTab === 'map');
+
+            // Handle the companion pulse circle for dashboard nodes
+            if (isDashboard) {
+                const pulseId = svgId.replace('dash-node-', 'dash-node-pulse-');
+                const pulseCircle = document.getElementById(pulseId);
+                if (pulseCircle) {
+                    if (isActive) {
+                        pulseCircle.classList.add('animate-ping');
+                        if (status === 'critical') {
+                            pulseCircle.setAttribute('fill', 'rgba(239, 68, 68, 0.4)');
+                        } else if (status === 'warning') {
+                            pulseCircle.setAttribute('fill', 'rgba(223, 116, 18, 0.4)');
+                        } else {
+                            pulseCircle.setAttribute('fill', 'rgba(16, 185, 129, 0.4)');
+                        }
+                    } else {
+                        pulseCircle.classList.remove('animate-ping');
+                        pulseCircle.setAttribute('fill', 'rgba(0, 0, 0, 0)');
+                    }
+                }
+            }
+
+            if (!isActive) {
+                // If the tab is not active, clear animation classes and set nominal/inactive styles to prevent ghost/stale renders
+                circle.className.baseVal = "node-circle fill-success/20 stroke-success";
+                circle.setAttribute('stroke', '#10b981');
+                circle.setAttribute('fill', 'rgba(16, 185, 129, 0.2)');
+                return;
+            }
 
             if (mapMode === 'heatmap') {
                 // Show radial heat maps
@@ -3314,6 +3439,7 @@
                     circle.setAttribute('fill', 'rgba(16, 185, 129, 0.4)');
                     circle.setAttribute('stroke', '#10b981');
                 }
+                circle.className.baseVal = "node-circle";
             } else {
                 // Show clean topology maps
                 if (status === 'critical') {
@@ -3335,6 +3461,17 @@
         function updateEdgeSvgLine(svgId, flowRate) {
             const line = document.getElementById(svgId);
             if (!line) return;
+
+            const isDashboard = svgId.startsWith('dash-');
+            const isActive = isDashboard ? (currentTab === 'dashboard') : (currentTab === 'map');
+
+            if (!isActive) {
+                line.setAttribute('stroke', theme === 'dark' ? '#424754' : '#c3c6d7');
+                line.setAttribute('stroke-width', '2');
+                line.removeAttribute('stroke-dasharray');
+                line.style.animation = 'none';
+                return;
+            }
 
             if (flowRate >= 100.0) {
                 line.setAttribute('stroke', '#ef4444');
@@ -3504,12 +3641,19 @@
 
         // Animate vibration wave via simple JS frame updates
         function animateVibration() {
+            if (isVibrationAnimating) return;
             const wavePath = document.getElementById('vibrationWavePath');
             const vibrationStatus = document.getElementById('vibrationStatus');
             if (!wavePath || !vibrationStatus) return;
 
+            isVibrationAnimating = true;
             let phase = 0;
             function drawWave() {
+                if (currentTab !== 'dashboard') {
+                    isVibrationAnimating = false;
+                    return;
+                }
+
                 let currentDensity = 1.0;
                 if (localState && localState.nodes) {
                     const concourse = localState.nodes.find(n => n.zone_id === 'Main_Concourse');
@@ -3824,6 +3968,41 @@
                 })
                 .catch(err => {
                     console.error("Failed to fetch audit logs:", err);
+                });
+
+            // Automatically verify ledger integrity
+            verifyAuditLedger();
+        }
+
+        function verifyAuditLedger() {
+            const badge = document.getElementById('ledger-verification-badge');
+            const btn = document.getElementById('btn-verify-ledger');
+            if (!badge || !btn) return;
+            
+            btn.disabled = true;
+            btn.innerHTML = `<span class="material-symbols-outlined text-[16px] animate-spin">sync</span> Verifying...`;
+            
+            fetch(getBackendUrl() + '/api/audit-logs/verify')
+                .then(res => res.json())
+                .then(data => {
+                    badge.classList.remove('hidden');
+                    if (data.verified) {
+                        badge.className = "text-xs py-1 px-3 rounded font-mono font-bold flex items-center gap-xs bg-success-bg text-success border border-success/30";
+                        badge.innerHTML = `<span class="material-symbols-outlined text-[16px]">shield</span> Chain Verified`;
+                    } else {
+                        badge.className = "text-xs py-1 px-3 rounded font-mono font-bold flex items-center gap-xs bg-critical-bg text-critical border border-critical/30";
+                        badge.innerHTML = `<span class="material-symbols-outlined text-[16px]">warning</span> Tampered Ledger`;
+                    }
+                })
+                .catch(err => {
+                    console.error("Ledger verification error:", err);
+                    badge.classList.remove('hidden');
+                    badge.className = "text-xs py-1 px-3 rounded font-mono font-bold flex items-center gap-xs bg-warning-bg text-warning border border-warning/30";
+                    badge.innerHTML = `<span class="material-symbols-outlined text-[16px]">error</span> Verify Failed`;
+                })
+                .finally(() => {
+                    btn.disabled = false;
+                    btn.innerHTML = `<span class="material-symbols-outlined text-[16px]">verified_user</span> Verify Ledger`;
                 });
         }
 

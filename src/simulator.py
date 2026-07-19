@@ -1,16 +1,27 @@
 """
 Mock Ingestion Telemetry Simulator for SafePlay.
 
-This module provides a background simulation loop that generates realistic fluctuating
-telemetry data for stadium zones (Gate_A, Gate_B, Corridor_1, Corridor_2, Main_Concourse).
-It simulates crowd surges periodically to verify real-time alerts, SLA veto windows,
-and safety routing transitions without requiring physical edge devices connected to MQTT.
+Role:
+    Runs a background simulation loop that generates realistic crowd telemetry payloads
+    (fluctuating densities and flow rates) and simulates periodic surges at gate zones.
+    This serves to test the real-time alerting, operator SLA approval workflows, and routing logic
+    without requiring physical camera sensors or smart turnstiles to be online.
+
+Ecosystem Positioning:
+    - Below: Builtin libraries (`asyncio`, `random`, `json`, `time`, `hmac`, `hashlib`).
+    - Above: Instantiated and run within `src/orchestrator.py` during boot time
+      if a mock ingestion mode is active. Pushes telemetry to `orchestrator.telemetry_queue`.
 """
 
+
 import asyncio
-import time
-import random
+import hashlib
+import hmac
 import json
+import os
+import random
+import time
+
 from src.config import logger
 
 async def simulation_loop(orchestrator) -> None:
@@ -121,11 +132,10 @@ async def simulation_loop(orchestrator) -> None:
                 }
                 
                 # Sign simulated telemetry
-                import hmac
-                import hashlib
-                import os
                 serialized = json.dumps(payload, sort_keys=True)
-                secret = os.environ.get("TELEMETRY_SECRET_KEY", "safe-play-telemetry-secret-key-2026").encode("utf-8")
+                secret = os.environ.get(
+                    "TELEMETRY_SECRET_KEY", "safe-play-telemetry-secret-key-2026"
+                ).encode("utf-8")
                 signature = hmac.new(secret, serialized.encode("utf-8"), hashlib.sha256).hexdigest()
                 payload["signature"] = signature
                 

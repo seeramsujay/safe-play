@@ -1,18 +1,32 @@
 """
 GenAI Stadium Operations Copilot Module for FIFA World Cup 2026.
 
-This module provides real-time decision support for stadium operations commanders,
-volunteers, and transit coordinators by combining current telemetry, spatial graph routes,
-and official FIFA 2026 safety SOPs via Generative AI or fallback semantic heuristics.
+Role:
+    Provides real-time decision support for stadium operations commanders, volunteers,
+    and transit coordinators. It merges current crowd density metrics, spatial graph
+    topology, and official FIFA 2026 safety standard operating procedures (SOPs)
+    using GenAI (via the Gemini API) or a localized heuristic fallback matcher.
+
+Ecosystem Positioning:
+    - Below: `src/models.py` (providing CopilotRequest and CopilotResponse models)
+      and `src/config.py`.
+    - Above: Used by `src/web_api.py` to route operator queries from the `/api/copilot`
+      POST endpoint.
+    - Peer: Interacts with the `SafePlayOrchestrator` instance passed to `query_copilot`
+      to inspect graph nodes, active scripts, and global panic state.
 """
 
-import os
 import json
+import os
 import time
+from typing import Any, Dict, List, Optional
+
 import httpx
-from typing import Optional, List, Dict, Any
-from src.models import CopilotRequest, CopilotResponse
+
 from src.config import logger
+from src.models import CopilotRequest, CopilotResponse
+
+_GEMINI_MODEL = "gemini-2.0-flash-lite"
 
 # Static FIFA World Cup 2026 Command Center SOPs
 FIFA_2026_SOPS = """
@@ -61,12 +75,9 @@ async def query_copilot(orchestrator, request: CopilotRequest) -> CopilotRespons
         density = node.current_density
         capacity = node.capacity
         is_overloaded = density >= capacity
-        
-        # Count incident if zone density exceeds dynamic safety threshold or active intervention is pending
         active_script = orchestrator.active_scripts.get(zone_id)
-        has_active_script = active_script is not None
-        
-        if is_overloaded or has_active_script:
+
+        if is_overloaded or active_script is not None:
             active_incidents += 1
             if is_overloaded:
                 overloaded_zones.append(zone_id)
@@ -80,17 +91,20 @@ async def query_copilot(orchestrator, request: CopilotRequest) -> CopilotRespons
         })
         
     # Generate static hazard summary
-    if len(overloaded_zones) > 0:
+    if overloaded_zones:
         hazard_summary = f"CRITICAL overload in progress at: {', '.join(overloaded_zones)}. Active response protocols actuated."
     elif active_incidents > 0:
         hazard_summary = f"{active_incidents} zones under warning/active operator review. Monitoring flow rates."
     else:
         hazard_summary = "All gates and concourses reporting nominal crowd densities and transit flows."
 
-    # 2. Check for Gemini API key to run GenAI pipeline
+    # Check for Gemini API key to run GenAI pipeline
     gemini_api_key = os.environ.get("GEMINI_API_KEY")
     if gemini_api_key:
-        url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={gemini_api_key}"
+        url = (
+            f"https://generativelanguage.googleapis.com/v1beta/models/"
+            f"{_GEMINI_MODEL}:generateContent?key={gemini_api_key}"
+        )
         
         # Build prompt containing full context
         system_context = (
@@ -138,7 +152,8 @@ async def query_copilot(orchestrator, request: CopilotRequest) -> CopilotRespons
                         answer=parsed.get("answer", "No answer field found in response."),
                         timestamp=time.time(),
                         active_incident_count=active_incidents,
-                        hazard_summary=hazard_summary
+                        hazard_summary=hazard_summary,
+                        source="gemini"
                     )
         except Exception as e:
             logger.warning(f"Copilot Gemini API query failed, falling back to local heuristic: {e}")
@@ -175,7 +190,7 @@ async def query_copilot(orchestrator, request: CopilotRequest) -> CopilotRespons
         )
     # Density / Overload / Incident status queries
     elif any(k in query_lower for k in ["density", "incident", "hazard", "threat", "status", "safe", "overload", "clogged"]):
-        if len(overloaded_zones) > 0:
+        if overloaded_zones:
             answer = (
                 f"Active Incident Alert: {len(overloaded_zones)} vomitory portals exceed safe density limits: "
                 f"{', '.join(overloaded_zones)}. Signage and gate controls have been triggered to reroute fans. "
@@ -199,5 +214,6 @@ async def query_copilot(orchestrator, request: CopilotRequest) -> CopilotRespons
         answer=answer,
         timestamp=time.time(),
         active_incident_count=active_incidents,
-        hazard_summary=hazard_summary
+        hazard_summary=hazard_summary,
+        source="fallback"
     )

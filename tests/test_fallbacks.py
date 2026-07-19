@@ -1,3 +1,17 @@
+"""
+Unit tests for SafePlay static fallback logic and spatial routing algorithms.
+
+Role:
+    Validates that the orchestrator's backup rules generate correct safety instructions
+    (e.g., CLOSE_IMMEDIATELY for critical density) when generative AI models fail or time out,
+    and checks graph routing behavior under nominal and saturated conditions.
+
+Ecosystem Positioning:
+    - Below: pytest test library and mock objects.
+    - Above: Exercises spatial pathfinding on the corridor graphs (`src/models.py`)
+      and fallback heuristics within the orchestrator (`src/orchestrator.py`).
+"""
+
 import pytest
 import unittest.mock as mock
 import httpx

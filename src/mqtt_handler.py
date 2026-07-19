@@ -1,10 +1,18 @@
 """
 MQTT Callback Handlers for SafePlay.
 
-This module processes asynchronous message events from the paho-mqtt network client thread 
-and dispatches them thread-safely to the main asyncio event loop executing the 
-orchestration logic and FastAPI server.
+Role:
+    Handles asynchronous message callback events from the paho-mqtt network client
+    thread, dispatching telemetry payloads and operator veto commands thread-safely
+    to the main asyncio event loop.
+
+Ecosystem Positioning:
+    - Below: Paho MQTT Client library.
+    - Above: Used by `src/orchestrator.py` to register callback hooks during MQTT setup,
+      passing incoming telemetry to `orchestrator.telemetry_queue` and operators' vetos
+      to `orchestrator.register_operator_veto`.
 """
+
 
 import asyncio
 import json

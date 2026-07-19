@@ -1,10 +1,21 @@
 """
 WebSocket Connection Manager for SafePlay.
 
-This module provides the ConnectionManager class responsible for keeping track of open
-WebSockets connected to the front-end operator dashboard and broadcasting state updates 
-concurrently and thread-safely.
+Role:
+    Manages active WebSocket connections connected to the front-end operator
+    dashboard. It provides capabilities to register connections, handle client
+    disconnects, and broadcast concurrent state updates safely and asynchronously.
+
+Ecosystem Positioning:
+    - Below: FastAPI WebSocket protocol layer and standard asyncio scheduler.
+    - Above:
+        - `src/orchestrator.py`: holds an instance of `ConnectionManager` to broadcast
+          the updated venue status (e.g. panic mode, active scripts, QoS changes) to all
+          connected clients when telemetry is processed.
+        - `src/web_api.py`: handles the `/ws` WebSocket endpoint routing, registering new
+          connections and calling `disconnect` in a try/finally block when a client leaves.
 """
+
 
 import asyncio
 from typing import List

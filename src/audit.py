@@ -1,11 +1,21 @@
 """
 Audit Trail Logging Module for SafePlay.
 
-This module handles writing structured, append-only security logs of critical 
-system state transitions, such as incident alerts, operator overrides (vetos/approvals),
-and configuration changes, to a persistent JSON Lines (JSONL) format.
-Each entry is cryptographically linked to the previous entry to prevent tampering.
+Role:
+    Handles writing structured, append-only security logs of critical system state
+    transitions (such as incident alerts, operator overrides, and configuration changes)
+    to a persistent JSON Lines (JSONL) format. Each entry is cryptographically linked
+    to the hash of the previous entry to prevent tampering.
+
+Ecosystem Positioning:
+    - Below: Built-in Python utilities (`os`, `json`, `time`, `hashlib`) and `src/config.py`.
+    - Above:
+        - `src/orchestrator.py`: calls `write_audit_log` to persist veto windows, actuations,
+          QoS updates, and security telemetry rejections.
+        - `src/web_api.py`: imports `verify_audit_trail` and reads the audit logs to expose
+          REST endpoints `/api/audit-logs` and `/api/audit-logs/verify` to the dashboard UI.
 """
+
 
 import os
 import json
