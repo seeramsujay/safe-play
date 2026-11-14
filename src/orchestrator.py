@@ -22,11 +22,10 @@ import hmac
 import json
 import os
 import time
-from typing import Dict, Optional, Set
 
 import httpx
 import paho.mqtt.client as mqtt
-
+from src import inference, mqtt_handler, simulator
 from src.audit import write_audit_log
 from src.config import (
     ACTUATION_SLA_SEC,
@@ -39,38 +38,31 @@ from src.config import (
 )
 from src.connection_manager import ConnectionManager
 from src.exceptions import (
-    GraphRoutingError,
-    InferenceTimeoutError,
     OperatorActionError,
-    SafePlayError,
     TelemetryValidationError,
 )
 from src.models import (
     HAS_CYTHON,
     InterventionScript,
-    SpatialEdge,
     SpatialGraph,
-    SpatialNode,
     TelemetryPayload,
 )
-import src.inference as inference
-import src.mqtt_handler as mqtt_handler
-import src.simulator as simulator
 from src.web_api import create_app
 
 # Mapping of zone IDs to their downstream edge targets for flow-rate propagation.
 # Zones not listed here have no outgoing edges to update.
-_ZONE_EDGE_MAP: Dict[str, list[tuple[str, str, float]]] = {
-    "Gate_A":        [("Gate_A",        "Corridor_1",    1.0)],
-    "Gate_B":        [("Gate_B",        "Corridor_2",    1.0)],
-    "Gate_C":        [("Gate_C",        "Main_Concourse", 1.0)],
-    "Corridor_1":    [("Corridor_1",    "Main_Concourse", 1.0)],
-    "Corridor_2":    [("Corridor_2",    "Main_Concourse", 1.0)],
+_ZONE_EDGE_MAP: dict[str, list[tuple[str, str, float]]] = {
+    "Gate_A": [("Gate_A", "Corridor_1", 1.0)],
+    "Gate_B": [("Gate_B", "Corridor_2", 1.0)],
+    "Gate_C": [("Gate_C", "Main_Concourse", 1.0)],
+    "Corridor_1": [("Corridor_1", "Main_Concourse", 1.0)],
+    "Corridor_2": [("Corridor_2", "Main_Concourse", 1.0)],
     "Main_Concourse": [
-        ("Main_Concourse", "Transit_Hub",     0.5),
+        ("Main_Concourse", "Transit_Hub", 0.5),
         ("Main_Concourse", "Transit_Shuttle", 0.5),
     ],
 }
+
 
 class SafePlayOrchestrator:
     """
@@ -81,10 +73,11 @@ class SafePlayOrchestrator:
       4. Implements dynamic MQTT QoS backpressure scaling.
       5. Enforces human-in-the-loop safety veto windows.
     """
+
     def __init__(self, config_path: str, broker: str, port: int):
         """
         Initializes the SafePlayOrchestrator instance.
-        
+
         Args:
             config_path: Path to the JSON schema file used to constrain LLM responses.
             broker: Host address of the MQTT message broker.
@@ -93,65 +86,69 @@ class SafePlayOrchestrator:
         self.config_path = config_path
         self.broker = broker
         self.port = port
-        
+
         # Load the validation schema required for constraining local SLM JSON output
         with open(self.config_path, "r") as f:
             self.json_schema = json.load(f)
-            
+
         # Initialize default spatial graph representing stadium corridors for FIFA 2026
         self.graph = SpatialGraph.get_default_world_cup_graph()
-        
+
         # Ingestion queue for transferring payloads thread-safely from MQTT client thread
         self.telemetry_queue: asyncio.Queue = asyncio.Queue()
-        
+
         # Maps zone_id to active asyncio countdown tasks
-        self.active_interventions: Dict[str, asyncio.Task] = {}
-        
+        self.active_interventions: dict[str, asyncio.Task] = {}
+
         # Maps zone_id to proposed safety scripts currently waiting in the veto window
-        self.active_scripts: Dict[str, InterventionScript] = {}
-        
+        self.active_scripts: dict[str, InterventionScript] = {}
+
         # Tracks metadata (e.g. countdown start time) for active interventions
-        self.active_intervention_metadata: Dict[str, dict] = {}
-        
+        self.active_intervention_metadata: dict[str, dict] = {}
+
         # Set of zone IDs that have been vetoed by operators in the current ingestion window
-        self.vetoed_zones: Set[str] = set()
-        
+        self.vetoed_zones: set[str] = set()
+
         # Tracks timestamp of last received manual telemetry via REST endpoint
         self.last_manual_telemetry_time = 0.0
-        
+
         # State flag representing emergency override panic mode (all gates open)
         self.panic_mode = False
-        
+
         # Operator veto countdown timer limit
         self.actuation_sla_sec: float = ACTUATION_SLA_SEC
-        
+
         # Safety fallback density limit
         self.fallback_density_limit: float = FALLBACK_DENSITY_LIMIT
-        
+
         # Keeps track of subscribed QoS levels per zone (0: standard, 1: escalated backpressure)
-        self.zone_qos: Dict[str, int] = {}
-        
+        self.zone_qos: dict[str, int] = {}
+
         # Shared connection manager for dashboard WebSockets
         self.manager = ConnectionManager()
-        
+
         # Diagnostic tracking statistics
         self.last_llm_latency_ms = 0.0
         self.last_llm_status = True
         self.mqtt_connected = False
-        self.mqtt_client: Optional[mqtt.Client] = None
-        self.loop: Optional[asyncio.AbstractEventLoop] = None
-        
+        self.mqtt_client: mqtt.Client | None = None
+        self.loop: asyncio.AbstractEventLoop | None = None
+
         # Cache environment configurations for optimized, hot-path lookup
-        secret_key_str = os.environ.get("TELEMETRY_SECRET_KEY", "safe-play-telemetry-secret-key-2026")
+        secret_key_str = os.environ.get(
+            "TELEMETRY_SECRET_KEY", "safe-play-telemetry-secret-key-2026"
+        )
         self.telemetry_secret_key = secret_key_str.encode("utf-8")
-        self.strict_signature_verification = os.environ.get("STRICT_SIGNATURE_VERIFICATION", "false").lower() in ("true", "1", "yes")
+        self.strict_signature_verification = os.environ.get(
+            "STRICT_SIGNATURE_VERIFICATION", "false"
+        ).lower() in ("true", "1", "yes")
 
     @property
     def http_client(self) -> httpx.AsyncClient:
         """
         Lazily instantiates a shared HTTP connection pool.
         Recreates the client if it was previously closed.
-        
+
         Returns:
             An active httpx.AsyncClient instance.
         """
@@ -166,7 +163,7 @@ class SafePlayOrchestrator:
         """Cleanly releases and closes the HTTP connection pool client."""
         if hasattr(self, "_http_client") and not self._http_client.is_closed:
             await self._http_client.aclose()
-        
+
     def _node_status(self, density: float) -> str:
         """Maps a node density reading to a human-readable status label."""
         if density >= self.fallback_density_limit:
@@ -177,8 +174,8 @@ class SafePlayOrchestrator:
 
     async def broadcast_state(self) -> None:
         """
-        Serializes the current orchestrator status, spatial node/edge states, 
-        active interventions, and system health info, then broadcasts the payload 
+        Serializes the current orchestrator status, spatial node/edge states,
+        active interventions, and system health info, then broadcasts the payload
         to all active WebSocket dashboard clients.
         """
         try:
@@ -213,9 +210,9 @@ class SafePlayOrchestrator:
                             zone_id, {}
                         ).get("start_time", time.time()),
                         "duration": self.actuation_sla_sec,
-                        "mode": self.active_intervention_metadata.get(
-                            zone_id, {}
-                        ).get("mode", "unknown"),
+                        "mode": self.active_intervention_metadata.get(zone_id, {}).get(
+                            "mode", "unknown"
+                        ),
                     }
                     for zone_id, script in self.active_scripts.items()
                 ],
@@ -250,19 +247,21 @@ class SafePlayOrchestrator:
     # -----------------------------------------------------------------------
     async def reject_intervention_veto(self, zone_id: str) -> None:
         """
-        Registers an operator veto command. Cancels the active countdown task 
+        Registers an operator veto command. Cancels the active countdown task
         for the zone and broadcasts the cancellation state update to all dashboards.
-        
+
         Args:
             zone_id: The zone ID targeted by the operator veto command.
-            
+
         Raises:
             OperatorActionError: If no active safety script exists for the zone.
         """
         logger.warning(f"Operator VETO received for zone: {zone_id}")
         if zone_id not in self.active_scripts:
-            raise OperatorActionError(f"No active proposed safety script found to veto for zone: '{zone_id}'")
-            
+            raise OperatorActionError(
+                f"No active proposed safety script found to veto for zone: '{zone_id}'"
+            )
+
         self.vetoed_zones.add(zone_id)
         if zone_id in self.active_interventions:
             self.active_interventions[zone_id].cancel()
@@ -273,50 +272,51 @@ class SafePlayOrchestrator:
         """
         Operator override to execute the safety intervention immediately,
         bypassing the remaining time of the countdown veto window.
-        
+
         Args:
             zone_id: The zone ID targeted by the early approval command.
-            
+
         Raises:
             OperatorActionError: If no active countdown timer or safety script exists for the zone.
         """
         logger.info(f"Operator manual APPROVAL received for zone: {zone_id}")
         if zone_id not in self.active_interventions:
-            raise OperatorActionError(f"No active countdown timer found to approve for zone: '{zone_id}'")
-            
+            raise OperatorActionError(
+                f"No active countdown timer found to approve for zone: '{zone_id}'"
+            )
+
         script = self.active_scripts.get(zone_id)
         mode = self.active_intervention_metadata.get(zone_id, {}).get("mode", "manual")
         if zone_id in self.active_intervention_metadata:
             self.active_intervention_metadata[zone_id]["operator_approved"] = True
-        
+
         # Cancel the sleep timer first to prevent race condition if SLA timer expires during execute_intervention
         self.active_interventions[zone_id].cancel()
-        
+
         if script:
             await self.execute_intervention(script, f"{mode}_approved")
-            write_audit_log("veto_window_approved", {
-                "zone_id": zone_id,
-                "status": "approved"
-            })
+            write_audit_log(
+                "veto_window_approved", {"zone_id": zone_id, "status": "approved"}
+            )
         await self.broadcast_state()
 
     async def trigger_panic_mode(self) -> None:
         """
-        Puts the system into emergency panic mode. Automatically cancels all 
+        Puts the system into emergency panic mode. Automatically cancels all
         pending intervention veto tasks and opens/unlocks all exit gates.
         """
         logger.warning("EMERGENCY PANIC SHUTDOWN ACTIVATED")
         self.panic_mode = True
         write_audit_log("panic_mode_activated", {"status": "active"})
-        
+
         # Cancel all active override countdown tasks
         for zone_id, task in list(self.active_interventions.items()):
             task.cancel()
-            
+
         self.active_interventions.clear()
         self.active_scripts.clear()
         self.active_intervention_metadata.clear()
-        
+
         await self.broadcast_state()
 
     async def clear_panic_mode(self) -> None:
@@ -329,11 +329,15 @@ class SafePlayOrchestrator:
     # -----------------------------------------------------------------------
     # Inference Recommendations (delegated to inference submodule)
     # -----------------------------------------------------------------------
-    async def get_slm_recommendation(self, payload: TelemetryPayload) -> Optional[InterventionScript]:
+    async def get_slm_recommendation(
+        self, payload: TelemetryPayload
+    ) -> InterventionScript | None:
         """Queries the AI model engine for safety intervention recommendations."""
         return await inference.get_slm_recommendation(self, payload)
 
-    def get_static_fallback_recommendation(self, payload: TelemetryPayload) -> InterventionScript:
+    def get_static_fallback_recommendation(
+        self, payload: TelemetryPayload
+    ) -> InterventionScript:
         """Retrieves the backup, rule-based recommendation when inference fails or is offline."""
         return inference.get_static_fallback_recommendation(self, payload)
 
@@ -344,7 +348,7 @@ class SafePlayOrchestrator:
         """
         Executes physical gate control actuations and digital signage messages.
         Persists a completed audit record for historical compliance auditing.
-        
+
         Args:
             script: The InterventionScript to apply.
             mode: Triggering source mode (e.g. 'slm', 'fallback_rule', 'manual_approved').
@@ -354,85 +358,96 @@ class SafePlayOrchestrator:
             f"Signage(EN): '{script.signage_instruction_en}', Accessibility Target: {script.accessibility_route_target}, "
             f"Transit Action: {script.transit_dispatch_action}"
         )
-        write_audit_log("actuation_complete", {
-            "zone_id": script.zone_id,
-            "mode": mode,
-            "gate_action": script.gate_action,
-            "signage_instruction_en": script.signage_instruction_en,
-            "signage_instruction_es": script.signage_instruction_es,
-            "signage_instruction_fr": script.signage_instruction_fr,
-            "audio_announcement_en": script.audio_announcement_en,
-            "audio_announcement_es": script.audio_announcement_es,
-            "audio_announcement_fr": script.audio_announcement_fr,
-            "reroute_target": script.reroute_target,
-            "accessibility_route_target": script.accessibility_route_target,
-            "accessibility_instruction": script.accessibility_instruction,
-            "transit_dispatch_action": script.transit_dispatch_action,
-            "transit_instruction": script.transit_instruction
-        })
+        write_audit_log(
+            "actuation_complete",
+            {
+                "zone_id": script.zone_id,
+                "mode": mode,
+                "gate_action": script.gate_action,
+                "signage_instruction_en": script.signage_instruction_en,
+                "signage_instruction_es": script.signage_instruction_es,
+                "signage_instruction_fr": script.signage_instruction_fr,
+                "audio_announcement_en": script.audio_announcement_en,
+                "audio_announcement_es": script.audio_announcement_es,
+                "audio_announcement_fr": script.audio_announcement_fr,
+                "reroute_target": script.reroute_target,
+                "accessibility_route_target": script.accessibility_route_target,
+                "accessibility_instruction": script.accessibility_instruction,
+                "transit_dispatch_action": script.transit_dispatch_action,
+                "transit_instruction": script.transit_instruction,
+            },
+        )
         await self.broadcast_state()
 
-    async def run_intervention_lifecycle(self, script: InterventionScript, mode: str) -> None:
+    async def run_intervention_lifecycle(
+        self, script: InterventionScript, mode: str
+    ) -> None:
         """
         Manages the operator veto countdown timer loop for safety recommendations.
-        
+
         If action_required is False, executes immediately.
         Otherwise, waits for self.actuation_sla_sec seconds. If not cancelled by a
         veto or early-approved, the intervention executes.
-        
+
         Args:
             script: The proposed InterventionScript.
             mode: The recommendation engine source ('slm' or 'fallback_rule').
         """
         zone_id = script.zone_id
-        
+
         if not script.action_required:
             # Execute immediately if no operator veto window is required
             await self.execute_intervention(script, mode)
             return
 
-        logger.info(f"Operator VETO window ({self.actuation_sla_sec:.1f}s) started for intervention on zone {zone_id}")
-        write_audit_log("veto_window_started", {
-            "zone_id": zone_id,
-            "script": script.model_dump()
-        })
-        
+        logger.info(
+            f"Operator VETO window ({self.actuation_sla_sec:.1f}s) started for intervention on zone {zone_id}"
+        )
+        write_audit_log(
+            "veto_window_started", {"zone_id": zone_id, "script": script.model_dump()}
+        )
+
         # Track pending script in active lists for WebSocket reporting
         self.active_scripts[zone_id] = script
         self.active_intervention_metadata[zone_id] = {
             "start_time": time.time(),
-            "mode": mode
+            "mode": mode,
         }
         await self.broadcast_state()
-        
+
         # Discard previous veto history for this zone
         self.vetoed_zones.discard(zone_id)
         try:
             # Wait for operator veto SLA window
             await asyncio.sleep(self.actuation_sla_sec)
-            
+
             # Timer expired: execute proposed gate changes
             await self.execute_intervention(script, mode)
-            write_audit_log("veto_window_expired", {
-                "zone_id": zone_id,
-                "status": "executed"
-            })
+            write_audit_log(
+                "veto_window_expired", {"zone_id": zone_id, "status": "executed"}
+            )
         except asyncio.CancelledError:
             # Check the cancellation trigger
             if zone_id in self.vetoed_zones:
-                logger.warning(f"Intervention on zone {zone_id} was VETOED by the operator!")
-                write_audit_log("veto_window_cancelled", {
-                    "zone_id": zone_id,
-                    "status": "vetoed"
-                })
-            elif self.active_intervention_metadata.get(zone_id, {}).get("operator_approved"):
-                logger.info(f"Intervention on zone {zone_id} was APPROVED early by the operator.")
+                logger.warning(
+                    f"Intervention on zone {zone_id} was VETOED by the operator!"
+                )
+                write_audit_log(
+                    "veto_window_cancelled", {"zone_id": zone_id, "status": "vetoed"}
+                )
+            elif self.active_intervention_metadata.get(zone_id, {}).get(
+                "operator_approved"
+            ):
+                logger.info(
+                    f"Intervention on zone {zone_id} was APPROVED early by the operator."
+                )
             else:
-                logger.info(f"Intervention on zone {zone_id} was CANCELLED due to crowd clearing naturally.")
-                write_audit_log("veto_window_cancelled", {
-                    "zone_id": zone_id,
-                    "status": "cleared"
-                })
+                logger.info(
+                    f"Intervention on zone {zone_id} was CANCELLED due to crowd clearing naturally."
+                )
+                write_audit_log(
+                    "veto_window_cancelled", {"zone_id": zone_id, "status": "cleared"}
+                )
         finally:
             # Cleanup pending registries
             self.active_interventions.pop(zone_id, None)
@@ -443,10 +458,10 @@ class SafePlayOrchestrator:
     def verify_payload_signature(self, raw_payload: str) -> bool:
         """
         Cryptographic HMAC-SHA256 signature verification on inbound edge telemetry.
-        
+
         Args:
             raw_payload: The raw JSON string received from the edge sensor.
-            
+
         Returns:
             True if verification succeeds or if strict validation is disabled and the
             payload is unsigned/development-fallback; False if verification fails.
@@ -464,7 +479,9 @@ class SafePlayOrchestrator:
             signature = data.get("signature")
             if not signature:
                 if strict:
-                    logger.error("Rejecting unsigned telemetry payload in strict verification mode!")
+                    logger.error(
+                        "Rejecting unsigned telemetry payload in strict verification mode!"
+                    )
                     return False
                 return True
 
@@ -475,7 +492,9 @@ class SafePlayOrchestrator:
             ).hexdigest()
 
             if not hmac.compare_digest(signature, expected):
-                logger.error("HMAC signature verification failed for telemetry payload!")
+                logger.error(
+                    "HMAC signature verification failed for telemetry payload!"
+                )
                 return False
             return True
         except Exception as e:
@@ -491,22 +510,30 @@ class SafePlayOrchestrator:
         if not self.verify_payload_signature(raw_payload):
             logger.error("Security verification failed for incoming telemetry payload!")
             write_audit_log("security_validation_failed", {"raw_payload": raw_payload})
-            raise TelemetryValidationError("Security verification failed for incoming telemetry payload!")
-            
+            raise TelemetryValidationError(
+                "Security verification failed for incoming telemetry payload!"
+            )
+
         try:
             data = json.loads(raw_payload)
         except json.JSONDecodeError as e:
-            raise TelemetryValidationError(f"Failed to parse raw telemetry as JSON: {e}") from e
-            
+            raise TelemetryValidationError(
+                f"Failed to parse raw telemetry as JSON: {e}"
+            ) from e
+
         try:
             payload = TelemetryPayload.model_validate(data)
         except Exception as e:
-            raise TelemetryValidationError(f"Telemetry payload validation failed: {e}") from e
+            raise TelemetryValidationError(
+                f"Telemetry payload validation failed: {e}"
+            ) from e
 
         # Verify zone_id exists in the spatial graph to prevent processing invalid telemetry
         if payload.zone_id not in self.graph.nodes:
-            raise TelemetryValidationError(f"Zone '{payload.zone_id}' not found in spatial graph")
-            
+            raise TelemetryValidationError(
+                f"Zone '{payload.zone_id}' not found in spatial graph"
+            )
+
         return payload
 
     def _update_spatial_graph(self, payload: TelemetryPayload) -> None:
@@ -525,7 +552,9 @@ class SafePlayOrchestrator:
         """
         current_qos = self.zone_qos.get(payload.zone_id, 0)
         if payload.crowd_density >= 2.0 and current_qos == 0:
-            logger.warning(f"High surge detected in {payload.zone_id} ({payload.crowd_density} people/m^2). Toggling QoS to 1.")
+            logger.warning(
+                f"High surge detected in {payload.zone_id} ({payload.crowd_density} people/m^2). Toggling QoS to 1."
+            )
             self.zone_qos[payload.zone_id] = 1
             if self.mqtt_client:
                 topic = f"stadium/{payload.zone_id}/telemetry"
@@ -537,13 +566,17 @@ class SafePlayOrchestrator:
             write_audit_log("qos_escalated", {"zone_id": payload.zone_id, "qos": 1})
             await self.broadcast_state()
         elif payload.crowd_density < 1.5 and current_qos == 1:
-            logger.info(f"Crowd cleared in {payload.zone_id} ({payload.crowd_density} people/m^2). Toggling QoS back to 0.")
+            logger.info(
+                f"Crowd cleared in {payload.zone_id} ({payload.crowd_density} people/m^2). Toggling QoS back to 0."
+            )
             self.zone_qos[payload.zone_id] = 0
             if self.mqtt_client:
                 topic = f"stadium/{payload.zone_id}/telemetry"
                 try:
                     self.mqtt_client.unsubscribe(topic)
-                    logger.info(f"Dynamically unsubscribed from topic: {topic} (falling back to QoS 0 wildcard)")
+                    logger.info(
+                        f"Dynamically unsubscribed from topic: {topic} (falling back to QoS 0 wildcard)"
+                    )
                 except Exception as e:
                     logger.error(f"Failed to unsubscribe from {topic}: {e}")
             write_audit_log("qos_deescalated", {"zone_id": payload.zone_id, "qos": 0})
@@ -556,26 +589,33 @@ class SafePlayOrchestrator:
         """
         if payload.crowd_density >= self.fallback_density_limit * 0.5:
             # Skip if an intervention task is already running or a script is awaiting veto
-            if payload.zone_id in self.active_interventions or payload.zone_id in self.active_scripts:
+            if (
+                payload.zone_id in self.active_interventions
+                or payload.zone_id in self.active_scripts
+            ):
                 return
-            
+
             # Fetch recommendation from the LLM or static fallback rules
             script = await self.get_slm_recommendation(payload)
             mode = "slm"
             if not script:
                 script = self.get_static_fallback_recommendation(payload)
                 mode = "fallback_rule"
-            
+
             # Spawn a non-blocking asynchronous task to manage the veto/actuation lifecycle
             task = asyncio.create_task(self.run_intervention_lifecycle(script, mode))
             self.active_interventions[payload.zone_id] = task
         else:
             # Crowd cleared naturally: cancel any pending operator countdown task
             if payload.zone_id in self.active_interventions:
-                logger.info(f"Crowd cleared in {payload.zone_id}. Cancelling pending operator intervention task.")
+                logger.info(
+                    f"Crowd cleared in {payload.zone_id}. Cancelling pending operator intervention task."
+                )
                 self.active_interventions[payload.zone_id].cancel()
             if payload.zone_id in self.vetoed_zones:
-                logger.info(f"Crowd fully cleared in {payload.zone_id}. Discarding operator veto lock.")
+                logger.info(
+                    f"Crowd fully cleared in {payload.zone_id}. Discarding operator veto lock."
+                )
                 self.vetoed_zones.discard(payload.zone_id)
 
     async def process_telemetry(self, raw_payload: str) -> None:
@@ -583,32 +623,35 @@ class SafePlayOrchestrator:
         Main routing function for telemetry payloads.
         Parses JSON metrics, updates graph state, scales MQTT QoS based on density surge thresholds,
         and triggers safety evaluation workflows if necessary.
-        
+
         Args:
             raw_payload: The raw string of the telemetry request.
         """
         if self.panic_mode:
             return
-            
+
         try:
             # 1. Parse and validate incoming telemetry
             payload = self._parse_and_validate_telemetry(raw_payload)
-            
+
             # 2. Update the spatial directed graph representation
             self._update_spatial_graph(payload)
-            
+
             # Broadcast the updated state to WebSockets listeners
             await self.broadcast_state()
-            
+
             # 3. Dynamic QoS Backpressure checks
             await self._evaluate_qos_backpressure(payload)
-            
+
             # 4. Evaluate crowd safety status and handle intervention lifecycles
             await self._evaluate_crowd_safety(payload)
-                
+
         except TelemetryValidationError as e:
             logger.error(f"Telemetry validation error: {e}")
-            write_audit_log("telemetry_validation_failed", {"error": str(e), "raw_payload": raw_payload})
+            write_audit_log(
+                "telemetry_validation_failed",
+                {"error": str(e), "raw_payload": raw_payload},
+            )
         except Exception as e:
             logger.error(f"Error processing telemetry payload: {e}", exc_info=True)
 
@@ -632,17 +675,33 @@ class SafePlayOrchestrator:
         """Runs the telemetry simulator loop to mock stadium crowd behaviors (delegated)."""
         await simulator.simulation_loop(self)
 
+
 async def main() -> None:
     """
     Main entrypoint of the SafePlay service.
     Configures argument parsing, launches the MQTT client, sets up Uvicorn web server,
     and runs asynchronous execution loops concurrently.
     """
-    parser = argparse.ArgumentParser(description="safe-play Edge-Intelligence Orchestrator")
-    parser.add_argument("--config", default=DEFAULT_SCHEMA_PATH, help="Path to compiled JSON schema")
-    parser.add_argument("--broker", default=os.environ.get("MQTT_BROKER_URL", DEFAULT_BROKER), help="MQTT Broker Host")
-    parser.add_argument("--port", type=int, default=DEFAULT_PORT, help="MQTT Broker Port")
-    parser.add_argument("--web-port", type=int, default=int(os.environ.get("PORT", "8000")), help="Web server port")
+    parser = argparse.ArgumentParser(
+        description="safe-play Edge-Intelligence Orchestrator"
+    )
+    parser.add_argument(
+        "--config", default=DEFAULT_SCHEMA_PATH, help="Path to compiled JSON schema"
+    )
+    parser.add_argument(
+        "--broker",
+        default=os.environ.get("MQTT_BROKER_URL", DEFAULT_BROKER),
+        help="MQTT Broker Host",
+    )
+    parser.add_argument(
+        "--port", type=int, default=DEFAULT_PORT, help="MQTT Broker Port"
+    )
+    parser.add_argument(
+        "--web-port",
+        type=int,
+        default=int(os.environ.get("PORT", "8000")),
+        help="Web server port",
+    )
     args = parser.parse_args()
 
     orchestrator = SafePlayOrchestrator(args.config, args.broker, args.port)
@@ -651,8 +710,7 @@ async def main() -> None:
     loop = asyncio.get_running_loop()
     orchestrator.loop = loop
     client = mqtt.Client(
-        callback_api_version=mqtt.CallbackAPIVersion.VERSION2,
-        userdata={"loop": loop}
+        callback_api_version=mqtt.CallbackAPIVersion.VERSION2, userdata={"loop": loop}
     )
     client.on_connect = orchestrator.on_mqtt_connect
     client.on_disconnect = orchestrator.on_mqtt_disconnect
@@ -665,25 +723,27 @@ async def main() -> None:
         client.loop_start()
         mqtt_started = True
     except Exception as e:
-        logger.error(f"Failed to connect to Mosquitto Broker: {e}. Running in web-simulation fallback mode.")
+        logger.error(
+            f"Failed to connect to Mosquitto Broker: {e}. Running in web-simulation fallback mode."
+        )
 
     app = create_app(orchestrator)
     import uvicorn
+
     config = uvicorn.Config(app, host="0.0.0.0", port=args.web_port, log_level="info")
     server = uvicorn.Server(config)
 
     # Gather orchestrator main queue, simulator, and Uvicorn server loops concurrently
     try:
         await asyncio.gather(
-            orchestrator.main_loop(),
-            orchestrator.simulation_loop(),
-            server.serve()
+            orchestrator.main_loop(), orchestrator.simulation_loop(), server.serve()
         )
     finally:
         if mqtt_started:
             client.loop_stop()
         await orchestrator.close()
         logger.info("Orchestrator shut down.")
+
 
 if __name__ == "__main__":
     try:

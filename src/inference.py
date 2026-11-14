@@ -17,30 +17,35 @@ Ecosystem Positioning:
 import json
 import os
 import time
-from typing import Optional
 
 import httpx
-
 from src.audit import write_audit_log
 from src.config import INFERENCE_TIMEOUT_SEC, logger
 from src.models import InterventionScript, TelemetryPayload
 
 _GEMINI_MODEL = "gemini-2.0-flash-lite"
 # Fields that Gemini may return as empty strings but should be None
-_NULLABLE_FIELDS = ("reroute_target", "accessibility_route_target", "accessibility_instruction")
+_NULLABLE_FIELDS = (
+    "reroute_target",
+    "accessibility_route_target",
+    "accessibility_instruction",
+)
 
-async def get_slm_recommendation(orchestrator, payload: TelemetryPayload) -> Optional[InterventionScript]:
+
+async def get_slm_recommendation(
+    orchestrator, payload: TelemetryPayload
+) -> InterventionScript | None:
     """
     Queries the configured LLM/SLM engine under strict structural constraints to
     obtain crowd management recommendations.
-    
+
     If GEMINI_API_KEY is found in the environment, this method calls the Google Gemini REST API.
     Otherwise, it defaults to a local llama-server instance running on port 8080.
-    
+
     Args:
         orchestrator: The orchestrator instance managing system configurations, clients, and graph states.
         payload: TelemetryPayload instance containing current crowd density and flow metrics.
-        
+
     Returns:
         A validated InterventionScript instance containing safety instructions, or
         None if the inference request fails, raises an exception, or times out.
@@ -48,14 +53,14 @@ async def get_slm_recommendation(orchestrator, payload: TelemetryPayload) -> Opt
     # Look up alternative routing options via cython/python graph traversal
     alt_route = orchestrator.graph.get_alternative_route(payload.zone_id)
     gemini_api_key = os.environ.get("GEMINI_API_KEY")
-    
+
     if gemini_api_key:
         # Remote Gemini REST endpoint utilizing developer-supplied API key
         url = (
             f"https://generativelanguage.googleapis.com/v1beta/models/"
             f"{_GEMINI_MODEL}:generateContent?key={gemini_api_key}"
         )
-        
+
         # Zero-shot prompt providing structural context for inference
         prompt = (
             f"STAD_ZONE: {payload.zone_id}\n"
@@ -66,12 +71,10 @@ async def get_slm_recommendation(orchestrator, payload: TelemetryPayload) -> Opt
             f"Assess crowd hazard for FIFA World Cup 2026. Recommend turnstile gate action, multilingual signage/audio instructions in English, Spanish, and French, special ADA accessibility redirection targets/notes, and transit coordination instructions. "
             f"Generate a valid JSON object matching the InterventionScript schema."
         )
-        
+
         # Enforce exact JSON response schema using Gemini's native schema constraints
         req_payload = {
-            "contents": [{
-                "parts": [{"text": prompt}]
-            }],
+            "contents": [{"parts": [{"text": prompt}]}],
             "generationConfig": {
                 "responseMimeType": "application/json",
                 "responseSchema": {
@@ -79,83 +82,100 @@ async def get_slm_recommendation(orchestrator, payload: TelemetryPayload) -> Opt
                     "properties": {
                         "zone_id": {
                             "type": "STRING",
-                            "description": "Must match STAD_ZONE exactly"
+                            "description": "Must match STAD_ZONE exactly",
                         },
                         "hazard_level": {
                             "type": "STRING",
-                            "enum": ["low", "medium", "high", "critical"]
+                            "enum": ["low", "medium", "high", "critical"],
                         },
-                        "action_required": {
-                            "type": "BOOLEAN"
-                        },
+                        "action_required": {"type": "BOOLEAN"},
                         "reroute_target": {
                             "type": "STRING",
-                            "description": "Alternative zone_id to redirect crowd flow or null"
+                            "description": "Alternative zone_id to redirect crowd flow or null",
                         },
                         "signage_instruction_en": {
                             "type": "STRING",
-                            "description": "English signage message (max 120 chars)"
+                            "description": "English signage message (max 120 chars)",
                         },
                         "signage_instruction_es": {
                             "type": "STRING",
-                            "description": "Spanish signage message translation (max 120 chars)"
+                            "description": "Spanish signage message translation (max 120 chars)",
                         },
                         "signage_instruction_fr": {
                             "type": "STRING",
-                            "description": "French signage message translation (max 120 chars)"
+                            "description": "French signage message translation (max 120 chars)",
                         },
                         "audio_announcement_en": {
                             "type": "STRING",
-                            "description": "English PA announcement audio transcript (max 200 chars)"
+                            "description": "English PA announcement audio transcript (max 200 chars)",
                         },
                         "audio_announcement_es": {
                             "type": "STRING",
-                            "description": "Spanish PA announcement audio transcript (max 200 chars)"
+                            "description": "Spanish PA announcement audio transcript (max 200 chars)",
                         },
                         "audio_announcement_fr": {
                             "type": "STRING",
-                            "description": "French PA announcement audio transcript (max 200 chars)"
+                            "description": "French PA announcement audio transcript (max 200 chars)",
                         },
                         "gate_action": {
                             "type": "STRING",
-                            "enum": ["KEEP_OPEN", "SLOW_ENTRY", "CLOSE_IMMEDIATELY", "REVERSE_FLOW"]
+                            "enum": [
+                                "KEEP_OPEN",
+                                "SLOW_ENTRY",
+                                "CLOSE_IMMEDIATELY",
+                                "REVERSE_FLOW",
+                            ],
                         },
                         "accessibility_route_target": {
                             "type": "STRING",
-                            "description": "Optional alternative ADA zone ID (like Gate_C) or null"
+                            "description": "Optional alternative ADA zone ID (like Gate_C) or null",
                         },
                         "accessibility_instruction": {
                             "type": "STRING",
-                            "description": "Special ADA guidelines or null"
+                            "description": "Special ADA guidelines or null",
                         },
                         "transit_dispatch_action": {
                             "type": "STRING",
-                            "enum": ["KEEP_NOMINAL", "INCREASE_SHUTTLE_FREQUENCY", "REDIRECT_METRO_PASSENGER_ENTRY", "HOLD_METRO_TRAINS"]
+                            "enum": [
+                                "KEEP_NOMINAL",
+                                "INCREASE_SHUTTLE_FREQUENCY",
+                                "REDIRECT_METRO_PASSENGER_ENTRY",
+                                "HOLD_METRO_TRAINS",
+                            ],
                         },
                         "transit_instruction": {
                             "type": "STRING",
-                            "description": "Transit operational guidelines"
+                            "description": "Transit operational guidelines",
                         },
                         "rationale": {
                             "type": "STRING",
-                            "description": "Zero-fluff explanation of the assessment (maximum 10 words)"
-                        }
+                            "description": "Zero-fluff explanation of the assessment (maximum 10 words)",
+                        },
                     },
                     "required": [
-                        "zone_id", "hazard_level", "action_required", 
-                        "signage_instruction_en", "signage_instruction_es", "signage_instruction_fr", 
-                        "audio_announcement_en", "audio_announcement_es", "audio_announcement_fr", 
-                        "gate_action", "transit_dispatch_action", "transit_instruction", "rationale"
-                    ]
-                }
-            }
+                        "zone_id",
+                        "hazard_level",
+                        "action_required",
+                        "signage_instruction_en",
+                        "signage_instruction_es",
+                        "signage_instruction_fr",
+                        "audio_announcement_en",
+                        "audio_announcement_es",
+                        "audio_announcement_fr",
+                        "gate_action",
+                        "transit_dispatch_action",
+                        "transit_instruction",
+                        "rationale",
+                    ],
+                },
+            },
         }
         # Allow up to 2.0 seconds for external cloud API round-trips
         timeout = httpx.Timeout(2.0, connect=1.0)
     else:
         # Local llama-server endpoint using GBNF JSON schemas
         url = os.environ.get("LLAMA_SERVER_URL", "http://localhost:8080/completion")
-        
+
         prompt = (
             f"STAD_ZONE: {payload.zone_id}\n"
             f"DENSITY: {payload.crowd_density:.2f}\n"
@@ -164,7 +184,7 @@ async def get_slm_recommendation(orchestrator, payload: TelemetryPayload) -> Opt
             f"ALT_ROUTE: {alt_route or 'NONE'}\n"
             f"Assess crowd hazard for FIFA World Cup 2026. Recommend turnstile gate action, multilingual signage/audio (EN, ES, FR), accessibility ADA route targets, and transit coordination."
         )
-        
+
         req_payload = {
             "prompt": prompt,
             "temperature": 0.0,
@@ -175,83 +195,106 @@ async def get_slm_recommendation(orchestrator, payload: TelemetryPayload) -> Opt
         }
         # Enforce sub-100ms real-time latency boundary for local edge servers
         timeout = httpx.Timeout(INFERENCE_TIMEOUT_SEC, connect=1.0)
-        
+
     start_time = time.time()
     try:
         # Submit POST request to the inference server
-        response = await orchestrator.http_client.post(url, json=req_payload, timeout=timeout)
+        response = await orchestrator.http_client.post(
+            url, json=req_payload, timeout=timeout
+        )
         latency_ms = (time.time() - start_time) * 1000.0
-        
+
         if response.status_code == 200:
             resp_json = response.json()
-            
+
             # Extract content payload based on the response format of the active model engine
             if gemini_api_key:
                 candidates = resp_json.get("candidates", [])
                 if candidates:
-                    text_content = candidates[0].get("content", {}).get("parts", [{}])[0].get("text", "").strip()
+                    text_content = (
+                        candidates[0]
+                        .get("content", {})
+                        .get("parts", [{}])[0]
+                        .get("text", "")
+                        .strip()
+                    )
                     parsed_content = json.loads(text_content)
                 else:
                     raise ValueError("No candidates returned from Gemini API response.")
             else:
                 content = resp_json.get("content", "").strip()
                 parsed_content = json.loads(content)
-            
+
             # Normalize empty strings back to None for standardized routing targets
             for field in _NULLABLE_FIELDS:
                 if parsed_content.get(field) == "":
                     parsed_content[field] = None
-            
+
             # Validate output structurally using our Pydantic model
             script = InterventionScript.model_validate(parsed_content)
-            
+
             # Record telemetry stats on orchestrator instance for status dashboard reporting
             orchestrator.last_llm_latency_ms = latency_ms
             orchestrator.last_llm_status = True
-            
+
             # Write a persistent entry to the security audit trail
-            write_audit_log("inference_success", {
-                "zone_id": payload.zone_id,
-                "latency_ms": latency_ms,
-                "engine": "gemini" if gemini_api_key else "llama",
-                "response": parsed_content
-            })
+            write_audit_log(
+                "inference_success",
+                {
+                    "zone_id": payload.zone_id,
+                    "latency_ms": latency_ms,
+                    "engine": "gemini" if gemini_api_key else "llama",
+                    "response": parsed_content,
+                },
+            )
             return script
         else:
-            logger.error(f"Inference server error: {response.status_code} {response.text}")
+            logger.error(
+                f"Inference server error: {response.status_code} {response.text}"
+            )
             orchestrator.last_llm_latency_ms = latency_ms
             orchestrator.last_llm_status = False
-            
-    except (httpx.TimeoutException, httpx.RequestError, json.JSONDecodeError, ValueError, Exception) as e:
+
+    except (
+        httpx.TimeoutException,
+        httpx.RequestError,
+        json.JSONDecodeError,
+        ValueError,
+        Exception,
+    ) as e:
         latency_ms = (time.time() - start_time) * 1000.0
-        logger.warning(f"Inference engine unavailable or timed out ({latency_ms:.1f}ms). Reason: {type(e).__name__}")
-        
+        logger.warning(
+            f"Inference engine unavailable or timed out ({latency_ms:.1f}ms). Reason: {type(e).__name__}"
+        )
+
         orchestrator.last_llm_latency_ms = latency_ms
         orchestrator.last_llm_status = False
-        
+
         # Log the inference fallback event to the audit trail for regulatory traceability
-        write_audit_log("inference_fallback", {
-            "zone_id": payload.zone_id,
-            "latency_ms": latency_ms,
-            "error": str(e)
-        })
-        
+        write_audit_log(
+            "inference_fallback",
+            {"zone_id": payload.zone_id, "latency_ms": latency_ms, "error": str(e)},
+        )
+
     return None
 
-def get_static_fallback_recommendation(orchestrator, payload: TelemetryPayload) -> InterventionScript:
+
+def get_static_fallback_recommendation(
+    orchestrator, payload: TelemetryPayload
+) -> InterventionScript:
     """
     Rule-based deterministic backup system that executes immediately when the LLM is offline or times out.
     Guarantees that safety recommendations can be made within sub-millisecond timelines.
-    
+
     Args:
         orchestrator: The active orchestrator instance.
         payload: TelemetryPayload containing crowd flow and density values.
-        
+
     Returns:
         An InterventionScript generated using static safety rules.
     """
     alt_route = orchestrator.graph.get_alternative_route(payload.zone_id)
-    
+
     # Critical state: Crowd density is at or above the safety limit
     if payload.crowd_density >= orchestrator.fallback_density_limit:
         ada_route = "Gate_C" if payload.zone_id in ("Gate_A", "Gate_B") else None
@@ -271,7 +314,7 @@ def get_static_fallback_recommendation(orchestrator, payload: TelemetryPayload) 
             accessibility_instruction="Stroller and wheelchair traffic redirect to North Portal Gate C.",
             transit_dispatch_action="INCREASE_SHUTTLE_FREQUENCY",
             transit_instruction="Request immediate transit frequency increase to disperse outbound crowds.",
-            rationale="Fallback: density limit exceeded"
+            rationale="Fallback: density limit exceeded",
         )
     # Elevated state: Moderate density, slow down entry but keep flow moving
     else:
@@ -291,5 +334,5 @@ def get_static_fallback_recommendation(orchestrator, payload: TelemetryPayload) 
             accessibility_instruction="ADA routing lanes are nominal and fully clear.",
             transit_dispatch_action="KEEP_NOMINAL",
             transit_instruction="Maintain nominal transit operations and gate flow monitoring.",
-            rationale="Fallback: density elevated"
+            rationale="Fallback: density elevated",
         )

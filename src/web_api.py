@@ -18,93 +18,93 @@ Ecosystem Positioning:
       - `src/audit.py`: provides file verification for audit trail logs.
 """
 
-
 import json
 import os
 import time
 from collections import deque
-from typing import Optional
 
 from fastapi import FastAPI, HTTPException, WebSocket, WebSocketDisconnect
 from fastapi.responses import HTMLResponse, JSONResponse
 from pydantic import BaseModel, Field
-
-from src.audit import verify_audit_trail, write_audit_log
+from src.audit import verify_audit_trail
 from src.config import AUDIT_LOG_FILE, logger
 from src.copilot import query_copilot
-from src.exceptions import GraphRoutingError, OperatorActionError, SafePlayError, TelemetryValidationError
+from src.exceptions import (
+    GraphRoutingError,
+    OperatorActionError,
+    SafePlayError,
+    TelemetryValidationError,
+)
 from src.models import CopilotRequest, CopilotResponse
 
 # ---------------------------------------------------------------------------
 # Pydantic request models — validate API inputs instead of accepting raw dicts
 # ---------------------------------------------------------------------------
 
+
 class ZoneActionRequest(BaseModel):
     """Schema representing an operator action target zone (e.g. for vetos or approvals)."""
+
     zone_id: str = Field(
-        ..., 
-        min_length=1, 
-        max_length=64, 
-        description="The target zone identifier where the action is executed"
+        ...,
+        min_length=1,
+        max_length=64,
+        description="The target zone identifier where the action is executed",
     )
+
 
 class TelemetryRequest(BaseModel):
     """Schema representing raw incoming telemetry data from edge ingestion devices."""
+
     zone_id: str = Field(
-        ..., 
-        min_length=1, 
-        max_length=64, 
-        description="Target vomitory or quadrant zone ID"
+        ...,
+        min_length=1,
+        max_length=64,
+        description="Target vomitory or quadrant zone ID",
     )
     crowd_density: float = Field(
-        ..., 
-        ge=0.0, 
-        le=20.0, 
-        description="Recorded crowd density in people per square meter"
+        ...,
+        ge=0.0,
+        le=20.0,
+        description="Recorded crowd density in people per square meter",
     )
     flow_rate_in: float = Field(
-        ..., 
-        ge=0.0, 
-        description="Inflow rate of people per minute"
+        ..., ge=0.0, description="Inflow rate of people per minute"
     )
     flow_rate_out: float = Field(
-        ..., 
-        ge=0.0, 
-        description="Outflow rate of people per minute"
+        ..., ge=0.0, description="Outflow rate of people per minute"
     )
-    timestamp: float = Field(
-        ..., 
-        gt=0.0, 
-        description="Inflow timestamp"
+    timestamp: float = Field(..., gt=0.0, description="Inflow timestamp")
+    signature: str | None = Field(
+        None, description="Optional HMAC SHA-256 signature of the telemetry payload"
     )
-    signature: Optional[str] = Field(
-        None, 
-        description="Optional HMAC SHA-256 signature of the telemetry payload"
-    )
+
 
 class ConfigUpdateRequest(BaseModel):
     """Schema for updating the dynamic orchestration limits and SLA parameters."""
-    actuation_sla_sec: Optional[float] = Field(
-        None, 
-        ge=2.0, 
-        le=300.0, 
-        description="Dynamic countdown timer window (in seconds) during which operators can veto recommendations"
+
+    actuation_sla_sec: float | None = Field(
+        None,
+        ge=2.0,
+        le=300.0,
+        description="Dynamic countdown timer window (in seconds) during which operators can veto recommendations",
     )
-    fallback_density_limit: Optional[float] = Field(
-        None, 
-        ge=0.5, 
-        le=10.0, 
-        description="Safe threshold density at which automatic backup policies execute"
+    fallback_density_limit: float | None = Field(
+        None,
+        ge=0.5,
+        le=10.0,
+        description="Safe threshold density at which automatic backup policies execute",
     )
+
 
 def create_app(orchestrator) -> FastAPI:
     """
     Factory function creating and configuring the FastAPI application instance.
     Injects the active orchestrator context to wire routes to domain models.
-    
+
     Args:
         orchestrator: The main system Orchestrator instance.
-        
+
     Returns:
         A configured FastAPI application.
     """
@@ -119,7 +119,9 @@ def create_app(orchestrator) -> FastAPI:
         return JSONResponse(status_code=400, content={"detail": str(exc)})
 
     @app.exception_handler(TelemetryValidationError)
-    async def telemetry_validation_exception_handler(request, exc: TelemetryValidationError):
+    async def telemetry_validation_exception_handler(
+        request, exc: TelemetryValidationError
+    ):
         return JSONResponse(status_code=400, content={"detail": str(exc)})
 
     @app.exception_handler(GraphRoutingError)
@@ -141,7 +143,9 @@ def create_app(orchestrator) -> FastAPI:
         if os.path.exists(index_path):
             with open(index_path, "r") as f:
                 return HTMLResponse(content=f.read(), status_code=200)
-        return HTMLResponse(content="<h1>static/index.html not found!</h1>", status_code=404)
+        return HTMLResponse(
+            content="<h1>static/index.html not found!</h1>", status_code=404
+        )
 
     @app.websocket("/ws")
     async def websocket_endpoint(websocket: WebSocket):
@@ -168,7 +172,10 @@ def create_app(orchestrator) -> FastAPI:
     async def post_veto(payload: ZoneActionRequest):
         """Allows operators to veto/cancel a proposed safety gate intervention."""
         if payload.zone_id not in orchestrator.graph.nodes:
-            raise HTTPException(status_code=404, detail=f"Zone '{payload.zone_id}' not found in spatial graph")
+            raise HTTPException(
+                status_code=404,
+                detail=f"Zone '{payload.zone_id}' not found in spatial graph",
+            )
         await orchestrator.reject_intervention_veto(payload.zone_id)
         return {"status": "success", "zone_id": payload.zone_id}
 
@@ -176,7 +183,10 @@ def create_app(orchestrator) -> FastAPI:
     async def post_approve(payload: ZoneActionRequest):
         """Allows operators to early-approve a proposed intervention, bypassing the SLA window."""
         if payload.zone_id not in orchestrator.graph.nodes:
-            raise HTTPException(status_code=404, detail=f"Zone '{payload.zone_id}' not found in spatial graph")
+            raise HTTPException(
+                status_code=404,
+                detail=f"Zone '{payload.zone_id}' not found in spatial graph",
+            )
         await orchestrator.approve_intervention_early(payload.zone_id)
         return {"status": "success", "zone_id": payload.zone_id}
 
@@ -199,7 +209,10 @@ def create_app(orchestrator) -> FastAPI:
         processing queue and updates the manual input timestamp.
         """
         if payload.zone_id not in orchestrator.graph.nodes:
-            raise HTTPException(status_code=404, detail=f"Zone '{payload.zone_id}' not found in spatial graph")
+            raise HTTPException(
+                status_code=404,
+                detail=f"Zone '{payload.zone_id}' not found in spatial graph",
+            )
         orchestrator.last_manual_telemetry_time = time.time()
         orchestrator.telemetry_queue.put_nowait(payload.model_dump_json())
         return {"status": "success", "message": "Telemetry queued"}
@@ -220,7 +233,7 @@ def create_app(orchestrator) -> FastAPI:
         """
         limit = min(max(limit, 1), 500)
         logs: deque = deque(maxlen=500)
-        
+
         if os.path.exists(AUDIT_LOG_FILE):
             with open(AUDIT_LOG_FILE, "r") as f:
                 for line in f:
@@ -231,7 +244,7 @@ def create_app(orchestrator) -> FastAPI:
                         except json.JSONDecodeError:
                             # Silently ignore malformed/corrupted file records
                             pass
-        
+
         # Convert deque collection to standard list and slice last limit entries
         return list(logs)[-limit:]
 
@@ -261,7 +274,7 @@ def create_app(orchestrator) -> FastAPI:
             orchestrator.actuation_sla_sec = payload.actuation_sla_sec
         if payload.fallback_density_limit is not None:
             orchestrator.fallback_density_limit = payload.fallback_density_limit
-            
+
         await orchestrator.broadcast_state()
         return {
             "status": "success",

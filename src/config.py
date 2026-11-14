@@ -16,10 +16,10 @@ Ecosystem Positioning:
         - `src/inference.py`: to set timeout boundaries on LLM engine requests.
 """
 
-
-import os
 import logging
+import os
 import sys
+
 
 def load_env() -> None:
     """
@@ -41,6 +41,7 @@ def load_env() -> None:
                     if key and key not in os.environ:
                         os.environ[key] = val
 
+
 # Run environment initialization immediately on import
 load_env()
 
@@ -48,7 +49,7 @@ load_env()
 logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s [%(levelname)s] %(name)s: %(message)s",
-    handlers=[logging.StreamHandler(sys.stdout)]
+    handlers=[logging.StreamHandler(sys.stdout)],
 )
 logger = logging.getLogger("Orchestrator")
 
