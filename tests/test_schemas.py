@@ -13,9 +13,11 @@ Ecosystem Positioning:
 """
 
 import json
+
 import pytest
 from pydantic import ValidationError
-from src.models import TelemetryPayload, InterventionScript, SpatialNode, SpatialEdge
+from src.models import InterventionScript, SpatialEdge, SpatialNode, TelemetryPayload
+
 
 def test_telemetry_payload_valid():
     # A valid payload
@@ -24,11 +26,12 @@ def test_telemetry_payload_valid():
         "crowd_density": 1.8,
         "flow_rate_in": 45.0,
         "flow_rate_out": 30.0,
-        "timestamp": 1720875600.0
+        "timestamp": 1720875600.0,
     }
     payload = TelemetryPayload.model_validate(payload_data)
     assert payload.zone_id == "Gate_A"
     assert payload.crowd_density == 1.8
+
 
 def test_telemetry_payload_extra_fields():
     # Extra fields should raise validation error due to extra="forbid"
@@ -38,19 +41,18 @@ def test_telemetry_payload_extra_fields():
         "flow_rate_in": 45.0,
         "flow_rate_out": 30.0,
         "timestamp": 1720875600.0,
-        "unsupported_field": "some_value"
+        "unsupported_field": "some_value",
     }
     with pytest.raises(ValidationError):
         TelemetryPayload.model_validate(payload_data)
 
+
 def test_telemetry_payload_missing_fields():
     # Missing fields should raise validation error
-    payload_data = {
-        "zone_id": "Gate_A",
-        "crowd_density": 1.8
-    }
+    payload_data = {"zone_id": "Gate_A", "crowd_density": 1.8}
     with pytest.raises(ValidationError):
         TelemetryPayload.model_validate(payload_data)
+
 
 def test_intervention_script_valid():
     # A valid script
@@ -70,13 +72,14 @@ def test_intervention_script_valid():
         "accessibility_instruction": "ADA ramp available at Gate B",
         "transit_dispatch_action": "INCREASE_SHUTTLE_FREQUENCY",
         "transit_instruction": "Deploy additional shuttles",
-        "rationale": "High density detected"
+        "rationale": "High density detected",
     }
     script = InterventionScript.model_validate(script_data)
     assert script.zone_id == "Gate_A"
     assert script.action_required is True
     assert script.reroute_target == "Corridor_2"
     assert script.signage_instruction_en == "USE ALTERNATIVE GATE B"
+
 
 def test_intervention_script_extra_fields():
     # Extra fields should raise validation error due to extra="forbid"
@@ -97,10 +100,11 @@ def test_intervention_script_extra_fields():
         "transit_dispatch_action": "INCREASE_SHUTTLE_FREQUENCY",
         "transit_instruction": "Deploy additional shuttles",
         "rationale": "High density",
-        "extra_info": "unauthorized"
+        "extra_info": "unauthorized",
     }
     with pytest.raises(ValidationError):
         InterventionScript.model_validate(script_data)
+
 
 def test_compiled_schema_integrity():
     # Load config/schema.json and verify config properties
@@ -123,14 +127,16 @@ def test_compiled_schema_integrity():
     assert "transit_instruction" in schema["properties"]
     assert "rationale" in schema["properties"]
 
+
 def test_spatial_node_validation():
     node = SpatialNode(zone_id="Gate_A", capacity=2.5)
     assert node.zone_id == "Gate_A"
     assert node.capacity == 2.5
     assert node.current_density == 0.0
-    
+
     with pytest.raises(ValidationError):
         SpatialNode(zone_id="Gate_A")
+
 
 def test_spatial_edge_validation():
     edge = SpatialEdge(source="Gate_A", target="Corridor_1", max_flow_rate=120.0)
@@ -138,75 +144,78 @@ def test_spatial_edge_validation():
     assert edge.target == "Corridor_1"
     assert edge.max_flow_rate == 120.0
     assert edge.current_flow_rate == 0.0
-    
+
     with pytest.raises(ValidationError):
         SpatialEdge(source="Gate_A", target="Corridor_1")
 
+
 def test_spatial_graph_pathfinding():
     from src.models import SpatialGraph
-    
+
     nodes = [
         SpatialNode(zone_id="A", capacity=2.0, current_density=0.0),
         SpatialNode(zone_id="B", capacity=2.0, current_density=0.0),
         SpatialNode(zone_id="C", capacity=2.0, current_density=0.0),
-        SpatialNode(zone_id="D", capacity=2.0, current_density=0.0)
+        SpatialNode(zone_id="D", capacity=2.0, current_density=0.0),
     ]
     edges = [
         SpatialEdge(source="A", target="B", max_flow_rate=10.0),
         SpatialEdge(source="B", target="C", max_flow_rate=10.0),
-        SpatialEdge(source="C", target="D", max_flow_rate=10.0)
+        SpatialEdge(source="C", target="D", max_flow_rate=10.0),
     ]
-    
+
     graph = SpatialGraph(nodes, edges)
-    
+
     # 1. Successful path find
     path = graph.find_optimal_egress_path("A", ["D"])
     assert path == ["A", "B", "C", "D"]
-    
+
     # 2. Blocked path due to congestion
-    graph.update_node_density("B", 3.0)  # B is now overloaded (density 3.0 > capacity 2.0)
+    graph.update_node_density(
+        "B", 3.0
+    )  # B is now overloaded (density 3.0 > capacity 2.0)
     path = graph.find_optimal_egress_path("A", ["D"])
     assert path is None
 
 
 def test_cryptographic_audit_log_verification(tmp_path, monkeypatch):
     import os
-    from src.audit import write_audit_log, verify_audit_trail
-    import src.audit as audit
-    
+
+    from src import audit
+    from src.audit import verify_audit_trail, write_audit_log
+
     # Override audit log file to a temp directory path to isolate this test
     temp_log_file = os.path.join(tmp_path, "test_audit_trail.jsonl")
     monkeypatch.setattr(audit, "AUDIT_LOG_FILE", temp_log_file)
-    
+
     # 1. Clear files if any, verify empty file passes
     if os.path.exists(temp_log_file):
         os.remove(temp_log_file)
-        
+
     assert verify_audit_trail() is True
-    
+
     # 2. Write some logs
     write_audit_log("test_event_1", {"zone_id": "Gate_A", "info": "first log"})
     write_audit_log("test_event_2", {"zone_id": "Gate_B", "info": "second log"})
-    
+
     # Verify the chain is valid
     assert verify_audit_trail() is True
-    
+
     # 3. Read the file, alter a line, and verify it detects tampering
     with open(temp_log_file, "r") as f:
         lines = f.readlines()
-    
+
     assert len(lines) == 2
-    
+
     # Let's tamper with the first line's info
     import json
+
     data = json.loads(lines[0])
     data["info"] = "tampered info"
     lines[0] = json.dumps(data) + "\n"
-    
+
     with open(temp_log_file, "w") as f:
         f.writelines(lines)
-        
+
     # Validation should now fail
     assert verify_audit_trail() is False
-
-

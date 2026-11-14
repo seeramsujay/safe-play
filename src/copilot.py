@@ -19,9 +19,6 @@ Ecosystem Positioning:
 import json
 import os
 import time
-from typing import Any, Dict, List, Optional
-
-import httpx
 
 from src.config import logger
 from src.models import CopilotRequest, CopilotResponse
@@ -52,25 +49,26 @@ FIFA WORLD CUP 2026 - VENUE COMMAND & EGRESS OPERATIONS SOPS:
    - Action 'HOLD_METRO_TRAINS': Hold inbound/outbound transit during active gate evacuations.
 """
 
+
 async def query_copilot(orchestrator, request: CopilotRequest) -> CopilotResponse:
     """
     Processes an operator query using Gemini's structured generation capabilities
     or a localized semantic fallback engine.
-    
+
     Args:
         orchestrator: The active orchestrator instance.
         request: The CopilotRequest containing the query text and target zone.
-        
+
     Returns:
         A CopilotResponse containing the natural language answer and system states.
     """
     start_time = time.time()
-    
+
     # 1. Gather current stadium status for prompt context
     nodes_info = []
     active_incidents = 0
     overloaded_zones = []
-    
+
     for zone_id, node in orchestrator.graph.nodes.items():
         density = node.current_density
         capacity = node.capacity
@@ -81,15 +79,23 @@ async def query_copilot(orchestrator, request: CopilotRequest) -> CopilotRespons
             active_incidents += 1
             if is_overloaded:
                 overloaded_zones.append(zone_id)
-                
-        nodes_info.append({
-            "zone_id": zone_id,
-            "current_density": round(density, 2),
-            "max_capacity": capacity,
-            "status": "CRITICAL" if is_overloaded else ("WARNING" if density >= 1.5 else "NOMINAL"),
-            "active_intervention": active_script.gate_action if active_script else None
-        })
-        
+
+        nodes_info.append(
+            {
+                "zone_id": zone_id,
+                "current_density": round(density, 2),
+                "max_capacity": capacity,
+                "status": (
+                    "CRITICAL"
+                    if is_overloaded
+                    else ("WARNING" if density >= 1.5 else "NOMINAL")
+                ),
+                "active_intervention": (
+                    active_script.gate_action if active_script else None
+                ),
+            }
+        )
+
     # Generate static hazard summary
     if overloaded_zones:
         hazard_summary = f"CRITICAL overload in progress at: {', '.join(overloaded_zones)}. Active response protocols actuated."
@@ -105,7 +111,7 @@ async def query_copilot(orchestrator, request: CopilotRequest) -> CopilotRespons
             f"https://generativelanguage.googleapis.com/v1beta/models/"
             f"{_GEMINI_MODEL}:generateContent?key={gemini_api_key}"
         )
-        
+
         # Build prompt containing full context
         system_context = (
             f"You are the FIFA World Cup 2026 Stadium Operations Copilot. "
@@ -120,10 +126,17 @@ async def query_copilot(orchestrator, request: CopilotRequest) -> CopilotRespons
             f"Answer the operator's query accurately using the telemetry data and SOPs above. "
             f"If the question refers to a specific zone, focus on that zone's metrics and transit connectivity."
         )
-        
+
         req_payload = {
             "contents": [
-                {"role": "user", "parts": [{"text": f"{system_context}\n\nOperator Query: {request.prompt}"}]}
+                {
+                    "role": "user",
+                    "parts": [
+                        {
+                            "text": f"{system_context}\n\nOperator Query: {request.prompt}"
+                        }
+                    ],
+                }
             ],
             "generationConfig": {
                 "responseMimeType": "application/json",
@@ -132,37 +145,52 @@ async def query_copilot(orchestrator, request: CopilotRequest) -> CopilotRespons
                     "properties": {
                         "answer": {
                             "type": "STRING",
-                            "description": "Natural language answer, clear, concise, professional (max 150 words)."
+                            "description": "Natural language answer, clear, concise, professional (max 150 words).",
                         }
                     },
-                    "required": ["answer"]
-                }
-            }
+                    "required": ["answer"],
+                },
+            },
         }
-        
+
         try:
-            response = await orchestrator.http_client.post(url, json=req_payload, timeout=5.0)
+            response = await orchestrator.http_client.post(
+                url, json=req_payload, timeout=5.0
+            )
             if response.status_code == 200:
                 resp_json = response.json()
                 candidates = resp_json.get("candidates", [])
                 if candidates:
-                    text_content = candidates[0].get("content", {}).get("parts", [{}])[0].get("text", "").strip()
+                    text_content = (
+                        candidates[0]
+                        .get("content", {})
+                        .get("parts", [{}])[0]
+                        .get("text", "")
+                        .strip()
+                    )
                     parsed = json.loads(text_content)
                     return CopilotResponse(
-                        answer=parsed.get("answer", "No answer field found in response."),
+                        answer=parsed.get(
+                            "answer", "No answer field found in response."
+                        ),
                         timestamp=time.time(),
                         active_incident_count=active_incidents,
                         hazard_summary=hazard_summary,
-                        source="gemini"
+                        source="gemini",
                     )
         except Exception as e:
-            logger.warning(f"Copilot Gemini API query failed, falling back to local heuristic: {e}")
+            logger.warning(
+                f"Copilot Gemini API query failed, falling back to local heuristic: {e}"
+            )
 
     # 3. Fallback Heuristic Matcher (runs offline or on API failure)
     query_lower = request.prompt.lower()
-    
+
     # ADA / Accessibility queries
-    if any(k in query_lower for k in ["ada", "wheelchair", "stroller", "accessibility", "disabled", "ramp"]):
+    if any(
+        k in query_lower
+        for k in ["ada", "wheelchair", "stroller", "accessibility", "disabled", "ramp"]
+    ):
         answer = (
             "Accessibility Protocol: Under current World Cup stadium configurations, "
             "Gate C and the Accessibility Ramp are designated as ADA egress routes. "
@@ -170,11 +198,16 @@ async def query_copilot(orchestrator, request: CopilotRequest) -> CopilotRespons
             f"Current state: Gate C density is {orchestrator.graph.nodes['Gate_C'].current_density:.1f} people/m^2 (nominal)."
         )
     # Transit / Shuttle / Metro queries
-    elif any(k in query_lower for k in ["transit", "metro", "bus", "shuttle", "transport", "train"]):
+    elif any(
+        k in query_lower
+        for k in ["transit", "metro", "bus", "shuttle", "transport", "train"]
+    ):
         outbound_zones = []
         for zone in ["Transit_Hub", "Transit_Shuttle"]:
-            outbound_zones.append(f"{zone} (Density: {orchestrator.graph.nodes[zone].current_density:.1f}/m^2)")
-        
+            outbound_zones.append(
+                f"{zone} (Density: {orchestrator.graph.nodes[zone].current_density:.1f}/m^2)"
+            )
+
         answer = (
             "Transit Coordination: Outbound dispersal is routed through public transit hubs. "
             "If major exits overflow, dispatch commands request increased bus frequencies or train entry holds. "
@@ -182,14 +215,37 @@ async def query_copilot(orchestrator, request: CopilotRequest) -> CopilotRespons
             "Transit dispatch recommendation will match flow demand to prevent station congestion."
         )
     # Language / Spanish / French queries
-    elif any(k in query_lower for k in ["language", "spanish", "french", "espanol", "francais", "translate", "translation"]):
+    elif any(
+        k in query_lower
+        for k in [
+            "language",
+            "spanish",
+            "french",
+            "espanol",
+            "francais",
+            "translate",
+            "translation",
+        ]
+    ):
         answer = (
             "Multilingual Support: EdgePulse dynamically broadcasts all safety alerts in English, Spanish, "
             "and French concurrently. Visual digital displays render three languages in rotation, "
             "and public address audio tracks are queued in all three languages to guide international visitors safely."
         )
     # Density / Overload / Incident status queries
-    elif any(k in query_lower for k in ["density", "incident", "hazard", "threat", "status", "safe", "overload", "clogged"]):
+    elif any(
+        k in query_lower
+        for k in [
+            "density",
+            "incident",
+            "hazard",
+            "threat",
+            "status",
+            "safe",
+            "overload",
+            "clogged",
+        ]
+    ):
         if overloaded_zones:
             answer = (
                 f"Active Incident Alert: {len(overloaded_zones)} vomitory portals exceed safe density limits: "
@@ -215,5 +271,5 @@ async def query_copilot(orchestrator, request: CopilotRequest) -> CopilotRespons
         timestamp=time.time(),
         active_incident_count=active_incidents,
         hazard_summary=hazard_summary,
-        source="fallback"
+        source="fallback",
     )
