@@ -1,4 +1,22 @@
-# ⚡ safe-play
+<div align="center">
+
+<img src="assets/logo.svg" alt="Safe-Play Logo" width="160" />
+
+# Safe-Play (EdgePulse)
+### Real-Time Edge IoT Crowd Safety Orchestrator & Cryptographic Audit Engine
+
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+[![Telemetry: MQTT](https://img.shields.io/badge/Telemetry-MQTT%20Sub--100ms-009688.svg?logo=mqtt&logoColor=white)](config/)
+[![Engine: Qwen & Gemini](https://img.shields.io/badge/Inference-Qwen%202.5%20%7C%20Gemini%20Flash-4285F4.svg?logo=google&logoColor=white)](#)
+[![Security: SHA-256 Ledger](https://img.shields.io/badge/Audit-Cryptographic%20SHA--256-success.svg)](#)
+
+<p align="center">
+  <b>A real-time edge middleware orchestrator that continuously ingests sub-100ms MQTT crowd telemetry, executes edge LLM safety evaluations, and logs tamper-evident cryptographic audit trails.</b>
+</p>
+
+</div>
+
+---
 
 > Decentralized edge-intelligence mesh for stadium crowd safety and automated incident triage. Designed for FIFA World Cup 2026 event egress and venue operations.
 
